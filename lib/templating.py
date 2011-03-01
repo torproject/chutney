@@ -128,6 +128,7 @@ class IncluderDict(_DictWrapper):
     def __init__(self, parent, includePath=(".",)):
         _DictWrapper.__init__(self, parent)
         self._includePath = includePath
+        self._st_mtime = 0
 
     def _getitem(self, key):
         if not key.startswith("include:"):
@@ -136,15 +137,24 @@ class IncluderDict(_DictWrapper):
         filename = key[len("include:"):]
         if os.path.isabs(filename):
             with open(filename, 'r') as f:
+                stat = os.fstat(f.fileno())
+                if stat.st_mtime > self._st_mtime:
+                    self._st_mtime = stat.st_mtime
                 return f.read()
 
         for elt in self._includePath:
             fullname = os.path.join(elt, filename)
             if os.path.exists(fullname):
                 with open(fullname, 'r') as f:
+                    stat = os.fstat(f.fileno())
+                    if stat.st_mtime > self._st_mtime:
+                        self._st_mtime = stat.st_mtime
                     return f.read()
 
         raise KeyError(key)
+
+    def getUpdateTime(self):
+        return self._st_mtime
 
 class _BetterTemplate(string.Template):
 

@@ -9,10 +9,12 @@
 from __future__ import with_statement
 import os
 import templating
+import signal
 import subprocess
 import sys
 import re
 import errno
+import time
 
 def mkdir_p(d):
     try:
@@ -38,10 +40,13 @@ class Node:
     #######
     # Users are NOT expected to call these:
 
+    def _getTorrcFname(self):
+        return templating.Template("${torrc_fname}").format(self._fields)
+
     def _createTorrcFile(self, checkOnly=False):
         template = self._getTorrcTemplate()
         env = self._fields
-        fn_out = templating.Template("${torrc_fname}").format(env)
+        fn_out = self._getTorrcFname()
         output = template.format(env)
         if checkOnly:
             return
@@ -161,6 +166,98 @@ class Node:
             env['nick'], v3id, env['orport'], env['dirserver_flags'],
             env['ip'], env['dirport'], env['fingerprint'])
 
+
+    ##### Controlling a node.  This should probably get split into its
+    # own class. XXXX
+
+    def getPid(self):
+        env = self._fields
+        pidfile = os.path.join(env['dir'], 'pid')
+        if not os.path.exists(pidfile):
+            return None
+
+        with open(pidfile, 'r') as f:
+            return int(f.read())
+
+    def isRunning(self, pid=None):
+        env = self._fields
+        if pid is None:
+            pid = self.getPid()
+        if pid is None:
+            return False
+
+        try:
+            os.kill(pid, 0) # "kill 0" == "are you there?"
+        except OSError, e:
+            if e.errno == errno.ESRCH:
+                return False
+            raise
+
+	# okay, so the process exists.  Say "True" for now.
+        # XXXX check if this is really tor!
+        return True
+
+    def check(self, listRunning=True, listNonRunning=False):
+        env = self._fields
+        pid = self.getPid()
+        running = self.isRunning(pid)
+        name = env['nick']
+        dir = env['dir']
+        if running:
+            if listRunning:
+                print "%s is running with PID %s"%(name,pid)
+            return True
+        elif os.path.exists(os.path.join(dir, "core.%s"%pid)):
+            if listNonRunning:
+                print "%s seems to have crashed, and left core file core.%s"%(
+                   nick,pid)
+            return False
+        else:
+            if listNonRunning:
+                print "%s is stopped"%nick
+            return False
+
+    def hup(self):
+        pid = self.getPid()
+        running = self.isRunning()
+        nick = self._fields['nick']
+        if self.isRunning():
+            print "Sending sighup to %s"%nick
+            os.kill(pid, signal.SIGHUP)
+            return True
+        else:
+            print "%s is not running"%nick
+            return False
+
+    def start(self):
+        if self.isRunning():
+            print "%s is already running"
+            return
+        torrc = self._getTorrcFname()
+        cmdline = [
+            self._fields['tor'],
+            "--quiet",
+            "-f", torrc,
+            ]
+        p = subprocess.Popen(cmdline)
+        # XXXX this requires that RunAsDaemon is set.
+        p.wait()
+        if p.returncode != 0:
+            print "Couldn't launch %s (%s): %s"%(self._fields['nick'],
+                                                 " ".join(cmdline),
+                                                 p.returncode)
+            return False
+        return True
+
+    def stop(self, sig=signal.SIGINT):
+        env = self._fields
+        pid = self.getPid()
+        if not self.isRunning(pid):
+            print "%s is not running"%env['nick']
+            return
+        os.kill(pid, sig)
+
+
 DEFAULTS = {
     'authority' : False,
     'relay' : False,
@@ -176,7 +273,8 @@ DEFAULTS = {
     'dirport_base' : 7000,
     'controlport_base' : 8000,
     'socksport_base' : 9000,
-    'dirservers' : "Dirserver bleargh bad torrc file!"
+    'dirservers' : "Dirserver bleargh bad torrc file!",
+    'core' : True,
 }
 
 class TorEnviron(templating.Environ):
@@ -198,10 +296,10 @@ class TorEnviron(templating.Environ):
     def _get_dir(self, me):
         return os.path.abspath(os.path.join(me['net_base_dir'],
                                             "nodes",
-                                            me['nick']))
+                                         "%03d%s"%(me['nodenum'], me['tag'])))
 
     def _get_nick(self, me):
-        return "%s-%02d"%(me['tag'], me['nodenum'])
+        return "test%03d%s"%(me['nodenum'], me['tag'])
 
     def _get_tor_gencert(self, me):
         return me['tor']+"-gencert"
@@ -219,17 +317,23 @@ class Network:
         self._dfltEnv = defaultEnviron
         self._nextnodenum = 0
 
-    def addNode(self, n):
+    def _addNode(self, n):
         n._setnodenum(self._nextnodenum)
         self._nextnodenum += 1
         self._nodes.append(n)
+
+    def _checkConfig(self):
+        for n in self._nodes:
+            n._checkConfig(self)
 
     def configure(self):
         network = self
         dirserverlines = []
 
-        for n in self._nodes:
-            n._checkConfig(network)
+        self._checkConfig()
+
+        # XXX don't change node names or types or count if anything is
+        # XXX running!
 
         for n in self._nodes:
             n._preConfig(network)
@@ -243,18 +347,54 @@ class Network:
         for n in self._nodes:
             n._postConfig(network)
 
+    def status(self):
+        statuses = [n.check() for n in self._nodes]
+        n_ok = len([x for x in statuses if x])
+        print "%d/%d nodes are running"%(n_ok,len(self._nodes))
+
+    def restart(self):
+        self.stop()
+        self.start()
+
+    def start(self):
+        print "Starting nodes"
+        return all([n.start() for n in self._nodes])
+
+    def hup(self):
+        print "Sending SIGHUP to nodes"
+        return all([n.hup() for n in self._nodes])
+
+    def stop(self):
+        for sig, desc in [(signal.SIGINT, "SIGINT"),
+                          (signal.SIGINT, "another SIGINT"),
+                          (signal.SIGKILL, "SIGKILL")]:
+            print "Sending %s to nodes"%desc
+            for n in self._nodes:
+                if n.isRunning():
+                    n.stop(sig=sig)
+            print "Waiting for nodes to finish."
+            for n in xrange(15):
+                time.sleep(1)
+                if all(not n.isRunning() for n in self._nodes):
+                    return
+                sys.stdout.write(".")
+                sys.stdout.flush()
+            for n in self._nodes:
+                n.check(listNonRunning=False)
 
 def ConfigureNodes(nodelist):
     network = _THE_NETWORK
 
     for n in nodelist:
-        network.addNode(n)
+        network._addNode(n)
 
-def runConfigFile(f):
+def runConfigFile(verb, f):
     global _BASE_FIELDS
     global _THE_NETWORK
     _BASE_FIELDS = TorEnviron(templating.Environ(**DEFAULTS))
     _THE_NETWORK = Network(_BASE_FIELDS)
+
+
     _GLOBALS = dict(_BASE_FIELDS= _BASE_FIELDS,
                     Node=Node,
                     ConfigureNodes=ConfigureNodes,
@@ -263,10 +403,15 @@ def runConfigFile(f):
     exec f in _GLOBALS
     network = _GLOBALS['_THE_NETWORK']
 
-    network.configure()
+    if not hasattr(network, verb):
+        print "I don't know how to %s.  Known commands are: %s" % (
+            verb, " ".join(x for x in dir(network) if not x.startswith("_")))
+        return
+
+    getattr(network,verb)()
 
 if __name__ == '__main__':
-    f = open(sys.argv[1])
-    runConfigFile(f)
+    f = open(sys.argv[2])
+    runConfigFile(sys.argv[1], f)
 
 
