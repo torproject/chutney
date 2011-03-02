@@ -8,13 +8,15 @@
 
 from __future__ import with_statement
 import os
-import templating
 import signal
 import subprocess
 import sys
 import re
 import errno
 import time
+
+import chutney.Templating
+
 
 def mkdir_p(d):
     try:
@@ -41,7 +43,8 @@ class Node:
     # Users are NOT expected to call these:
 
     def _getTorrcFname(self):
-        return templating.Template("${torrc_fname}").format(self._fields)
+        t = chutney.Templating.Template("${torrc_fname}")
+        return t.format(self._fields)
 
     def _createTorrcFile(self, checkOnly=False):
         template = self._getTorrcTemplate()
@@ -58,7 +61,7 @@ class Node:
         template_path = env['torrc_template_path']
 
         t = "$${include:$torrc}"
-        return templating.Template(t, includePath=template_path)
+        return chutney.Templating.Template(t, includePath=template_path)
 
     def _getFreeVars(self):
         template = self._getTorrcTemplate()
@@ -277,9 +280,9 @@ DEFAULTS = {
     'core' : True,
 }
 
-class TorEnviron(templating.Environ):
+class TorEnviron(chutney.Templating.Environ):
     def __init__(self,parent=None,**kwargs):
-        templating.Environ.__init__(self, parent=parent, **kwargs)
+        chutney.Templating.Environ.__init__(self, parent=parent, **kwargs)
 
     def _get_orport(self, me):
         return me['orport_base']+me['nodenum']
@@ -391,9 +394,8 @@ def ConfigureNodes(nodelist):
 def runConfigFile(verb, f):
     global _BASE_FIELDS
     global _THE_NETWORK
-    _BASE_FIELDS = TorEnviron(templating.Environ(**DEFAULTS))
+    _BASE_FIELDS = TorEnviron(chutney.Templating.Environ(**DEFAULTS))
     _THE_NETWORK = Network(_BASE_FIELDS)
-
 
     _GLOBALS = dict(_BASE_FIELDS= _BASE_FIELDS,
                     Node=Node,
@@ -411,6 +413,10 @@ def runConfigFile(verb, f):
     getattr(network,verb)()
 
 if __name__ == '__main__':
+    if len(sys.argv) < 3:
+        print "Syntax: chutney {command} {networkfile}"
+        sys.exit(1)
+
     f = open(sys.argv[2])
     runConfigFile(sys.argv[1], f)
 
