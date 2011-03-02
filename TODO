@@ -1,9 +1,4 @@
 
-- Rename this.  "onionsalad"?  "onionchutney?"  "kachumber"? "chutney"?
-  "pyaaz"?  "ganda"?  "piaz ka catni"?
-
-
-
 - Have ability to override default parameter values.
    Search order for configuration values:
     - command line
@@ -22,7 +17,19 @@
 - Right now we assume that we're acting like a fooctl startup/shutdown script
   series.  Instead we could run in a managed mode.
 
+- Pipe stdout to a file, not to nowhere with "quiet"
+
+- Log stuff.
+
+- Split TorNode into a class that *just* holds the nodes configuration, and
+  implements some methods that create other classes for the stuff we really
+  need (node configurer, rc.d-like launcher, etc)
+
+- Have launcher check for configuration
+
+- Resolve XXXX comments
+
 - Document everything
 
-- Get it into git
-
+- Start writing passive "tests" like "did it bootstrap?" or "any
+  warnings in the logs?", etc
