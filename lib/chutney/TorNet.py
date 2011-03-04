@@ -234,7 +234,7 @@ class Node:
 
     def start(self):
         if self.isRunning():
-            print "%s is already running"
+            print "%s is already running"%self._fields['nick']
             return
         torrc = self._getTorrcFname()
         cmdline = [
