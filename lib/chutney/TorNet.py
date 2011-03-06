@@ -387,12 +387,12 @@ def ConfigureNodes(nodelist):
     for n in nodelist:
         network._addNode(n)
 
-def runConfigFile(verb, f):
-    global _BASE_ENVIRON
-    global _THE_NETWORK
-    _BASE_ENVIRON = TorEnviron(chutney.Templating.Environ(**DEFAULTS))
-    _THE_NETWORK = Network(_BASE_ENVIRON)
+def usage(network):
+    return "\n".join(["Usage: chutney {command} {networkfile}",
+       "Known commands are: %s" % (
+        " ".join(x for x in dir(network) if not x.startswith("_")))])
 
+def runConfigFile(verb, f):
     _GLOBALS = dict(_BASE_ENVIRON= _BASE_ENVIRON,
                     Node=Node,
                     ConfigureNodes=ConfigureNodes,
@@ -402,18 +402,25 @@ def runConfigFile(verb, f):
     network = _GLOBALS['_THE_NETWORK']
 
     if not hasattr(network, verb):
-        print "I don't know how to %s.  Known commands are: %s" % (
-            verb, " ".join(x for x in dir(network) if not x.startswith("_")))
+        print usage(network)
+        print "Error: I don't know how to %s." % verb
         return
 
     getattr(network,verb)()
 
-if __name__ == '__main__':
+def main():
+    global _BASE_ENVIRON
+    global _THE_NETWORK
+    _BASE_ENVIRON = TorEnviron(chutney.Templating.Environ(**DEFAULTS))
+    _THE_NETWORK = Network(_BASE_ENVIRON)
+
     if len(sys.argv) < 3:
-        print "Syntax: chutney {command} {networkfile}"
+        print usage(_THE_NETWORK)
+        print "Error: Not enough arguments given."
         sys.exit(1)
 
     f = open(sys.argv[2])
     runConfigFile(sys.argv[1], f)
 
-
+if __name__ == '__main__':
+    main()
