@@ -27,7 +27,7 @@
 ...    def __init__(self, p=None, **kw):
 ...       Environ.__init__(self, p, **kw)
 ...       self._n_calls = 0
-...    def _get_expensive_value(self, me):
+...    def _get_expensive_value(self, my):
 ...       self._n_calls += 1
 ...       return "Let's pretend this is hard to compute"
 ...
