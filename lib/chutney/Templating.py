@@ -64,7 +64,6 @@ from __future__ import with_statement
 
 import string
 import os
-import re
 
 #class _KeyError(KeyError):
 #    pass
