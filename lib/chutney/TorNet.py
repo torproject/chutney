@@ -7,6 +7,10 @@
 #  in all redistributed copies and derived works.  There is no warranty.
 
 from __future__ import with_statement
+
+import cgitb
+cgitb.enable(format="plain")
+
 import os
 import signal
 import subprocess
