@@ -26,7 +26,7 @@ def mkdir_p(d):
             return
         raise
 
-class Node:
+class Node(object):
     ########
     # Users are expected to call these:
     def __init__(self, parent=None, **kwargs):
@@ -314,7 +314,7 @@ class TorEnviron(chutney.Templating.Environ):
         return [ os.path.join(me['privnet_dir'], 'torrc_templates') ]
 
 
-class Network:
+class Network(object):
     def __init__(self,defaultEnviron):
         self._nodes = []
         self._dfltEnv = defaultEnviron

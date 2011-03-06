@@ -70,7 +70,7 @@ import os
 
 _KeyError = KeyError
 
-class _DictWrapper:
+class _DictWrapper(object):
     def __init__(self, parent=None):
         self._parent = parent
 
@@ -162,7 +162,7 @@ class _BetterTemplate(string.Template):
     def __init__(self, template):
         string.Template.__init__(self, template)
 
-class _FindVarsHelper:
+class _FindVarsHelper(object):
     def __init__(self, dflts):
         self._dflts = dflts
         self._vars = set()
@@ -173,7 +173,7 @@ class _FindVarsHelper:
         except KeyError:
             return ""
 
-class Template:
+class Template(object):
     MAX_ITERATIONS = 32
 
     def __init__(self, pattern, includePath=(".",)):
