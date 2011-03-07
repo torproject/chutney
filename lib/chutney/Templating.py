@@ -34,14 +34,12 @@
 
     You can declare an environment subclass with methods named
     _get_foo() to implement a dictionary whose 'foo' item is
-    calculated on the fly, and cached.
+    calculated on the fly.
 
 >>> class Specialized(Environ):
 ...    def __init__(self, p=None, **kw):
 ...       Environ.__init__(self, p, **kw)
-...       self._n_calls = 0
 ...    def _get_expensive_value(self, my):
-...       self._n_calls += 1
 ...       return "Let's pretend this is hard to compute"
 ...
 >>> s = Specialized(base, quux="hi")
@@ -49,10 +47,6 @@
 'hi'
 >>> s['expensive_value']
 "Let's pretend this is hard to compute"
->>> s['expensive_value']
-"Let's pretend this is hard to compute"
->>> s._n_calls
-1
 >>> sorted(s.keys())
 ['bar', 'expensive_value', 'foo', 'quux']
 
@@ -107,19 +101,35 @@ class _DictWrapper(object):
     def __init__(self, parent=None):
         self._parent = parent
 
-    def _getitem(self, key):
+    def _getitem(self, key, my):
         raise NotImplemented()
 
     def __getitem__(self, key):
+        return self.lookup(key, self)
+
+    def lookup(self, key, my):
+        """As self[key], but parents are told when doing their lookups that
+           the lookup is relative to a specialized environment 'my'.  This
+           is helpful when a parent environment has a value that depends
+           on other values.
+        """
         try:
-            return self._getitem(key)
+            return self._getitem(key,my)
         except KeyError:
             pass
         if self._parent is None:
             raise _KeyError(key)
 
         try:
-            return self._parent[key]
+            lookup = self._parent.lookup
+        except AttributeError:
+            try:
+                return self._parent[key]
+            except KeyError:
+                raise _KeyError(key)
+
+        try:
+            return lookup(key,my)
         except KeyError:
             raise _KeyError(key)
 
@@ -151,44 +161,53 @@ class Environ(_DictWrapper):
        >>> class HomeEnv(Environ):
        ...    def __init__(self, p=None, **kw):
        ...       Environ.__init__(self, p, **kw)
-       ...    def _get_homedir(self, my):
-       ...       return os.environ.get("HOME",None)
        ...    def _get_dotemacs(self, my):
        ...       return os.path.join(my['homedir'], ".emacs")
-       >>> h = HomeEnv()
-       >>> os.path.exists(h["homedir"])
-       True
-       >>> h2 = Environ(h, homedir="/tmp")
-       >>> h2['dotemacs']
+       >>> h = HomeEnv(homedir="/tmp")
+       >>> h['dotemacs']
        '/tmp/.emacs'
 
-       Values returned from these _get_KEY functions are cached.  The
-       'my' argument passed to these functions is the top-level dictionary
-       that we're using for our lookup.
+       The 'my' argument passed to these functions is the top-level
+       dictionary that we're using for our lookup.  This is useful
+       when defining values that depend on other values which might in
+       turn be overridden:
+
+       >>> class Animal(Environ):
+       ...    def __init__(self, p=None, **kw):
+       ...       Environ.__init__(self, p, **kw)
+       ...    def _get_limbs(self, my):
+       ...       return my['legs'] + my['arms']
+       >>> a = Animal(legs=2,arms=2)
+       >>> spider = Environ(a, legs=8,arms=0)
+       >>> squid = Environ(a, legs=0,arms=10)
+       >>> squid['limbs']
+       10
+       >>> spider['limbs']
+       8
+
+       Note that if _get_limbs() had been defined as
+          'return self['legs']+self['arms']',
+       both spider['limbs'] and squid['limbs'] would be given
+       (incorrectly) as 4.
     """
     ## Fields
     # _dict: dictionary holding the contents of this Environ that are
     #   not inherited from the parent and are not computed on the fly.
-    # _cache: dictionary holding already-computed values in this Environ.
 
     def __init__(self, parent=None, **kw):
         _DictWrapper.__init__(self, parent)
         self._dict = kw
-        self._cache = {}
 
-    def _getitem(self, key):
+    def _getitem(self, key, my):
         try:
             return self._dict[key]
         except KeyError:
             pass
-        try:
-            return self._cache[key]
-        except KeyError:
-            pass
+
         fn = getattr(self, "_get_%s"%key, None)
         if fn is not None:
             try:
-                self._cache[key] = rv = fn(self)
+                rv = fn(my)
                 return rv
             except _KeyError:
                 raise KeyError(key)
@@ -200,7 +219,6 @@ class Environ(_DictWrapper):
     def keys(self):
         s = set()
         s.update(self._dict.keys())
-        s.update(self._cache.keys())
         if self._parent is not None:
             s.update(self._parent.keys())
         s.update(name[5:] for name in dir(self) if name.startswith("_get_"))
@@ -227,7 +245,7 @@ class IncluderDict(_DictWrapper):
         self._includePath = includePath
         self._st_mtime = 0
 
-    def _getitem(self, key):
+    def _getitem(self, key, my):
         if not key.startswith("include:"):
             raise KeyError(key)
 
@@ -275,6 +293,8 @@ class _FindVarsHelper(object):
         self._dflts = dflts
         self._vars = set()
     def __getitem__(self, var):
+        return self.lookup(var, self)
+    def lookup(self, var, my):
         self._vars.add(var)
         try:
             return self._dflts[var]
