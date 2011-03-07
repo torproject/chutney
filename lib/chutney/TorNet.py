@@ -35,7 +35,7 @@ class Node(object):
     # Users are expected to call these:
     def __init__(self, parent=None, **kwargs):
         self._parent = parent
-        self.env = self._createEnviron(parent, kwargs)
+        self._env = self._createEnviron(parent, kwargs)
 
     def getN(self, N):
         return [ Node(self) for _ in xrange(N) ]
@@ -44,7 +44,7 @@ class Node(object):
         return Node(parent=self, **kwargs)
 
     def expand(self, pat, includePath=(".",)):
-        return chutney.Templating.Template(pat, includePath).format(self.env)
+        return chutney.Templating.Template(pat, includePath).format(self._env)
 
 
     #######
@@ -55,24 +55,24 @@ class Node(object):
     def _createTorrcFile(self, checkOnly=False):
         fn_out = self._getTorrcFname()
         torrc_template = self._getTorrcTemplate()
-        output = torrc_template.format(self.env)
+        output = torrc_template.format(self._env)
         if checkOnly:
             return
         with open(fn_out, 'w') as f:
             f.write(output)
 
     def _getTorrcTemplate(self):
-        template_path = self.env['torrc_template_path']
+        template_path = self._env['torrc_template_path']
         return chutney.Templating.Template("$${include:$torrc}",
             includePath=template_path)
 
     def _getFreeVars(self):
         template = self._getTorrcTemplate()
-        return template.freevars(self.env)
+        return template.freevars(self._env)
 
     def _createEnviron(self, parent, argdict):
         if parent:
-            parentenv = parent.env
+            parentenv = parent._env
         else:
             parentenv = self._getDefaultEnviron()
         return TorEnviron(parentenv, **argdict)
@@ -85,9 +85,9 @@ class Node(object):
 
     def _preConfig(self, net):
         self._makeDataDir()
-        if self.env['authority']:
+        if self._env['authority']:
             self._genAuthorityKey()
-        if self.env['relay']:
+        if self._env['relay']:
             self._genRouterKey()
 
     def _config(self, net):
@@ -99,21 +99,21 @@ class Node(object):
         pass
 
     def _setnodenum(self, num):
-        self.env['nodenum'] = num
+        self._env['nodenum'] = num
 
     def _makeDataDir(self):
-        datadir = self.env['dir']
+        datadir = self._env['dir']
         mkdir_p(os.path.join(datadir, 'keys'))
 
     def _genAuthorityKey(self):
-        datadir = self.env['dir']
-        tor_gencert = self.env['tor_gencert']
-        lifetime = self.env['auth_cert_lifetime']
+        datadir = self._env['dir']
+        tor_gencert = self._env['tor_gencert']
+        lifetime = self._env['auth_cert_lifetime']
         idfile   = os.path.join(datadir,'keys',"authority_identity_key")
         skfile   = os.path.join(datadir,'keys',"authority_signing_key")
         certfile = os.path.join(datadir,'keys',"authority_certificate")
         addr = self.expand("${ip}:${dirport}")
-        passphrase = self.env['auth_passphrase']
+        passphrase = self._env['auth_passphrase']
         if all(os.path.exists(f) for f in [idfile, skfile, certfile]):
             return
         cmdline = [
@@ -126,14 +126,14 @@ class Node(object):
             '-m', str(lifetime),
             '-a', addr]
         print "Creating identity key %s for %s with %s"%(
-            idfile,self.env['nick']," ".join(cmdline))
+            idfile,self._env['nick']," ".join(cmdline))
         p = subprocess.Popen(cmdline, stdin=subprocess.PIPE)
         p.communicate(passphrase+"\n")
         assert p.returncode == 0 #XXXX BAD!
 
     def _genRouterKey(self):
-        datadir = self.env['dir']
-        tor = self.env['tor']
+        datadir = self._env['dir']
+        tor = self._env['tor']
         idfile = os.path.join(datadir,'keys',"identity_key")
         cmdline = [
             tor,
@@ -147,13 +147,13 @@ class Node(object):
         stdout, stderr = p.communicate()
         fingerprint = "".join(stdout.split()[1:])
         assert re.match(r'^[A-F0-9]{40}$', fingerprint)
-        self.env['fingerprint'] = fingerprint
+        self._env['fingerprint'] = fingerprint
 
     def _getDirServerLine(self):
-        if not self.env['authority']:
+        if not self._env['authority']:
             return ""
 
-        datadir = self.env['dir']
+        datadir = self._env['dir']
         certfile = os.path.join(datadir,'keys',"authority_certificate")
         v3id = None
         with open(certfile, 'r') as f:
@@ -165,16 +165,16 @@ class Node(object):
         assert v3id is not None
 
         return "DirServer %s v3ident=%s orport=%s %s %s:%s %s\n" %(
-            self.env['nick'], v3id, self.env['orport'],
-            self.env['dirserver_flags'], self.env['ip'], self.env['dirport'],
-            self.env['fingerprint'])
+            self._env['nick'], v3id, self._env['orport'],
+            self._env['dirserver_flags'], self._env['ip'], self._env['dirport'],
+            self._env['fingerprint'])
 
 
     ##### Controlling a node.  This should probably get split into its
     # own class. XXXX
 
     def getPid(self):
-        pidfile = os.path.join(self.env['dir'], 'pid')
+        pidfile = os.path.join(self._env['dir'], 'pid')
         if not os.path.exists(pidfile):
             return None
 
@@ -201,8 +201,8 @@ class Node(object):
     def check(self, listRunning=True, listNonRunning=False):
         pid = self.getPid()
         running = self.isRunning(pid)
-        nick = self.env['nick']
-        dir = self.env['dir']
+        nick = self._env['nick']
+        dir = self._env['dir']
         if running:
             if listRunning:
                 print "%s is running with PID %s"%(nick,pid)
@@ -220,7 +220,7 @@ class Node(object):
     def hup(self):
         pid = self.getPid()
         running = self.isRunning()
-        nick = self.env['nick']
+        nick = self._env['nick']
         if self.isRunning():
             print "Sending sighup to %s"%nick
             os.kill(pid, signal.SIGHUP)
@@ -231,11 +231,11 @@ class Node(object):
 
     def start(self):
         if self.isRunning():
-            print "%s is already running"%self.env['nick']
+            print "%s is already running"%self._env['nick']
             return
         torrc = self._getTorrcFname()
         cmdline = [
-            self.env['tor'],
+            self._env['tor'],
             "--quiet",
             "-f", torrc,
             ]
@@ -243,7 +243,7 @@ class Node(object):
         # XXXX this requires that RunAsDaemon is set.
         p.wait()
         if p.returncode != 0:
-            print "Couldn't launch %s (%s): %s"%(self.env['nick'],
+            print "Couldn't launch %s (%s): %s"%(self._env['nick'],
                                                  " ".join(cmdline),
                                                  p.returncode)
             return False
@@ -252,7 +252,7 @@ class Node(object):
     def stop(self, sig=signal.SIGINT):
         pid = self.getPid()
         if not self.isRunning(pid):
-            print "%s is not running"%self.env['nick']
+            print "%s is not running"%self._env['nick']
             return
         os.kill(pid, sig)
 
