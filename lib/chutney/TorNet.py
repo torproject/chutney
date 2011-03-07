@@ -8,6 +8,7 @@
 
 from __future__ import with_statement
 
+# Get verbose tracebacks, so we can diagnose better.
 import cgitb
 cgitb.enable(format="plain")
 
@@ -21,16 +22,55 @@ import time
 
 import chutney.Templating
 
-
-def mkdir_p(d):
+def mkdir_p(d, mode=0777):
+    """Create directory 'd' and all of its parents as needed.  Unlike
+       os.makedirs, does not give an error if d already exists.
+    """
     try:
-        os.makedirs(d)
+        os.makedirs(d,mode=mode)
     except OSError, e:
         if e.errno == errno.EEXIST:
             return
         raise
 
 class Node(object):
+    """A Node represents a Tor node or a set of Tor nodes.  It's created
+       in a network configuration file.
+
+       This class is responsible for holding the user's selected node
+       configuration, and figuring out how the node needs to be
+       configured and launched.
+    """
+    # XXXXX Split this class up; its various methods are too ungainly,
+    # and if we let them start talking to each other too intimately,
+    # we'll never crowbar them apart.  One possible design: it should
+    # turn into a factory that can return a NodeLauncher and a
+    # NodeConfigurator depending on options.
+
+    ## Fields:
+    # _parent
+    # _env
+
+    ## Environment members used:
+    # torrc -- which torrc file to use
+    # torrc_template_path -- path to search for torrc files and include files
+    # authority -- bool -- are we an authority?
+    # relay -- bool -- are we a relay
+    # nodenum -- int -- set by chutney -- which unique node index is this?
+    # dir -- path -- set by chutney -- data directory for this tor
+    # tor_gencert -- path to tor_gencert binary
+    # tor -- path to tor binary
+    # auth_cert_lifetime -- lifetime of authority certs, in months.
+    # ip -- IP to listen on (used only if authority)
+    # orport, dirport -- (used only if authority)
+    # fingerprint -- used only if authority
+    # dirserver_flags -- used only if authority
+    # nick -- nickname of this router
+
+    ## Environment members set
+    # fingerprint -- hex router key fingerprint
+    # nodenum -- int -- set by chutney -- which unique node index is this?
+
     ########
     # Users are expected to call these:
     def __init__(self, parent=None, **kwargs):
@@ -50,27 +90,39 @@ class Node(object):
     #######
     # Users are NOT expected to call these:
     def _getTorrcFname(self):
+        """Return the name of the file where we'll be writing torrc"""
         return self.expand("${torrc_fname}")
 
     def _createTorrcFile(self, checkOnly=False):
+        """Write the torrc file for this node.  If checkOnly, just make sure
+           that the formatting is indeed possible.
+        """
         fn_out = self._getTorrcFname()
         torrc_template = self._getTorrcTemplate()
         output = torrc_template.format(self._env)
         if checkOnly:
+            # XXXX Is it time-cosuming to format? If so, cache here.
             return
         with open(fn_out, 'w') as f:
             f.write(output)
 
     def _getTorrcTemplate(self):
+        """Return the template used to write the torrc for this node."""
         template_path = self._env['torrc_template_path']
         return chutney.Templating.Template("$${include:$torrc}",
             includePath=template_path)
 
     def _getFreeVars(self):
+        """Return a set of the free variables in the torrc template for this
+           node.
+        """
         template = self._getTorrcTemplate()
         return template.freevars(self._env)
 
     def _createEnviron(self, parent, argdict):
+        """Return an Environ that delegates to the parent node's Environ (if
+           there is a parent node), or to the default environment.
+        """
         if parent:
             parentenv = parent._env
         else:
@@ -78,12 +130,20 @@ class Node(object):
         return TorEnviron(parentenv, **argdict)
 
     def _getDefaultEnviron(self):
+        """Return the default environment.  Any variables that we can't find
+           set for any particular node, we look for here.
+        """
         return _BASE_ENVIRON
 
     def _checkConfig(self, net):
+        """Try to format our torrc; raise an exception if we can't.
+        """
         self._createTorrcFile(checkOnly=True)
 
     def _preConfig(self, net):
+        """Called on all nodes before any nodes configure: generates keys as
+           needed.
+        """
         self._makeDataDir()
         if self._env['authority']:
             self._genAuthorityKey()
@@ -91,21 +151,30 @@ class Node(object):
             self._genRouterKey()
 
     def _config(self, net):
+        """Called to configure a node: creates a torrc file for it."""
         self._createTorrcFile()
         #self._createScripts()
 
     def _postConfig(self, net):
+        """Called on each nodes after all nodes configure."""
         #self.net.addNode(self)
         pass
 
     def _setnodenum(self, num):
+        """Assign a value to the 'nodenum' element of this node.  Each node
+           in a network gets its own nodenum.
+        """
         self._env['nodenum'] = num
 
     def _makeDataDir(self):
+        """Create the data directory (with keys subdirectory) for this node.
+        """
         datadir = self._env['dir']
         mkdir_p(os.path.join(datadir, 'keys'))
 
     def _genAuthorityKey(self):
+        """Generate an authority identity and signing key for this authority,
+           if they do not already exist."""
         datadir = self._env['dir']
         tor_gencert = self._env['tor_gencert']
         lifetime = self._env['auth_cert_lifetime']
@@ -132,6 +201,9 @@ class Node(object):
         assert p.returncode == 0 #XXXX BAD!
 
     def _genRouterKey(self):
+        """Generate an identity key for this router, unless we already have,
+           and set up the 'fingerprint' entry in the Environ.
+        """
         datadir = self._env['dir']
         tor = self._env['tor']
         idfile = os.path.join(datadir,'keys',"identity_key")
@@ -150,6 +222,8 @@ class Node(object):
         self._env['fingerprint'] = fingerprint
 
     def _getDirServerLine(self):
+        """Return a DirServer line for this Node.  That'll be "" if this is
+           not an authority."""
         if not self._env['authority']:
             return ""
 
@@ -174,6 +248,10 @@ class Node(object):
     # own class. XXXX
 
     def getPid(self):
+        """Assuming that this node has its pidfile in ${dir}/pid, return
+           the pid of the running process, or None if there is no pid in the
+           file.
+        """
         pidfile = os.path.join(self._env['dir'], 'pid')
         if not os.path.exists(pidfile):
             return None
@@ -182,6 +260,10 @@ class Node(object):
             return int(f.read())
 
     def isRunning(self, pid=None):
+        """Return true iff this node is running.  (If 'pid' is provided, we
+           assume that the pid provided is the one of this node.  Otherwise
+           we call getPid().
+        """
         if pid is None:
             pid = self.getPid()
         if pid is None:
@@ -199,6 +281,13 @@ class Node(object):
         return True
 
     def check(self, listRunning=True, listNonRunning=False):
+        """See if this node is running, stopped, or crashed.  If it's running
+           and listRunning is set, print a short statement.  If it's
+           stopped and listNonRunning is set, then print a short statement.
+           If it's crashed, print a statement.  Return True if the
+           node is running, false otherwise.
+        """
+        # XXX Split this into "check" and "print" parts.
         pid = self.getPid()
         running = self.isRunning(pid)
         nick = self._env['nick']
@@ -218,6 +307,7 @@ class Node(object):
             return False
 
     def hup(self):
+        """Send a SIGHUP to this node, if it's running."""
         pid = self.getPid()
         running = self.isRunning()
         nick = self._env['nick']
@@ -230,9 +320,12 @@ class Node(object):
             return False
 
     def start(self):
+        """Try to start this node; return True if we succeeded or it was
+           already running, False if we failed."""
+
         if self.isRunning():
             print "%s is already running"%self._env['nick']
-            return
+            return True
         torrc = self._getTorrcFname()
         cmdline = [
             self._env['tor'],
@@ -250,6 +343,7 @@ class Node(object):
         return True
 
     def stop(self, sig=signal.SIGINT):
+        """Try to stop this node by sending it the signal 'sig'."""
         pid = self.getPid()
         if not self.isRunning(pid):
             print "%s is not running"%self._env['nick']
@@ -266,7 +360,7 @@ DEFAULTS = {
     'auth_cert_lifetime' : 12,
     'ip' : '127.0.0.1',
     'dirserver_flags' : 'no-v2',
-    'privnet_dir' : '.',
+    'chutney_dir' : '.',
     'torrc_fname' : '${dir}/torrc',
     'orport_base' : 6000,
     'dirport_base' : 7000,
@@ -277,6 +371,27 @@ DEFAULTS = {
 }
 
 class TorEnviron(chutney.Templating.Environ):
+    """Subclass of chutney.Templating.Environ to implement commonly-used
+       substitutions.
+
+       Environment fields provided:
+
+          orport, controlport, socksport, dirport:
+          dir:
+          nick:
+          tor_gencert:
+          auth_passphrase:
+          torrc_template_path:
+
+       Environment fields used:
+          nodenum
+          tag
+          orport_base, controlport_base, socksport_base, dirport_base
+          chutney_dir
+          tor
+
+       XXXX document the above.  Or document all fields in one place?
+    """
     def __init__(self,parent=None,**kwargs):
         chutney.Templating.Environ.__init__(self, parent=parent, **kwargs)
 
@@ -307,10 +422,12 @@ class TorEnviron(chutney.Templating.Environ):
         return self['nick'] # OMG TEH SECURE!
 
     def _get_torrc_template_path(self, my):
-        return [ os.path.join(my['privnet_dir'], 'torrc_templates') ]
+        return [ os.path.join(my['chutney_dir'], 'torrc_templates') ]
 
 
 class Network(object):
+    """A network of Tor nodes, plus functions to manipulate them
+    """
     def __init__(self,defaultEnviron):
         self._nodes = []
         self._dfltEnv = defaultEnviron
