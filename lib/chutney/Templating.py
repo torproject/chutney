@@ -258,7 +258,7 @@ class _BetterTemplate(string.Template):
        characters in variable names.
     """
 
-    idpattern = r'[a-z0-9:_/\.\-]+'
+    idpattern = r'[a-z0-9:_/\.\-\/]+'
 
     def __init__(self, template):
         string.Template.__init__(self, template)
