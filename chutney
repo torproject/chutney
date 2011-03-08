@@ -3,4 +3,4 @@
 
 PYTHONPATH="`dirname $0`/lib":${PYTHONPATH}
 export PYTHONPATH
-python -m chutney.TorNet $*
+${PYTHON:=python} -m chutney.TorNet $*
