@@ -21,10 +21,6 @@
 
 - Log stuff.
 
-- Split TorNode into a class that *just* holds the nodes configuration, and
-  implements some methods that create other classes for the stuff we really
-  need (node configurer, rc.d-like launcher, etc)
-
 - Have launcher check for configuration
 
 - Resolve XXXX comments

@@ -41,15 +41,131 @@ class Node(object):
        configuration, and figuring out how the node needs to be
        configured and launched.
     """
-    # XXXXX Split this class up; its various methods are too ungainly,
-    # and if we let them start talking to each other too intimately,
-    # we'll never crowbar them apart.  One possible design: it should
-    # turn into a factory that can return a NodeLauncher and a
-    # NodeConfigurator depending on options.
-
     ## Fields:
     # _parent
     # _env
+    # _builder
+    # _controller
+
+    ########
+    # Users are expected to call these:
+    def __init__(self, parent=None, **kwargs):
+        self._parent = parent
+        self._env = self._createEnviron(parent, kwargs)
+        self._builder = None
+        self._controller = None
+
+    def getN(self, N):
+        return [ Node(self) for _ in xrange(N) ]
+
+    def specialize(self, **kwargs):
+        return Node(parent=self, **kwargs)
+
+    ######
+    # Chutney uses these:
+
+    def getBuilder(self):
+        """Return a NodeBuilder instance to set up this node (that is, to
+           write all the files that need to be in place so that this
+           node can be run by a NodeController).
+        """
+        if self._builder is None:
+            self._builder = LocalNodeBuilder(self._env)
+        return self._builder
+
+    def getController(self):
+        """Return a NodeController instance to control this node (that is,
+           to start it, stop it, see if it's running, etc.)
+        """
+        if self._controller is None:
+            self._controller = LocalNodeController(self._env)
+        return self._controller
+
+    def setNodenum(self, num):
+        """Assign a value to the 'nodenum' element of this node.  Each node
+           in a network gets its own nodenum.
+        """
+        self._env['nodenum'] = num
+
+    #####
+    # These are internal:
+
+    def _createEnviron(self, parent, argdict):
+        """Return an Environ that delegates to the parent node's Environ (if
+           there is a parent node), or to the default environment.
+        """
+        if parent:
+            parentenv = parent._env
+        else:
+            parentenv = self._getDefaultEnviron()
+        return TorEnviron(parentenv, **argdict)
+
+    def _getDefaultEnviron(self):
+        """Return the default environment.  Any variables that we can't find
+           set for any particular node, we look for here.
+        """
+        return _BASE_ENVIRON
+
+class _NodeCommon(object):
+    """Internal helper class for functionality shared by some NodeBuilders
+       and some NodeControllers."""
+    # XXXX maybe this should turn into a mixin.
+    def __init__(self, env):
+        self._env = env
+
+    def expand(self, pat, includePath=(".",)):
+        return chutney.Templating.Template(pat, includePath).format(self._env)
+
+    def _getTorrcFname(self):
+        """Return the name of the file where we'll be writing torrc"""
+        return self.expand("${torrc_fname}")
+
+class NodeBuilder(_NodeCommon):
+    """Abstract base class.  A NodeBuilder is responsible for doing all the
+       one-time prep needed to set up a node in a network.
+    """
+    def __init__(self, env):
+        _NodeCommon.__init__(self, env)
+
+    def checkConfig(self, net):
+        """Try to format our torrc; raise an exception if we can't.
+        """
+
+    def preConfig(self, net):
+        """Called on all nodes before any nodes configure: generates keys as
+           needed.
+        """
+
+    def config(self, net):
+        """Called to configure a node: creates a torrc file for it."""
+
+    def postConfig(self, net):
+        """Called on each nodes after all nodes configure."""
+
+
+class NodeController(_NodeCommon):
+    """Abstract base class.  A NodeController is responsible for running a
+       node on the network.
+    """
+    def __init__(self, env):
+        _NodeCommon.__init__(self, env)
+
+    def check(self, listRunning=True, listNonRunning=False):
+        """See if this node is running, stopped, or crashed.  If it's running
+           and listRunning is set, print a short statement.  If it's
+           stopped and listNonRunning is set, then print a short statement.
+           If it's crashed, print a statement.  Return True if the
+           node is running, false otherwise.
+        """
+
+    def start(self):
+        """Try to start this node; return True if we succeeded or it was
+           already running, False if we failed."""
+
+    def stop(self, sig=signal.SIGINT):
+        """Try to stop this node by sending it the signal 'sig'."""
+
+class LocalNodeBuilder(NodeBuilder):
 
     ## Environment members used:
     # torrc -- which torrc file to use
@@ -71,27 +187,9 @@ class Node(object):
     # fingerprint -- hex router key fingerprint
     # nodenum -- int -- set by chutney -- which unique node index is this?
 
-    ########
-    # Users are expected to call these:
-    def __init__(self, parent=None, **kwargs):
-        self._parent = parent
-        self._env = self._createEnviron(parent, kwargs)
-
-    def getN(self, N):
-        return [ Node(self) for _ in xrange(N) ]
-
-    def specialize(self, **kwargs):
-        return Node(parent=self, **kwargs)
-
-    def expand(self, pat, includePath=(".",)):
-        return chutney.Templating.Template(pat, includePath).format(self._env)
-
-
-    #######
-    # Users are NOT expected to call these:
-    def _getTorrcFname(self):
-        """Return the name of the file where we'll be writing torrc"""
-        return self.expand("${torrc_fname}")
+    def __init__(self, env):
+        NodeBuilder.__init__(self, env)
+        self._env = env
 
     def _createTorrcFile(self, checkOnly=False):
         """Write the torrc file for this node.  If checkOnly, just make sure
@@ -119,28 +217,12 @@ class Node(object):
         template = self._getTorrcTemplate()
         return template.freevars(self._env)
 
-    def _createEnviron(self, parent, argdict):
-        """Return an Environ that delegates to the parent node's Environ (if
-           there is a parent node), or to the default environment.
-        """
-        if parent:
-            parentenv = parent._env
-        else:
-            parentenv = self._getDefaultEnviron()
-        return TorEnviron(parentenv, **argdict)
-
-    def _getDefaultEnviron(self):
-        """Return the default environment.  Any variables that we can't find
-           set for any particular node, we look for here.
-        """
-        return _BASE_ENVIRON
-
-    def _checkConfig(self, net):
+    def checkConfig(self, net):
         """Try to format our torrc; raise an exception if we can't.
         """
         self._createTorrcFile(checkOnly=True)
 
-    def _preConfig(self, net):
+    def preConfig(self, net):
         """Called on all nodes before any nodes configure: generates keys as
            needed.
         """
@@ -150,21 +232,15 @@ class Node(object):
         if self._env['relay']:
             self._genRouterKey()
 
-    def _config(self, net):
+    def config(self, net):
         """Called to configure a node: creates a torrc file for it."""
         self._createTorrcFile()
         #self._createScripts()
 
-    def _postConfig(self, net):
+    def postConfig(self, net):
         """Called on each nodes after all nodes configure."""
         #self.net.addNode(self)
         pass
-
-    def _setnodenum(self, num):
-        """Assign a value to the 'nodenum' element of this node.  Each node
-           in a network gets its own nodenum.
-        """
-        self._env['nodenum'] = num
 
     def _makeDataDir(self):
         """Create the data directory (with keys subdirectory) for this node.
@@ -243,9 +319,10 @@ class Node(object):
             self._env['dirserver_flags'], self._env['ip'], self._env['dirport'],
             self._env['fingerprint'])
 
-
-    ##### Controlling a node.  This should probably get split into its
-    # own class. XXXX
+class LocalNodeController(NodeController):
+    def __init__(self, env):
+        NodeController.__init__(self, env)
+        self._env = env
 
     def getPid(self):
         """Assuming that this node has its pidfile in ${dir}/pid, return
@@ -351,6 +428,8 @@ class Node(object):
         os.kill(pid, sig)
 
 
+
+
 DEFAULTS = {
     'authority' : False,
     'relay' : False,
@@ -434,37 +513,38 @@ class Network(object):
         self._nextnodenum = 0
 
     def _addNode(self, n):
-        n._setnodenum(self._nextnodenum)
+        n.setNodenum(self._nextnodenum)
         self._nextnodenum += 1
         self._nodes.append(n)
 
     def _checkConfig(self):
         for n in self._nodes:
-            n._checkConfig(self)
+            n.getBuilder().checkConfig(self)
 
     def configure(self):
         network = self
         dirserverlines = []
+        builders = [ n.getBuilder() for n in self._nodes ]
 
         self._checkConfig()
 
         # XXX don't change node names or types or count if anything is
         # XXX running!
 
-        for n in self._nodes:
-            n._preConfig(network)
-            dirserverlines.append(n._getDirServerLine())
+        for b in builders:
+            b.preConfig(network)
+            dirserverlines.append(b._getDirServerLine())
 
         self._dfltEnv['dirservers'] = "".join(dirserverlines)
 
-        for n in self._nodes:
-            n._config(network)
+        for b in builders:
+            b.config(network)
 
-        for n in self._nodes:
-            n._postConfig(network)
+        for b in builders:
+            b.postConfig(network)
 
     def status(self):
-        statuses = [n.check() for n in self._nodes]
+        statuses = [ n.getController().check() for n in self._nodes]
         n_ok = len([x for x in statuses if x])
         print "%d/%d nodes are running"%(n_ok,len(self._nodes))
 
@@ -474,28 +554,29 @@ class Network(object):
 
     def start(self):
         print "Starting nodes"
-        return all([n.start() for n in self._nodes])
+        return all([n.getController().start() for n in self._nodes])
 
     def hup(self):
         print "Sending SIGHUP to nodes"
-        return all([n.hup() for n in self._nodes])
+        return all([n.getController().hup() for n in self._nodes])
 
     def stop(self):
+        controllers = [ n.getController() for n in self._nodes ]
         for sig, desc in [(signal.SIGINT, "SIGINT"),
                           (signal.SIGINT, "another SIGINT"),
                           (signal.SIGKILL, "SIGKILL")]:
             print "Sending %s to nodes"%desc
-            for n in self._nodes:
-                if n.isRunning():
-                    n.stop(sig=sig)
+            for c in controllers:
+                if c.isRunning():
+                    c.stop(sig=sig)
             print "Waiting for nodes to finish."
             for n in xrange(15):
                 time.sleep(1)
-                if all(not n.isRunning() for n in self._nodes):
+                if all(not c.isRunning() for c in controllers):
                     return
                 sys.stdout.write(".")
                 sys.stdout.flush()
-            for n in self._nodes:
+            for c in controllers:
                 n.check(listNonRunning=False)
 
 def ConfigureNodes(nodelist):
