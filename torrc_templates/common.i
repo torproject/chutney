@@ -6,5 +6,8 @@ Nickname $nick
 ShutdownWaitLength 0
 PidFile ${dir}/pid
 Log notice file ${dir}/notice.log
+Log info file ${dir}/info.log
+ProtocolWarnings 1
+SafeLogging 0
 ${dirservers}
 
