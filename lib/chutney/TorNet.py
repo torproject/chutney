@@ -441,7 +441,7 @@ DEFAULTS = {
     'dirserver_flags' : 'no-v2',
     'chutney_dir' : '.',
     'torrc_fname' : '${dir}/torrc',
-    'orport_base' : 6000,
+    'orport_base' : 5000,
     'dirport_base' : 7000,
     'controlport_base' : 8000,
     'socksport_base' : 9000,
