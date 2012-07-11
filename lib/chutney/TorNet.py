@@ -171,7 +171,9 @@ class LocalNodeBuilder(NodeBuilder):
     # torrc -- which torrc file to use
     # torrc_template_path -- path to search for torrc files and include files
     # authority -- bool -- are we an authority?
-    # relay -- bool -- are we a relay
+    # bridgeauthority -- bool -- are we a bridge authority?
+    # relay -- bool -- are we a relay?
+    # bridge -- bool -- are we a bridge?
     # nodenum -- int -- set by chutney -- which unique node index is this?
     # dir -- path -- set by chutney -- data directory for this tor
     # tor_gencert -- path to tor_gencert binary
@@ -297,9 +299,10 @@ class LocalNodeBuilder(NodeBuilder):
         assert re.match(r'^[A-F0-9]{40}$', fingerprint)
         self._env['fingerprint'] = fingerprint
 
-    def _getDirServerLine(self):
-        """Return a DirServer line for this Node.  That'll be "" if this is
-           not an authority."""
+    def _getAltAuthLines(self):
+        """Return a combination of AlternateDirAuthority,
+        AlternateHSAuthority and AlternateBridgeAuthority lines for
+        this Node, appropriately.  Non-authorities return ""."""
         if not self._env['authority']:
             return ""
 
@@ -314,10 +317,33 @@ class LocalNodeBuilder(NodeBuilder):
 
         assert v3id is not None
 
-        return "DirServer %s v3ident=%s orport=%s %s %s:%s %s\n" %(
-            self._env['nick'], v3id, self._env['orport'],
-            self._env['dirserver_flags'], self._env['ip'], self._env['dirport'],
-            self._env['fingerprint'])
+        if self._env['bridgeauthority']:
+            # Bridge authorities return AlternateBridgeAuthority with
+            # the 'bridge' flag set.
+            options = ("AlternateBridgeAuthority",)
+            self._env['dirserver_flags'] += " bridge"
+        else:
+            # Directory authorities return AlternateDirAuthority with
+            # the 'hs' and 'v3ident' flags set.
+            options = ("AlternateDirAuthority",)
+            self._env['dirserver_flags'] += " hs v3ident=%s" % v3id
+
+        authlines = ""
+        for authopt in options:
+            authlines += "%s %s orport=%s %s %s:%s %s\n" %(
+                authopt, self._env['nick'], self._env['orport'],
+                self._env['dirserver_flags'], self._env['ip'],
+                self._env['dirport'], self._env['fingerprint'])
+        return authlines
+
+    def _getBridgeLines(self):
+        """Return potential Bridge line for this Node. Non-bridge
+        relays return "".
+        """
+        if not self._env['bridge']:
+            return ""
+
+        return "Bridge %s:%s\n" % (self._env['ip'], self._env['orport'])
 
 class LocalNodeController(NodeController):
     def __init__(self, env):
@@ -432,7 +458,9 @@ class LocalNodeController(NodeController):
 
 DEFAULTS = {
     'authority' : False,
+    'bridgeauthority' : False,
     'relay' : False,
+    'bridge' : False,
     'connlimit' : 60,
     'net_base_dir' : 'net',
     'tor' : 'tor',
@@ -445,7 +473,8 @@ DEFAULTS = {
     'dirport_base' : 7000,
     'controlport_base' : 8000,
     'socksport_base' : 9000,
-    'dirservers' : "Dirserver bleargh bad torrc file!",
+    'authorities' : "AlternateDirAuthority bleargh bad torrc file!",
+    'bridges' : "Bridge bleargh bad torrc file!",
     'core' : True,
 }
 
@@ -523,7 +552,8 @@ class Network(object):
 
     def configure(self):
         network = self
-        dirserverlines = []
+        altauthlines = []
+        bridgelines = []
         builders = [ n.getBuilder() for n in self._nodes ]
 
         self._checkConfig()
@@ -533,9 +563,11 @@ class Network(object):
 
         for b in builders:
             b.preConfig(network)
-            dirserverlines.append(b._getDirServerLine())
+            altauthlines.append(b._getAltAuthLines())
+            bridgelines.append(b._getBridgeLines())
 
-        self._dfltEnv['dirservers'] = "".join(dirserverlines)
+        self._dfltEnv['authorities'] = "".join(altauthlines)
+        self._dfltEnv['bridges'] = "".join(bridgelines)
 
         for b in builders:
             b.config(network)
