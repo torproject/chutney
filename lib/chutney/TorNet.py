@@ -179,7 +179,8 @@ class LocalNodeBuilder(NodeBuilder):
     # tor_gencert -- path to tor_gencert binary
     # tor -- path to tor binary
     # auth_cert_lifetime -- lifetime of authority certs, in months.
-    # ip -- IP to listen on (used only if authority)
+    # ip -- IP to listen on (used only if authority or bridge)
+    # ipv6_addr -- IPv6 address to listen on (used only if ipv6 bridge)
     # orport, dirport -- (used only if authority)
     # fingerprint -- used only if authority
     # dirserver_flags -- used only if authority
@@ -343,7 +344,12 @@ class LocalNodeBuilder(NodeBuilder):
         if not self._env['bridge']:
             return ""
 
-        return "Bridge %s:%s\n" % (self._env['ip'], self._env['orport'])
+        bridgelines = "Bridge %s:%s\n" % (self._env['ip'],
+                                          self._env['orport'])
+        if self._env['ipv6_addr'] is not None:
+            bridgelines += "Bridge %s:%s\n" % (self._env['ipv6_addr'],
+                                               self._env['orport'])
+        return bridgelines
 
 class LocalNodeController(NodeController):
     def __init__(self, env):
@@ -466,6 +472,7 @@ DEFAULTS = {
     'tor' : 'tor',
     'auth_cert_lifetime' : 12,
     'ip' : '127.0.0.1',
+    'ipv6_addr' : None,
     'dirserver_flags' : 'no-v2',
     'chutney_dir' : '.',
     'torrc_fname' : '${dir}/torrc',
