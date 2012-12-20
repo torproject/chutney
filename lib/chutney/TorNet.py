@@ -326,7 +326,10 @@ class LocalNodeBuilder(NodeBuilder):
         else:
             # Directory authorities return AlternateDirAuthority with
             # the 'hs' and 'v3ident' flags set.
-            options = ("AlternateDirAuthority",)
+            # XXXX This next line is needed for 'bridges' but breaks
+            # 'basic'
+            #options = ("AlternateDirAuthority",)
+            options = ("DirServer",)
             self._env['dirserver_flags'] += " hs v3ident=%s" % v3id
 
         authlines = ""
