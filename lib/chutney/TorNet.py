@@ -589,6 +589,9 @@ class Network(object):
         statuses = [ n.getController().check() for n in self._nodes]
         n_ok = len([x for x in statuses if x])
         print "%d/%d nodes are running"%(n_ok,len(self._nodes))
+        if n_ok != len(self._nodes):
+            return False
+        return True
 
     def restart(self):
         self.stop()
