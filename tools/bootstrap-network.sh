@@ -20,7 +20,6 @@ myname=$(basename "$0")
 
 [ -x $CHUTNEY ] || { echo "$myname: missing $CHUTNEY"; exit 1; }
 [ -d networks ] || { echo "$myname: missing directory: networks"; exit 1; }
-[ -d net ] || { echo "$myname: missing directory: net"; exit 1; }
 flavour=basic; [ -n "$1" ] && { flavour=$1; shift; }
 
 $CHUTNEY stop networks/$flavour
