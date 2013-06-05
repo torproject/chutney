@@ -275,7 +275,7 @@ def main():
 
     if success:
         return 0
-    return -1
+    return 255
 
 if __name__ == '__main__':
     sys.exit(main())
