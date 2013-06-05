@@ -673,7 +673,7 @@ def runConfigFile(verb, f):
         print "Error: I don't know how to %s." % verb
         return
 
-    getattr(network,verb)()
+    return getattr(network,verb)()
 
 def main():
     global _BASE_ENVIRON
@@ -687,7 +687,10 @@ def main():
         sys.exit(1)
 
     f = open(sys.argv[2])
-    runConfigFile(sys.argv[1], f)
+    result = runConfigFile(sys.argv[1], f)
+    if result is False:
+        return -1
+    return 0
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
