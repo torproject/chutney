@@ -1,2 +1,6 @@
 ${include:common.i}
 SocksPort $socksport
+#NOTE: Setting TestingClientConsensusDownloadSchedule doesn't
+#      help -- dl_stats.schedule is not DL_SCHED_CONSENSUS
+#      at boostrap time.
+TestingClientDownloadSchedule 10, 2, 2, 4, 4, 8, 13, 18, 25, 40, 60
