@@ -151,6 +151,7 @@ class Source(Peer):
                     self.state = self.CONNECTED
                     self.inbuf = ''
                     self.outbuf = self.data
+                    debug("successfully connected (fd=%d)" % self.fd())
                 else:
                     debug("proxy handshake failed (0x%x)! (fd=%d)" %
                           (ord(self.inbuf[1]), self.fd()))
@@ -171,6 +172,7 @@ class Source(Peer):
             if self.proxy is None:
                 self.state = self.CONNECTED
                 self.outbuf = self.data
+                debug("successfully connected (fd=%d)" % self.fd())
             else:
                 self.state = self.CONNECTING_THROUGH_PROXY
                 self.outbuf = socks_cmd(self.dest)
@@ -182,7 +184,6 @@ class Source(Peer):
                 return -1
             raise
         self.outbuf = self.outbuf[n:]
-        debug("successfully connected (fd=%d)" % self.fd())
         if self.state == self.CONNECTING_THROUGH_PROXY:
             return 1            # Keep us around.
         return len(self.outbuf) # When 0, we're being removed.
