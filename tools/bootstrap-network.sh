@@ -16,15 +16,20 @@
 
 VOTING_OFFSET=6
 CHUTNEY=./chutney
+myname=$(basename "$0")
 
-[ -x $CHUTNEY ] || { echo "$0: missing $CHUTNEY"; exit 1; }
-[ -d networks ] || { echo "$0: missing directory: networks"; exit 1; }
-[ -d net ] || { echo "$0: missing directory: net"; exit 1; }
+[ -x $CHUTNEY ] || { echo "$myname: missing $CHUTNEY"; exit 1; }
+[ -d networks ] || { echo "$myname: missing directory: networks"; exit 1; }
+[ -d net ] || { echo "$myname: missing directory: net"; exit 1; }
 flavour=basic; [ -n "$1" ] && { flavour=$1; shift; }
 
 $CHUTNEY stop networks/$flavour
-[ -d net/nodes ] && mv net/nodes net/nodes.$(date +%s)
-echo "$0: boostrapping network: $flavour"
+[ -d net/nodes ] && {
+    DEST=net/nodes.$(date +%s)
+    echo "$myname: NOTE: renaming net/nodes to $DEST"
+    mv net/nodes $DEST
+}
+echo "$myname: boostrapping network: $flavour"
 $CHUTNEY configure networks/$flavour
 
 # TODO: Make 'chutney configure' take an optional offset argument and
