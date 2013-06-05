@@ -641,7 +641,7 @@ class Network(object):
         TIMEOUT = 3                     # Seconds.
         with open('/dev/urandom', 'r') as randfp:
             tmpdata = randfp.read(DATALEN)
-        bind_to = ('localhost', LISTEN_PORT)
+        bind_to = ('127.0.0.1', LISTEN_PORT)
         tt = chutney.Traffic.TrafficTester(bind_to, tmpdata, TIMEOUT)
         for op in filter(lambda n: n._env['tag'] == 'c', self._nodes):
             tt.add(chutney.Traffic.Source(tt, bind_to, tmpdata,
