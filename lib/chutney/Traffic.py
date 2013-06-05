@@ -6,19 +6,38 @@
 # restrict, so long as you retain the above notice(s) and this license
 # in all redistributed copies and derived works.  There is no warranty.
 
+# Do select/read/write for binding to a port, connecting to it and
+# write, read what's written and verify it. You can connect over a
+# SOCKS proxy (like Tor).
+#
+# You can create a TrafficTester and give it an IP address/host and
+# port to bind to. If a Source is created and added to the
+# TrafficTester, it will connect to the address/port it was given at
+# instantiation and send its data. A Source can be configured to
+# connect over a SOCKS proxy. When everything is set up, you can
+# invoke TrafficTester.run() to start running. The TrafficTester will
+# accept the incoming connection and read from it, verifying the data.
+#
+# For example code, see main() below.
+
 import socket
 import select
 import struct
 import errno
 
+# Set debug_flag=True in order to debug this program or to get hints
+# about what's going wrong in your system.
 debug_flag = False
 
 def debug(s):
+    "Print a debug message on stdout if debug_flag is True."
     if debug_flag:
         print("DEBUG: %s" % s)
 
 def socks_cmd(addr_port):
     """
+    Return a SOCKS command for connecting to addr_port.
+
     SOCKSv4: https://en.wikipedia.org/wiki/SOCKS#Protocol
     SOCKSv5: RFC1928, RFC1929
     """
@@ -63,6 +82,7 @@ class TestSuite(object):
         return('%d/%d/%d' % (self.not_done, self.successes, self.failures))
 
 class Peer(object):
+    "Base class for Listener, Source and Sink."
     LISTENER = 1
     SOURCE = 2
     SINK = 3
@@ -84,6 +104,7 @@ class Peer(object):
         return self.type == self.SINK
 
 class Listener(Peer):
+    "A TCP listener, binding, listening and accepting new connections."
     def __init__(self, tt, endpoint):
         super(Listener, self).__init__(Peer.LISTENER, tt)
         self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -97,11 +118,17 @@ class Listener(Peer):
         self.tt.add(Sink(self.tt, newsock))
 
 class Sink(Peer):
+    "A data sink, reading from its peer and verifying the data."
     def __init__(self, tt, s):
         super(Sink, self).__init__(Peer.SINK, tt, s)
         self.inbuf = ''
 
     def on_readable(self):
+        """Invoked when the socket becomes readable.
+        Return 0 on finished, successful verification.
+               -1 on failed verification
+               >0 if more data needs to be read
+        """
         return self.verify(self.tt.data)
 
     def verify(self, data):
@@ -115,6 +142,8 @@ class Sink(Peer):
         return len(data) - len(self.inbuf)
 
 class Source(Peer):
+    """A data source, connecting to a TCP server, optionally over a
+    SOCKS proxy, sending data."""
     NOT_CONNECTED = 0
     CONNECTING = 1
     CONNECTING_THROUGH_PROXY = 2
@@ -143,6 +172,10 @@ class Source(Peer):
                 raise
 
     def on_readable(self):
+        """Invoked when the socket becomes readable.
+        Return -1 on failure
+               >0 if more data needs to be read or written
+        """
         if self.state == self.CONNECTING_THROUGH_PROXY:
             self.inbuf += self.s.recv(8 - len(self.inbuf))
             if len(self.inbuf) == 8:
@@ -168,6 +201,11 @@ class Source(Peer):
         return False
 
     def on_writable(self):
+        """Invoked when the socket becomes writable.
+        Return 0 when done writing
+               -1 on failure (like connection refused)
+               >0 if more data needs to be written
+        """
         if self.state == self.CONNECTING:
             if self.proxy is None:
                 self.state = self.CONNECTED
@@ -189,6 +227,13 @@ class Source(Peer):
         return len(self.outbuf) # When 0, we're being removed.
 
 class TrafficTester():
+    """
+    Hang on select.select() and dispatch to Sources and Sinks.
+    Time out after self.timeout seconds.
+    Keep track of successful and failed data verification using a
+    TestSuite.
+    Return True if all tests succeed, else False.
+    """
     def __init__(self, endpoint, data={}, timeout=3):
         self.listener = Listener(self, endpoint)
         self.pending_close = []
@@ -246,8 +291,8 @@ class TrafficTester():
                     self.remove(p)
 
             for fd in sets[1]:             # writable fd's
-                p = self.peers.get(fd) # Might have been removed above.
-                if p is not None:
+                p = self.peers.get(fd)
+                if p is not None: # Might have been removed above.
                     n = p.on_writable()
                     if n == 0:
                         self.remove(p)
