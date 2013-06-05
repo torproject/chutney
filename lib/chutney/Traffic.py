@@ -9,6 +9,7 @@
 import socket
 import select
 import struct
+import errno
 
 debug_flag = False
 
@@ -138,7 +139,7 @@ class Source(Peer):
         try:
             self.s.connect(dest)
         except socket.error, e:
-            if e[0] != 115:     # EINPROGRESS
+            if e[0] != errno.EINPROGRESS:
                 raise
 
     def on_readable(self):
@@ -176,7 +177,7 @@ class Source(Peer):
         try:
             n = self.s.send(self.outbuf)
         except socket.error, e:
-            if e[0] == 111:     # ECONNREFUSED
+            if e[0] == errno.ECONNREFUSED:
                 debug("connection refused (fd=%d)" % self.fd())
                 return -1
             raise
@@ -185,7 +186,7 @@ class Source(Peer):
         if self.state == self.CONNECTING_THROUGH_PROXY:
             return 1            # Keep us around.
         return len(self.outbuf) # When 0, we're being removed.
-        
+
 class TrafficTester():
     def __init__(self, endpoint, data={}, timeout=3):
         self.listener = Listener(self, endpoint)
