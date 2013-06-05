@@ -185,11 +185,13 @@ class Source(Peer):
                     self.inbuf = ''
                     self.outbuf = self.data
                     debug("successfully connected (fd=%d)" % self.fd())
+                    return 1    # Keep us around for writing.
                 else:
                     debug("proxy handshake failed (0x%x)! (fd=%d)" %
                           (ord(self.inbuf[1]), self.fd()))
                     self.state = self.NOT_CONNECTED
                     return -1
+            assert(8 - len(self.inbuf) > 0)
             return 8 - len(self.inbuf)
         return 1                # Keep us around for writing.
 
