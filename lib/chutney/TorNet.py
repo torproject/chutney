@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #
 # Copyright 2011 Nick Mathewson, Michael Stone
+# Copyright 2013 The Tor Project
 #
 #  You may do anything with this work that copyright law would normally
 #  restrict, so long as you retain the above notice(s) and this license
@@ -21,6 +22,7 @@ import errno
 import time
 
 import chutney.Templating
+import chutney.Traffic
 
 def mkdir_p(d, mode=0777):
     """Create directory 'd' and all of its parents as needed.  Unlike
@@ -624,6 +626,31 @@ class Network(object):
             for c in controllers:
                 n.check(listNonRunning=False)
 
+    def verify(self):
+        sys.stdout.write("Verifying data transmission: ")
+        sys.stdout.flush()
+        status = self._verify_traffic()
+        if status:
+            print("Success")
+        else:
+            print("Failure")
+        return status
+
+    def _verify_traffic(self):
+        """Verify (parts of) the network by sending traffic through it
+        and verify what is received."""
+        LISTEN_PORT = 4747 # FIXME: Do better! Note the default exit policy.
+        DATALEN = 10*1024               # Octets.
+        TIMEOUT = 3                     # Seconds.
+        with open('/dev/urandom', 'r') as randfp:
+            tmpdata = randfp.read(DATALEN)
+        bind_to = ('127.0.0.1', LISTEN_PORT)
+        tt = chutney.Traffic.TrafficTester(bind_to, tmpdata, TIMEOUT)
+        for op in filter(lambda n: n._env['tag'] == 'c', self._nodes):
+            tt.add(chutney.Traffic.Source(tt, bind_to, tmpdata,
+                                     ('localhost', int(op._env['socksport']))))
+        return tt.run()
+
 def ConfigureNodes(nodelist):
     network = _THE_NETWORK
 
@@ -649,7 +676,7 @@ def runConfigFile(verb, f):
         print "Error: I don't know how to %s." % verb
         return
 
-    getattr(network,verb)()
+    return getattr(network,verb)()
 
 def main():
     global _BASE_ENVIRON
@@ -663,7 +690,10 @@ def main():
         sys.exit(1)
 
     f = open(sys.argv[2])
-    runConfigFile(sys.argv[1], f)
+    result = runConfigFile(sys.argv[1], f)
+    if result is False:
+        return -1
+    return 0
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
