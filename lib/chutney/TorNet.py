@@ -624,7 +624,7 @@ class Network(object):
                 sys.stdout.write(".")
                 sys.stdout.flush()
             for c in controllers:
-                n.check(listNonRunning=False)
+                c.check(listNonRunning=False)
 
     def verify(self):
         sys.stdout.write("Verifying data transmission: ")
