@@ -302,7 +302,7 @@ class LocalNodeBuilder(NodeBuilder):
         assert re.match(r'^[A-F0-9]{40}$', fingerprint)
         self._env['fingerprint'] = fingerprint
 
-    def _getAltAuthLines(self):
+    def _getAltAuthLines(self, hasbridgeauth=False):
         """Return a combination of AlternateDirAuthority,
         AlternateHSAuthority and AlternateBridgeAuthority lines for
         this Node, appropriately.  Non-authorities return ""."""
@@ -330,8 +330,10 @@ class LocalNodeBuilder(NodeBuilder):
             # the 'hs' and 'v3ident' flags set.
             # XXXX This next line is needed for 'bridges' but breaks
             # 'basic'
-            #options = ("AlternateDirAuthority",)
-            options = ("DirServer",)
+            if hasbridgeauth:
+                options = ("AlternateDirAuthority",)
+	    else:
+                options = ("DirAuthority",)
             self._env['dirserver_flags'] += " hs v3ident=%s" % v3id
 
         authlines = ""
@@ -470,6 +472,7 @@ class LocalNodeController(NodeController):
 DEFAULTS = {
     'authority' : False,
     'bridgeauthority' : False,
+    'hasbridgeauth' : False,
     'relay' : False,
     'bridge' : False,
     'connlimit' : 60,
@@ -575,7 +578,8 @@ class Network(object):
 
         for b in builders:
             b.preConfig(network)
-            altauthlines.append(b._getAltAuthLines())
+            altauthlines.append(b._getAltAuthLines(
+                                    self._dfltEnv['hasbridgeauth']))
             bridgelines.append(b._getBridgeLines())
 
         self._dfltEnv['authorities'] = "".join(altauthlines)
@@ -656,6 +660,8 @@ def ConfigureNodes(nodelist):
 
     for n in nodelist:
         network._addNode(n)
+        if n._env['bridgeauthority']:
+            network._dfltEnv['hasbridgeauth'] = True
 
 def usage(network):
     return "\n".join(["Usage: chutney {command} {networkfile}",
