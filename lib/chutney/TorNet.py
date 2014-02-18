@@ -485,7 +485,8 @@ DEFAULTS = {
     'bridge' : False,
     'connlimit' : 60,
     'net_base_dir' : 'net',
-    'tor' : 'tor',
+    'tor' : os.environ.get('CHUTNEY_TOR', 'tor'),
+    'tor-gencert' : os.environ.get('CHUTNEY_TOR_GENCERT', None),
     'auth_cert_lifetime' : 12,
     'ip' : '127.0.0.1',
     'ipv6_addr' : None,
@@ -547,7 +548,10 @@ class TorEnviron(chutney.Templating.Environ):
         return "test%03d%s"%(my['nodenum'], my['tag'])
 
     def _get_tor_gencert(self, my):
-        return my['tor']+"-gencert"
+        if my['tor-gencert']:
+            return my['tor-gencert']
+        else:
+            return '{0}-gencert'.format(my['tor'])
 
     def _get_auth_passphrase(self, my):
         return self['nick'] # OMG TEH SECURE!
