@@ -277,7 +277,17 @@ class LocalNodeBuilder(NodeBuilder):
             '-a', addr]
         print "Creating identity key %s for %s with %s"%(
             idfile,self._env['nick']," ".join(cmdline))
-        p = subprocess.Popen(cmdline, stdin=subprocess.PIPE)
+        try:
+            p = subprocess.Popen(cmdline, stdin=subprocess.PIPE)
+        except OSError as e:
+            # only catch file not found error
+            if errno.errorcode[e.errno] == 'ENOENT':
+                print ''.join(["Cannot find tor-gencert binary, use ",
+                    "CHUTNEY_TOR_GENCERT environment variable to set the ",
+                    "path or put the binary into $PATH."])
+                sys.exit(0)
+            else:
+                raise
         p.communicate(passphrase+"\n")
         assert p.returncode == 0 #XXXX BAD!
 
@@ -296,7 +306,17 @@ class LocalNodeBuilder(NodeBuilder):
             "--dirserver",
                  "xyzzy 127.0.0.1:1 ffffffffffffffffffffffffffffffffffffffff",
             "--datadirectory", datadir ]
-        p = subprocess.Popen(cmdline, stdout=subprocess.PIPE)
+        try:
+            p = subprocess.Popen(cmdline, stdout=subprocess.PIPE)
+        except OSError as e:
+            # only catch file not found error
+            if errno.errorcode[e.errno] == 'ENOENT':
+                print ''.join(["Cannot find tor-gencert binary, use ",
+                    "CHUTNEY_TOR_GENCERT environment variable to set the ",
+                    "path or put the binary into $PATH."])
+                sys.exit(0)
+            else:
+                raise
         stdout, stderr = p.communicate()
         fingerprint = "".join(stdout.split()[1:])
         assert re.match(r'^[A-F0-9]{40}$', fingerprint)
@@ -442,13 +462,24 @@ class LocalNodeController(NodeController):
         if self.isRunning():
             print "%s is already running"%self._env['nick']
             return True
+        tor_path = self._env['tor']
         torrc = self._getTorrcFname()
         cmdline = [
-            self._env['tor'],
+            tor_path,
             "--quiet",
             "-f", torrc,
             ]
-        p = subprocess.Popen(cmdline)
+        try:
+            p = subprocess.Popen(cmdline)
+        except OSError as e:
+            # only catch file not found error
+            if errno.errorcode[e.errno] == 'ENOENT':
+                print ''.join(["Cannot find Tor binary, use CHUTNEY_TOR ",
+                    "environment variable to set the path or put the binary ",
+                    "into $PATH."])
+                sys.exit(0)
+            else:
+                raise
         # XXXX this requires that RunAsDaemon is set.
         p.wait()
         if p.returncode != 0:
