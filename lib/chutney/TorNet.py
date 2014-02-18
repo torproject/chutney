@@ -466,6 +466,14 @@ class LocalNodeController(NodeController):
             return
         os.kill(pid, sig)
 
+    def cleanup_lockfile(self):
+        lf = self._env['lockfile']
+        if self.isRunning() or (not os.path.exists(lf)):
+            return
+        print 'Removing stale lock file for {0} ...'.format(
+                self._env['nick'])
+        os.remove(lf)
+
 
 
 
@@ -547,6 +555,9 @@ class TorEnviron(chutney.Templating.Environ):
     def _get_torrc_template_path(self, my):
         return [ os.path.join(my['chutney_dir'], 'torrc_templates') ]
 
+    def _get_lockfile(self, my):
+        return os.path.join(self['dir'], 'lock')
+
 
 class Network(object):
     """A network of Tor nodes, plus functions to manipulate them
@@ -624,6 +635,9 @@ class Network(object):
             for n in xrange(15):
                 time.sleep(1)
                 if all(not c.isRunning() for c in controllers):
+                    # check for stale lock file when Tor crashes
+                    for c in controllers:
+                        c.cleanup_lockfile()
                     return
                 sys.stdout.write(".")
                 sys.stdout.flush()
