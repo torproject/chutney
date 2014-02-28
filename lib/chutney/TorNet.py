@@ -281,10 +281,10 @@ class LocalNodeBuilder(NodeBuilder):
             p = subprocess.Popen(cmdline, stdin=subprocess.PIPE)
         except OSError as e:
             # only catch file not found error
-            if errno.errorcode[e.errno] == 'ENOENT':
-                print ''.join(["Cannot find tor-gencert binary, use ",
-                    "CHUTNEY_TOR_GENCERT environment variable to set the ",
-                    "path or put the binary into $PATH."])
+            if e.errno == errno.ENOENT:
+                print ("Cannot find tor-gencert binary %r. Use "
+                       "CHUTNEY_TOR_GENCERT environment variable to set the "
+                       "path, or put the binary into $PATH.")%tor_gencert
                 sys.exit(0)
             else:
                 raise
@@ -310,10 +310,10 @@ class LocalNodeBuilder(NodeBuilder):
             p = subprocess.Popen(cmdline, stdout=subprocess.PIPE)
         except OSError as e:
             # only catch file not found error
-            if errno.errorcode[e.errno] == 'ENOENT':
-                print ''.join(["Cannot find tor-gencert binary, use ",
-                    "CHUTNEY_TOR_GENCERT environment variable to set the ",
-                    "path or put the binary into $PATH."])
+            if e.errno == errno.ENOENT:
+                print ("Cannot find tor binary %r. Use "
+                       "CHUTNEY_TOR environment variable to set the "
+                       "path, or put the binary into $PATH.")%tor
                 sys.exit(0)
             else:
                 raise
@@ -473,10 +473,10 @@ class LocalNodeController(NodeController):
             p = subprocess.Popen(cmdline)
         except OSError as e:
             # only catch file not found error
-            if errno.errorcode[e.errno] == 'ENOENT':
-                print ''.join(["Cannot find Tor binary, use CHUTNEY_TOR ",
-                    "environment variable to set the path or put the binary ",
-                    "into $PATH."])
+            if e.errno == errno.ENOENT:
+                print ("Cannot find tor binary %r. Use CHUTNEY_TOR "
+                       "environment variable to set the path, or put the binary "
+                       "into $PATH.")%tor_path
                 sys.exit(0)
             else:
                 raise
