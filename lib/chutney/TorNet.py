@@ -733,19 +733,23 @@ def runConfigFile(verb, f):
 
     return getattr(network,verb)()
 
+def parseArgs():
+    if len(sys.argv) < 3:
+        print usage(_THE_NETWORK)
+        print "Error: Not enough arguments given."
+        sys.exit(1)
+
+    return {'network_cfg': sys.argv[2], 'action': sys.argv[1]}
+
 def main():
     global _BASE_ENVIRON
     global _THE_NETWORK
     _BASE_ENVIRON = TorEnviron(chutney.Templating.Environ(**DEFAULTS))
     _THE_NETWORK = Network(_BASE_ENVIRON)
 
-    if len(sys.argv) < 3:
-        print usage(_THE_NETWORK)
-        print "Error: Not enough arguments given."
-        sys.exit(1)
-
-    f = open(sys.argv[2])
-    result = runConfigFile(sys.argv[1], f)
+    args = parseArgs()
+    f = open(args['network_cfg'])
+    result = runConfigFile(args['action'], f)
     if result is False:
         return -1
     return 0
