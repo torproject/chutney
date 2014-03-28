@@ -717,6 +717,11 @@ def usage(network):
        "Known commands are: %s" % (
         " ".join(x for x in dir(network) if not x.startswith("_")))])
 
+def exit_on_error(err_msg):
+    print "Error: {0}\n".format(err_msg)
+    print usage(_THE_NETWORK)
+    sys.exit(1)
+
 def runConfigFile(verb, f):
     _GLOBALS = dict(_BASE_ENVIRON= _BASE_ENVIRON,
                     Node=Node,
@@ -735,10 +740,9 @@ def runConfigFile(verb, f):
 
 def parseArgs():
     if len(sys.argv) < 3:
-        print usage(_THE_NETWORK)
-        print "Error: Not enough arguments given."
-        sys.exit(1)
-
+        exit_on_error("Not enough arguments given.")
+    if not os.path.isfile(sys.argv[2]):
+        exit_on_error("Cannot find networkfile: {0}.".format(sys.argv[2]))
     return {'network_cfg': sys.argv[2], 'action': sys.argv[1]}
 
 def main():
