@@ -312,7 +312,6 @@ import sys
 def main():
     """Test the TrafficTester by sending and receiving some data."""
     DATA = "a foo is a bar" * 1000
-    DATA_CORRUPT = "a foo is a baz" * 1000
     proxy = ('localhost', 9008)
     bind_to = ('localhost', int(sys.argv[1]))
 

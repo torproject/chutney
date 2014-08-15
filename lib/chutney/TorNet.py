@@ -297,7 +297,6 @@ class LocalNodeBuilder(NodeBuilder):
         """
         datadir = self._env['dir']
         tor = self._env['tor']
-        idfile = os.path.join(datadir,'keys',"identity_key")
         cmdline = [
             tor,
             "--quiet",
@@ -445,9 +444,9 @@ class LocalNodeController(NodeController):
     def hup(self):
         """Send a SIGHUP to this node, if it's running."""
         pid = self.getPid()
-        running = self.isRunning()
+        running = self.isRunning(pid)
         nick = self._env['nick']
-        if self.isRunning():
+        if running:
             print "Sending sighup to %s"%nick
             os.kill(pid, signal.SIGHUP)
             return True
