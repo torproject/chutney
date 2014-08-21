@@ -441,12 +441,12 @@ class LocalNodeController(NodeController):
         pid = self.getPid()
         running = self.isRunning(pid)
         nick = self._env['nick']
-        dir = self._env['dir']
+        datadir = self._env['dir']
         if running:
             if listRunning:
                 print "%s is running with PID %s" % (nick, pid)
             return True
-        elif os.path.exists(os.path.join(dir, "core.%s" % pid)):
+        elif os.path.exists(os.path.join(datadir, "core.%s" % pid)):
             if listNonRunning:
                 print "%s seems to have crashed, and left core file core.%s" % (
                     nick, pid)
