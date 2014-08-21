@@ -715,10 +715,7 @@ class TorEnviron(chutney.Templating.Environ):
         return "test%03d%s" % (my['nodenum'], my['tag'])
 
     def _get_tor_gencert(self, my):
-        if my['tor-gencert']:
-            return my['tor-gencert']
-        else:
-            return '{0}-gencert'.format(my['tor'])
+        return my['tor-gencert'] or '{0}-gencert'.format(my['tor'])
 
     def _get_auth_passphrase(self, my):
         return self['nick']  # OMG TEH SECURE!
@@ -832,10 +829,7 @@ class Network(object):
         sys.stdout.write("Verifying data transmission: ")
         sys.stdout.flush()
         status = self._verify_traffic()
-        if status:
-            print("Success")
-        else:
-            print("Failure")
+        print "Success" if status else "Failure"
         return status
 
     def _verify_traffic(self):

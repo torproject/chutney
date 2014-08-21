@@ -152,8 +152,7 @@ class Sink(Peer):
         if len(self.inbuf) == len(data):
             if self.inbuf != data:
                 return -1       # Failed verification.
-            else:
-                debug("successful verification")
+            debug("successful verification")
         return len(data) - len(self.inbuf)
 
 
@@ -178,10 +177,7 @@ class Source(Peer):
     def connect(self, endpoint):
         self.dest = endpoint
         self.state = self.CONNECTING
-        if self.proxy is None:
-            dest = self.dest
-        else:
-            dest = self.proxy
+        dest = self.proxy or self.dest
         try:
             self.s.connect(dest)
         except socket.error, e:
