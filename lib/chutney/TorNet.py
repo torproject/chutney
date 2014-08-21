@@ -24,6 +24,9 @@ import time
 import chutney.Templating
 import chutney.Traffic
 
+_BASE_ENVIRON = None
+_THE_NETWORK = None
+
 
 def mkdir_p(d, mode=0777):
     """Create directory 'd' and all of its parents as needed.  Unlike
