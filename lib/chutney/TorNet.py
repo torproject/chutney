@@ -439,10 +439,9 @@ class LocalNodeController(NodeController):
         """
         # XXX Split this into "check" and "print" parts.
         pid = self.getPid()
-        running = self.isRunning(pid)
         nick = self._env['nick']
         datadir = self._env['dir']
-        if running:
+        if self.isRunning(pid):
             if listRunning:
                 print "%s is running with PID %s" % (nick, pid)
             return True
@@ -459,9 +458,8 @@ class LocalNodeController(NodeController):
     def hup(self):
         """Send a SIGHUP to this node, if it's running."""
         pid = self.getPid()
-        running = self.isRunning(pid)
         nick = self._env['nick']
-        if running:
+        if self.isRunning(pid):
             print "Sending sighup to %s" % nick
             os.kill(pid, signal.SIGHUP)
             return True
