@@ -24,18 +24,21 @@ import time
 import chutney.Templating
 import chutney.Traffic
 
+
 def mkdir_p(d, mode=0777):
     """Create directory 'd' and all of its parents as needed.  Unlike
        os.makedirs, does not give an error if d already exists.
     """
     try:
-        os.makedirs(d,mode=mode)
+        os.makedirs(d, mode=mode)
     except OSError, e:
         if e.errno == errno.EEXIST:
             return
         raise
 
+
 class Node(object):
+
     """A Node represents a Tor node or a set of Tor nodes.  It's created
        in a network configuration file.
 
@@ -43,7 +46,7 @@ class Node(object):
        configuration, and figuring out how the node needs to be
        configured and launched.
     """
-    ## Fields:
+    # Fields:
     # _parent
     # _env
     # _builder
@@ -51,6 +54,7 @@ class Node(object):
 
     ########
     # Users are expected to call these:
+
     def __init__(self, parent=None, **kwargs):
         self._parent = parent
         self._env = self._createEnviron(parent, kwargs)
@@ -58,7 +62,7 @@ class Node(object):
         self._controller = None
 
     def getN(self, N):
-        return [ Node(self) for _ in xrange(N) ]
+        return [Node(self) for _ in xrange(N)]
 
     def specialize(self, **kwargs):
         return Node(parent=self, **kwargs)
@@ -108,10 +112,13 @@ class Node(object):
         """
         return _BASE_ENVIRON
 
+
 class _NodeCommon(object):
+
     """Internal helper class for functionality shared by some NodeBuilders
        and some NodeControllers."""
     # XXXX maybe this should turn into a mixin.
+
     def __init__(self, env):
         self._env = env
 
@@ -122,10 +129,13 @@ class _NodeCommon(object):
         """Return the name of the file where we'll be writing torrc"""
         return self.expand("${torrc_fname}")
 
+
 class NodeBuilder(_NodeCommon):
+
     """Abstract base class.  A NodeBuilder is responsible for doing all the
        one-time prep needed to set up a node in a network.
     """
+
     def __init__(self, env):
         _NodeCommon.__init__(self, env)
 
@@ -146,9 +156,11 @@ class NodeBuilder(_NodeCommon):
 
 
 class NodeController(_NodeCommon):
+
     """Abstract base class.  A NodeController is responsible for running a
        node on the network.
     """
+
     def __init__(self, env):
         _NodeCommon.__init__(self, env)
 
@@ -167,9 +179,10 @@ class NodeController(_NodeCommon):
     def stop(self, sig=signal.SIGINT):
         """Try to stop this node by sending it the signal 'sig'."""
 
+
 class LocalNodeBuilder(NodeBuilder):
 
-    ## Environment members used:
+    # Environment members used:
     # torrc -- which torrc file to use
     # torrc_template_path -- path to search for torrc files and include files
     # authority -- bool -- are we an authority?
@@ -188,7 +201,7 @@ class LocalNodeBuilder(NodeBuilder):
     # dirserver_flags -- used only if authority
     # nick -- nickname of this router
 
-    ## Environment members set
+    # Environment members set
     # fingerprint -- hex router key fingerprint
     # nodenum -- int -- set by chutney -- which unique node index is this?
 
@@ -213,7 +226,7 @@ class LocalNodeBuilder(NodeBuilder):
         """Return the template used to write the torrc for this node."""
         template_path = self._env['torrc_template_path']
         return chutney.Templating.Template("$${include:$torrc}",
-            includePath=template_path)
+                                           includePath=template_path)
 
     def _getFreeVars(self):
         """Return a set of the free variables in the torrc template for this
@@ -240,11 +253,11 @@ class LocalNodeBuilder(NodeBuilder):
     def config(self, net):
         """Called to configure a node: creates a torrc file for it."""
         self._createTorrcFile()
-        #self._createScripts()
+        # self._createScripts()
 
     def postConfig(self, net):
         """Called on each nodes after all nodes configure."""
-        #self.net.addNode(self)
+        # self.net.addNode(self)
         pass
 
     def _makeDataDir(self):
@@ -259,9 +272,9 @@ class LocalNodeBuilder(NodeBuilder):
         datadir = self._env['dir']
         tor_gencert = self._env['tor_gencert']
         lifetime = self._env['auth_cert_lifetime']
-        idfile   = os.path.join(datadir,'keys',"authority_identity_key")
-        skfile   = os.path.join(datadir,'keys',"authority_signing_key")
-        certfile = os.path.join(datadir,'keys',"authority_certificate")
+        idfile = os.path.join(datadir, 'keys', "authority_identity_key")
+        skfile = os.path.join(datadir, 'keys', "authority_signing_key")
+        certfile = os.path.join(datadir, 'keys', "authority_certificate")
         addr = self.expand("${ip}:${dirport}")
         passphrase = self._env['auth_passphrase']
         if all(os.path.exists(f) for f in [idfile, skfile, certfile]):
@@ -275,8 +288,8 @@ class LocalNodeBuilder(NodeBuilder):
             '-c', certfile,
             '-m', str(lifetime),
             '-a', addr]
-        print "Creating identity key %s for %s with %s"%(
-            idfile,self._env['nick']," ".join(cmdline))
+        print "Creating identity key %s for %s with %s" % (
+            idfile, self._env['nick'], " ".join(cmdline))
         try:
             p = subprocess.Popen(cmdline, stdin=subprocess.PIPE)
         except OSError as e:
@@ -284,12 +297,12 @@ class LocalNodeBuilder(NodeBuilder):
             if e.errno == errno.ENOENT:
                 print ("Cannot find tor-gencert binary %r. Use "
                        "CHUTNEY_TOR_GENCERT environment variable to set the "
-                       "path, or put the binary into $PATH.")%tor_gencert
+                       "path, or put the binary into $PATH.") % tor_gencert
                 sys.exit(0)
             else:
                 raise
-        p.communicate(passphrase+"\n")
-        assert p.returncode == 0 #XXXX BAD!
+        p.communicate(passphrase + "\n")
+        assert p.returncode == 0  # XXXX BAD!
 
     def _genRouterKey(self):
         """Generate an identity key for this router, unless we already have,
@@ -303,8 +316,8 @@ class LocalNodeBuilder(NodeBuilder):
             "--list-fingerprint",
             "--orport", "1",
             "--dirserver",
-                 "xyzzy 127.0.0.1:1 ffffffffffffffffffffffffffffffffffffffff",
-            "--datadirectory", datadir ]
+            "xyzzy 127.0.0.1:1 ffffffffffffffffffffffffffffffffffffffff",
+            "--datadirectory", datadir]
         try:
             p = subprocess.Popen(cmdline, stdout=subprocess.PIPE)
         except OSError as e:
@@ -312,7 +325,7 @@ class LocalNodeBuilder(NodeBuilder):
             if e.errno == errno.ENOENT:
                 print ("Cannot find tor binary %r. Use "
                        "CHUTNEY_TOR environment variable to set the "
-                       "path, or put the binary into $PATH.")%tor
+                       "path, or put the binary into $PATH.") % tor
                 sys.exit(0)
             else:
                 raise
@@ -329,7 +342,7 @@ class LocalNodeBuilder(NodeBuilder):
             return ""
 
         datadir = self._env['dir']
-        certfile = os.path.join(datadir,'keys',"authority_certificate")
+        certfile = os.path.join(datadir, 'keys', "authority_certificate")
         v3id = None
         with open(certfile, 'r') as f:
             for line in f:
@@ -351,13 +364,13 @@ class LocalNodeBuilder(NodeBuilder):
             # 'basic'
             if hasbridgeauth:
                 options = ("AlternateDirAuthority",)
-	    else:
+            else:
                 options = ("DirAuthority",)
             self._env['dirserver_flags'] += " hs v3ident=%s" % v3id
 
         authlines = ""
         for authopt in options:
-            authlines += "%s %s orport=%s %s %s:%s %s\n" %(
+            authlines += "%s %s orport=%s %s %s:%s %s\n" % (
                 authopt, self._env['nick'], self._env['orport'],
                 self._env['dirserver_flags'], self._env['ip'],
                 self._env['dirport'], self._env['fingerprint'])
@@ -377,7 +390,9 @@ class LocalNodeBuilder(NodeBuilder):
                                                self._env['orport'])
         return bridgelines
 
+
 class LocalNodeController(NodeController):
+
     def __init__(self, env):
         NodeController.__init__(self, env)
         self._env = env
@@ -405,7 +420,7 @@ class LocalNodeController(NodeController):
             return False
 
         try:
-            os.kill(pid, 0) # "kill 0" == "are you there?"
+            os.kill(pid, 0)  # "kill 0" == "are you there?"
         except OSError, e:
             if e.errno == errno.ESRCH:
                 return False
@@ -429,16 +444,16 @@ class LocalNodeController(NodeController):
         dir = self._env['dir']
         if running:
             if listRunning:
-                print "%s is running with PID %s"%(nick,pid)
+                print "%s is running with PID %s" % (nick, pid)
             return True
-        elif os.path.exists(os.path.join(dir, "core.%s"%pid)):
+        elif os.path.exists(os.path.join(dir, "core.%s" % pid)):
             if listNonRunning:
-                print "%s seems to have crashed, and left core file core.%s"%(
-                   nick,pid)
+                print "%s seems to have crashed, and left core file core.%s" % (
+                    nick, pid)
             return False
         else:
             if listNonRunning:
-                print "%s is stopped"%nick
+                print "%s is stopped" % nick
             return False
 
     def hup(self):
@@ -447,11 +462,11 @@ class LocalNodeController(NodeController):
         running = self.isRunning(pid)
         nick = self._env['nick']
         if running:
-            print "Sending sighup to %s"%nick
+            print "Sending sighup to %s" % nick
             os.kill(pid, signal.SIGHUP)
             return True
         else:
-            print "%s is not running"%nick
+            print "%s is not running" % nick
             return False
 
     def start(self):
@@ -459,7 +474,7 @@ class LocalNodeController(NodeController):
            already running, False if we failed."""
 
         if self.isRunning():
-            print "%s is already running"%self._env['nick']
+            print "%s is already running" % self._env['nick']
             return True
         tor_path = self._env['tor']
         torrc = self._getTorrcFname()
@@ -467,7 +482,7 @@ class LocalNodeController(NodeController):
             tor_path,
             "--quiet",
             "-f", torrc,
-            ]
+        ]
         try:
             p = subprocess.Popen(cmdline)
         except OSError as e:
@@ -475,16 +490,16 @@ class LocalNodeController(NodeController):
             if e.errno == errno.ENOENT:
                 print ("Cannot find tor binary %r. Use CHUTNEY_TOR "
                        "environment variable to set the path, or put the binary "
-                       "into $PATH.")%tor_path
+                       "into $PATH.") % tor_path
                 sys.exit(0)
             else:
                 raise
         # XXXX this requires that RunAsDaemon is set.
         p.wait()
         if p.returncode != 0:
-            print "Couldn't launch %s (%s): %s"%(self._env['nick'],
-                                                 " ".join(cmdline),
-                                                 p.returncode)
+            print "Couldn't launch %s (%s): %s" % (self._env['nick'],
+                                                   " ".join(cmdline),
+                                                   p.returncode)
             return False
         return True
 
@@ -492,7 +507,7 @@ class LocalNodeController(NodeController):
         """Try to stop this node by sending it the signal 'sig'."""
         pid = self.getPid()
         if not self.isRunning(pid):
-            print "%s is not running"%self._env['nick']
+            print "%s is not running" % self._env['nick']
             return
         os.kill(pid, sig)
 
@@ -501,38 +516,38 @@ class LocalNodeController(NodeController):
         if self.isRunning() or (not os.path.exists(lf)):
             return
         print 'Removing stale lock file for {0} ...'.format(
-                self._env['nick'])
+            self._env['nick'])
         os.remove(lf)
 
 
-
-
 DEFAULTS = {
-    'authority' : False,
-    'bridgeauthority' : False,
-    'hasbridgeauth' : False,
-    'relay' : False,
-    'bridge' : False,
-    'connlimit' : 60,
-    'net_base_dir' : 'net',
-    'tor' : os.environ.get('CHUTNEY_TOR', 'tor'),
-    'tor-gencert' : os.environ.get('CHUTNEY_TOR_GENCERT', None),
-    'auth_cert_lifetime' : 12,
-    'ip' : '127.0.0.1',
-    'ipv6_addr' : None,
-    'dirserver_flags' : 'no-v2',
-    'chutney_dir' : '.',
-    'torrc_fname' : '${dir}/torrc',
-    'orport_base' : 5000,
-    'dirport_base' : 7000,
-    'controlport_base' : 8000,
-    'socksport_base' : 9000,
-    'authorities' : "AlternateDirAuthority bleargh bad torrc file!",
-    'bridges' : "Bridge bleargh bad torrc file!",
-    'core' : True,
+    'authority': False,
+    'bridgeauthority': False,
+    'hasbridgeauth': False,
+    'relay': False,
+    'bridge': False,
+    'connlimit': 60,
+    'net_base_dir': 'net',
+    'tor': os.environ.get('CHUTNEY_TOR', 'tor'),
+    'tor-gencert': os.environ.get('CHUTNEY_TOR_GENCERT', None),
+    'auth_cert_lifetime': 12,
+    'ip': '127.0.0.1',
+    'ipv6_addr': None,
+    'dirserver_flags': 'no-v2',
+    'chutney_dir': '.',
+    'torrc_fname': '${dir}/torrc',
+    'orport_base': 5000,
+    'dirport_base': 7000,
+    'controlport_base': 8000,
+    'socksport_base': 9000,
+    'authorities': "AlternateDirAuthority bleargh bad torrc file!",
+    'bridges': "Bridge bleargh bad torrc file!",
+    'core': True,
 }
 
+
 class TorEnviron(chutney.Templating.Environ):
+
     """Subclass of chutney.Templating.Environ to implement commonly-used
        substitutions.
 
@@ -554,28 +569,29 @@ class TorEnviron(chutney.Templating.Environ):
 
        XXXX document the above.  Or document all fields in one place?
     """
-    def __init__(self,parent=None,**kwargs):
+
+    def __init__(self, parent=None, **kwargs):
         chutney.Templating.Environ.__init__(self, parent=parent, **kwargs)
 
     def _get_orport(self, my):
-        return my['orport_base']+my['nodenum']
+        return my['orport_base'] + my['nodenum']
 
     def _get_controlport(self, my):
-        return my['controlport_base']+my['nodenum']
+        return my['controlport_base'] + my['nodenum']
 
     def _get_socksport(self, my):
-        return my['socksport_base']+my['nodenum']
+        return my['socksport_base'] + my['nodenum']
 
     def _get_dirport(self, my):
-        return my['dirport_base']+my['nodenum']
+        return my['dirport_base'] + my['nodenum']
 
     def _get_dir(self, my):
         return os.path.abspath(os.path.join(my['net_base_dir'],
                                             "nodes",
-                                         "%03d%s"%(my['nodenum'], my['tag'])))
+                                            "%03d%s" % (my['nodenum'], my['tag'])))
 
     def _get_nick(self, my):
-        return "test%03d%s"%(my['nodenum'], my['tag'])
+        return "test%03d%s" % (my['nodenum'], my['tag'])
 
     def _get_tor_gencert(self, my):
         if my['tor-gencert']:
@@ -584,19 +600,21 @@ class TorEnviron(chutney.Templating.Environ):
             return '{0}-gencert'.format(my['tor'])
 
     def _get_auth_passphrase(self, my):
-        return self['nick'] # OMG TEH SECURE!
+        return self['nick']  # OMG TEH SECURE!
 
     def _get_torrc_template_path(self, my):
-        return [ os.path.join(my['chutney_dir'], 'torrc_templates') ]
+        return [os.path.join(my['chutney_dir'], 'torrc_templates')]
 
     def _get_lockfile(self, my):
         return os.path.join(self['dir'], 'lock')
 
 
 class Network(object):
+
     """A network of Tor nodes, plus functions to manipulate them
     """
-    def __init__(self,defaultEnviron):
+
+    def __init__(self, defaultEnviron):
         self._nodes = []
         self._dfltEnv = defaultEnviron
         self._nextnodenum = 0
@@ -614,7 +632,7 @@ class Network(object):
         network = self
         altauthlines = []
         bridgelines = []
-        builders = [ n.getBuilder() for n in self._nodes ]
+        builders = [n.getBuilder() for n in self._nodes]
 
         self._checkConfig()
 
@@ -624,7 +642,7 @@ class Network(object):
         for b in builders:
             b.preConfig(network)
             altauthlines.append(b._getAltAuthLines(
-                                    self._dfltEnv['hasbridgeauth']))
+                self._dfltEnv['hasbridgeauth']))
             bridgelines.append(b._getBridgeLines())
 
         self._dfltEnv['authorities'] = "".join(altauthlines)
@@ -637,9 +655,9 @@ class Network(object):
             b.postConfig(network)
 
     def status(self):
-        statuses = [ n.getController().check() for n in self._nodes]
+        statuses = [n.getController().check() for n in self._nodes]
         n_ok = len([x for x in statuses if x])
-        print "%d/%d nodes are running"%(n_ok,len(self._nodes))
+        print "%d/%d nodes are running" % (n_ok, len(self._nodes))
         if n_ok != len(self._nodes):
             return False
         return True
@@ -657,11 +675,11 @@ class Network(object):
         return all([n.getController().hup() for n in self._nodes])
 
     def stop(self):
-        controllers = [ n.getController() for n in self._nodes ]
+        controllers = [n.getController() for n in self._nodes]
         for sig, desc in [(signal.SIGINT, "SIGINT"),
                           (signal.SIGINT, "another SIGINT"),
                           (signal.SIGKILL, "SIGKILL")]:
-            print "Sending %s to nodes"%desc
+            print "Sending %s to nodes" % desc
             for c in controllers:
                 if c.isRunning():
                     c.stop(sig=sig)
@@ -691,8 +709,8 @@ class Network(object):
     def _verify_traffic(self):
         """Verify (parts of) the network by sending traffic through it
         and verify what is received."""
-        LISTEN_PORT = 4747 # FIXME: Do better! Note the default exit policy.
-        DATALEN = 10*1024               # Octets.
+        LISTEN_PORT = 4747  # FIXME: Do better! Note the default exit policy.
+        DATALEN = 10 * 1024               # Octets.
         TIMEOUT = 3                     # Seconds.
         with open('/dev/urandom', 'r') as randfp:
             tmpdata = randfp.read(DATALEN)
@@ -700,8 +718,9 @@ class Network(object):
         tt = chutney.Traffic.TrafficTester(bind_to, tmpdata, TIMEOUT)
         for op in filter(lambda n: n._env['tag'] == 'c', self._nodes):
             tt.add(chutney.Traffic.Source(tt, bind_to, tmpdata,
-                                     ('localhost', int(op._env['socksport']))))
+                                          ('localhost', int(op._env['socksport']))))
         return tt.run()
+
 
 def ConfigureNodes(nodelist):
     network = _THE_NETWORK
@@ -711,13 +730,15 @@ def ConfigureNodes(nodelist):
         if n._env['bridgeauthority']:
             network._dfltEnv['hasbridgeauth'] = True
 
+
 def usage(network):
     return "\n".join(["Usage: chutney {command} {networkfile}",
-       "Known commands are: %s" % (
-        " ".join(x for x in dir(network) if not x.startswith("_")))])
+                      "Known commands are: %s" % (
+                          " ".join(x for x in dir(network) if not x.startswith("_")))])
+
 
 def runConfigFile(verb, f):
-    _GLOBALS = dict(_BASE_ENVIRON= _BASE_ENVIRON,
+    _GLOBALS = dict(_BASE_ENVIRON=_BASE_ENVIRON,
                     Node=Node,
                     ConfigureNodes=ConfigureNodes,
                     _THE_NETWORK=_THE_NETWORK)
@@ -730,7 +751,8 @@ def runConfigFile(verb, f):
         print "Error: I don't know how to %s." % verb
         return
 
-    return getattr(network,verb)()
+    return getattr(network, verb)()
+
 
 def main():
     global _BASE_ENVIRON

@@ -81,12 +81,14 @@ from __future__ import with_statement
 import string
 import os
 
-#class _KeyError(KeyError):
+# class _KeyError(KeyError):
 #    pass
 
 _KeyError = KeyError
 
+
 class _DictWrapper(object):
+
     """Base class to implement a dictionary-like object with delegation.
        To use it, implement the _getitem method, and pass the optional
        'parent' argument to the constructor.
@@ -95,7 +97,7 @@ class _DictWrapper(object):
        fails with KeyError but the parent is present, lookups delegate
        to _parent.
     """
-    ## Fields
+    # Fields
     # _parent: the parent object that lookups delegate to.
 
     def __init__(self, parent=None):
@@ -114,7 +116,7 @@ class _DictWrapper(object):
            on other values.
         """
         try:
-            return self._getitem(key,my)
+            return self._getitem(key, my)
         except KeyError:
             pass
         if self._parent is None:
@@ -129,11 +131,13 @@ class _DictWrapper(object):
                 raise _KeyError(key)
 
         try:
-            return lookup(key,my)
+            return lookup(key, my)
         except KeyError:
             raise _KeyError(key)
 
+
 class Environ(_DictWrapper):
+
     """An 'Environ' is used to define a set of key-value mappings with a
        fall-back parent Environ.  When looking for keys in the
        Environ, any keys not found in this Environ are searched for in
@@ -190,7 +194,7 @@ class Environ(_DictWrapper):
        both spider['limbs'] and squid['limbs'] would be given
        (incorrectly) as 4.
     """
-    ## Fields
+    # Fields
     # _dict: dictionary holding the contents of this Environ that are
     #   not inherited from the parent and are not computed on the fly.
 
@@ -204,7 +208,7 @@ class Environ(_DictWrapper):
         except KeyError:
             pass
 
-        fn = getattr(self, "_get_%s"%key, None)
+        fn = getattr(self, "_get_%s" % key, None)
         if fn is not None:
             try:
                 rv = fn(my)
@@ -224,13 +228,15 @@ class Environ(_DictWrapper):
         s.update(name[5:] for name in dir(self) if name.startswith("_get_"))
         return s
 
+
 class IncluderDict(_DictWrapper):
+
     """Helper to implement ${include:} template substitution.  Acts as a
        dictionary that maps include:foo to the contents of foo (relative to
        a search path if foo is a relative path), and delegates everything else
        to a parent.
     """
-    ## Fields
+    # Fields
     # _includePath: a list of directories to consider when searching
     #   for files given as relative paths.
     # _st_mtime: the most recent time when any of the files included
@@ -271,7 +277,9 @@ class IncluderDict(_DictWrapper):
     def getUpdateTime(self):
         return self._st_mtime
 
+
 class _BetterTemplate(string.Template):
+
     """Subclass of the standard string.Template that allows a wider range of
        characters in variable names.
     """
@@ -281,19 +289,24 @@ class _BetterTemplate(string.Template):
     def __init__(self, template):
         string.Template.__init__(self, template)
 
+
 class _FindVarsHelper(object):
+
     """Helper dictionary for finding the free variables in a template.
        It answers all requests for key lookups affirmatively, and remembers
        what it was asked for.
     """
-    ## Fields
+    # Fields
     # _dflts: a dictionary of default values to treat specially
     # _vars: a set of all the keys that we've been asked to look up so far.
+
     def __init__(self, dflts):
         self._dflts = dflts
         self._vars = set()
+
     def __getitem__(self, var):
         return self.lookup(var, self)
+
     def lookup(self, var, my):
         self._vars.add(var)
         try:
@@ -301,7 +314,9 @@ class _FindVarsHelper(object):
         except KeyError:
             return ""
 
+
 class Template(object):
+
     """A Template is a string pattern that allows repeated variable
        substitutions.  These syntaxes are supported:
           $var -- expands to the value of var
@@ -316,7 +331,7 @@ class Template(object):
     # infinite loops
     MAX_ITERATIONS = 32
 
-    ## Fields
+    # Fields
     # _pat: The base pattern string to start our substitutions from
     # _includePath: a list of directories to search when including a file
     #    by relative path.
@@ -360,4 +375,3 @@ if __name__ == '__main__':
             with open(fn, 'r') as f:
                 t = Template(f.read())
                 print fn, t.freevars()
-

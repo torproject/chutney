@@ -29,10 +29,12 @@ import errno
 # about what's going wrong in your system.
 debug_flag = False
 
+
 def debug(s):
     "Print a debug message on stdout if debug_flag is True."
     if debug_flag:
         print("DEBUG: %s" % s)
+
 
 def socks_cmd(addr_port):
     """
@@ -53,9 +55,12 @@ def socks_cmd(addr_port):
         dnsname = '%s\x00' % host
     return struct.pack('!BBH', ver, cmd, port) + addr + user + dnsname
 
+
 class TestSuite(object):
+
     """Keep a tab on how many tests are pending, how many have failed
     and how many have succeeded."""
+
     def __init__(self):
         self.not_done = 0
         self.successes = 0
@@ -81,7 +86,9 @@ class TestSuite(object):
     def status(self):
         return('%d/%d/%d' % (self.not_done, self.successes, self.failures))
 
+
 class Peer(object):
+
     "Base class for Listener, Source and Sink."
     LISTENER = 1
     SOURCE = 2
@@ -98,13 +105,18 @@ class Peer(object):
 
     def fd(self):
         return self.s.fileno()
+
     def is_source(self):
         return self.type == self.SOURCE
+
     def is_sink(self):
         return self.type == self.SINK
 
+
 class Listener(Peer):
+
     "A TCP listener, binding, listening and accepting new connections."
+
     def __init__(self, tt, endpoint):
         super(Listener, self).__init__(Peer.LISTENER, tt)
         self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -117,8 +129,11 @@ class Listener(Peer):
               (endpoint[0], endpoint[1], newsock.fileno()))
         self.tt.add(Sink(self.tt, newsock))
 
+
 class Sink(Peer):
+
     "A data sink, reading from its peer and verifying the data."
+
     def __init__(self, tt, s):
         super(Sink, self).__init__(Peer.SINK, tt, s)
         self.inbuf = ''
@@ -141,7 +156,9 @@ class Sink(Peer):
                 debug("successful verification")
         return len(data) - len(self.inbuf)
 
+
 class Source(Peer):
+
     """A data source, connecting to a TCP server, optionally over a
     SOCKS proxy, sending data."""
     NOT_CONNECTED = 0
@@ -226,9 +243,11 @@ class Source(Peer):
         self.outbuf = self.outbuf[n:]
         if self.state == self.CONNECTING_THROUGH_PROXY:
             return 1            # Keep us around.
-        return len(self.outbuf) # When 0, we're being removed.
+        return len(self.outbuf)  # When 0, we're being removed.
+
 
 class TrafficTester():
+
     """
     Hang on select.select() and dispatch to Sources and Sinks.
     Time out after self.timeout seconds.
@@ -236,6 +255,7 @@ class TrafficTester():
     TestSuite.
     Return True if all tests succeed, else False.
     """
+
     def __init__(self, endpoint, data={}, timeout=3):
         self.listener = Listener(self, endpoint)
         self.pending_close = []
@@ -247,8 +267,10 @@ class TrafficTester():
 
     def sinks(self):
         return self.get_by_ptype(Peer.SINK)
+
     def sources(self):
         return self.get_by_ptype(Peer.SOURCE)
+
     def get_by_ptype(self, ptype):
         return filter(lambda p: p.type == ptype, self.peers.itervalues())
 
@@ -268,9 +290,9 @@ class TrafficTester():
             rset = [self.listener.fd()] + list(self.peers)
             wset = [p.fd() for p in
                     filter(lambda x: x.want_to_write(), self.sources())]
-            #debug("rset %s wset %s" % (rset, wset))
+            # debug("rset %s wset %s" % (rset, wset))
             sets = select.select(rset, wset, [], 1)
-            if all(len(s)==0 for s in sets):
+            if all(len(s) == 0 for s in sets):
                 self.timeout -= 1
                 continue
 
@@ -281,9 +303,9 @@ class TrafficTester():
                 p = self.peers[fd]
                 n = p.on_readable()
                 if n > 0:
-                    #debug("need %d more octets from fd %d" % (n, fd))
+                    # debug("need %d more octets from fd %d" % (n, fd))
                     pass
-                elif n == 0: # Success.
+                elif n == 0:  # Success.
                     self.tests.success()
                     self.remove(p)
                 else:       # Failure.
@@ -294,7 +316,7 @@ class TrafficTester():
 
             for fd in sets[1]:             # writable fd's
                 p = self.peers.get(fd)
-                if p is not None: # Might have been removed above.
+                if p is not None:  # Might have been removed above.
                     n = p.on_writable()
                     if n == 0:
                         self.remove(p)
@@ -308,6 +330,7 @@ class TrafficTester():
         return self.tests.all_done() and self.tests.failure_count() == 0
 
 import sys
+
 
 def main():
     """Test the TrafficTester by sending and receiving some data."""
