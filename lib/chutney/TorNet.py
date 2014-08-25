@@ -601,11 +601,10 @@ class LocalNodeController(NodeController):
 
     def cleanup_lockfile(self):
         lf = self._env['lockfile']
-        if self.isRunning() or (not os.path.exists(lf)):
-            return
-        print 'Removing stale lock file for {0} ...'.format(
-            self._env['nick'])
-        os.remove(lf)
+        if not self.isRunning() and os.path.exists(lf):
+            print 'Removing stale lock file for {0} ...'.format(
+                self._env['nick'])
+            os.remove(lf)
 
     def waitOnLaunch(self):
         """Check whether we can wait() for the tor process to launch"""
@@ -776,9 +775,7 @@ class Network(object):
         statuses = [n.getController().check() for n in self._nodes]
         n_ok = len([x for x in statuses if x])
         print "%d/%d nodes are running" % (n_ok, len(self._nodes))
-        if n_ok != len(self._nodes):
-            return False
-        return True
+        return n_ok == len(self._nodes)
 
     def restart(self):
         self.stop()

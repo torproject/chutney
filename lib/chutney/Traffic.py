@@ -210,11 +210,7 @@ class Source(Peer):
         return 1                # Keep us around for writing.
 
     def want_to_write(self):
-        if self.state == self.CONNECTING:
-            return True
-        if len(self.outbuf) > 0:
-            return True
-        return False
+        return self.state == self.CONNECTING or len(self.outbuf) > 0
 
     def on_writable(self):
         """Invoked when the socket becomes writable.
@@ -281,9 +277,7 @@ class TrafficTester():
         self.pending_close.append(peer.s)
 
     def run(self):
-        while True:
-            if self.tests.all_done() or self.timeout == 0:
-                break
+        while not self.tests.all_done() and self.timeout > 0:
             rset = [self.listener.fd()] + list(self.peers)
             wset = [p.fd() for p in
                     filter(lambda x: x.want_to_write(), self.sources())]
