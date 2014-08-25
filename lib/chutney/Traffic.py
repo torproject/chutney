@@ -20,6 +20,7 @@
 #
 # For example code, see main() below.
 
+import sys
 import socket
 import select
 import struct
@@ -324,8 +325,6 @@ class TrafficTester():
         for s in self.pending_close:
             s.close()
         return self.tests.all_done() and self.tests.failure_count() == 0
-
-import sys
 
 
 def main():
