@@ -20,6 +20,8 @@
 #
 # For example code, see main() below.
 
+from __future__ import print_function
+
 import sys
 import socket
 import select
@@ -181,7 +183,7 @@ class Source(Peer):
         dest = self.proxy or self.dest
         try:
             self.s.connect(dest)
-        except socket.error, e:
+        except socket.error as e:
             if e[0] != errno.EINPROGRESS:
                 raise
 
@@ -228,7 +230,7 @@ class Source(Peer):
                 self.outbuf = socks_cmd(self.dest)
         try:
             n = self.s.send(self.outbuf)
-        except socket.error, e:
+        except socket.error as e:
             if e[0] == errno.ECONNREFUSED:
                 debug("connection refused (fd=%d)" % self.fd())
                 return -1
