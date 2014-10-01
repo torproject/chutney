@@ -223,7 +223,7 @@ class LocalNodeBuilder(NodeBuilder):
         torrc_template = self._getTorrcTemplate()
         output = torrc_template.format(self._env)
         if checkOnly:
-            # XXXX Is it time-cosuming to format? If so, cache here.
+            # XXXX Is it time-consuming to format? If so, cache here.
             return
         # now filter the options we're about to write, commenting out
         # the options that the current tor binary doesn't support
