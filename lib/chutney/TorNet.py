@@ -220,7 +220,7 @@ class LocalNodeBuilder(NodeBuilder):
         torrc_template = self._getTorrcTemplate()
         output = torrc_template.format(self._env)
         if checkOnly:
-            # XXXX Is it time-cosuming to format? If so, cache here.
+            # XXXX Is it time-consuming to format? If so, cache here.
             return
         with open(fn_out, 'w') as f:
             f.write(output)
