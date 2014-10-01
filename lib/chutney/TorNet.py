@@ -25,6 +25,7 @@ import chutney.Templating
 import chutney.Traffic
 
 _BASE_ENVIRON = None
+_TORRC_OPTIONS = None
 _THE_NETWORK = None
 
 
@@ -213,8 +214,10 @@ class LocalNodeBuilder(NodeBuilder):
         self._env = env
 
     def _createTorrcFile(self, checkOnly=False):
-        """Write the torrc file for this node.  If checkOnly, just make sure
-           that the formatting is indeed possible.
+        """Write the torrc file for this node, disabling any options
+           that are not supported by env's tor binary using comments.
+           If checkOnly, just make sure that the formatting is indeed
+           possible.
         """
         fn_out = self._getTorrcFname()
         torrc_template = self._getTorrcTemplate()
@@ -222,8 +225,66 @@ class LocalNodeBuilder(NodeBuilder):
         if checkOnly:
             # XXXX Is it time-cosuming to format? If so, cache here.
             return
+        # now filter the options we're about to write, commenting out
+        # the options that the current tor binary doesn't support
+        tor = self._env['tor']
+        # find the options the current tor binary supports, and cache them
+        if tor not in _TORRC_OPTIONS:
+            # Note: some versions of tor (e.g. 0.2.4.23) require
+            # --list-torrc-options to be the first argument
+            cmdline = [
+                tor,
+                "--list-torrc-options",
+                "--hush"]
+            try:
+                opts = subprocess.check_output(cmdline,
+                                               bufsize=-1,
+                                               universal_newlines=True)
+            except OSError as e:
+                # only catch file not found error
+                if e.errno == errno.ENOENT:
+                    print ("Cannot find tor binary %r. Use "
+                           "CHUTNEY_TOR environment variable to set the "
+                           "path, or put the binary into $PATH.") % tor
+                    sys.exit(0)
+                else:
+                    raise
+            # check we received a list of options, and nothing else
+            assert re.match(r'(^\w+$)+', opts, flags=re.MULTILINE)
+            torrc_opts = opts.split()
+            # cache the options for this tor binary's path
+            _TORRC_OPTIONS[tor] = torrc_opts
+        else:
+            torrc_opts = _TORRC_OPTIONS[tor]
+        # check if each option is supported before writing it
+        # TODO: what about unsupported values?
+        # e.g. tor 0.2.4.23 doesn't support TestingV3AuthInitialVoteDelay 2
+        # but later version do. I say throw this one to the user.
         with open(fn_out, 'w') as f:
-            f.write(output)
+            # we need to do case-insensitive option comparison
+            # even if this is a static whitelist,
+            # so we convert to lowercase as close to the loop as possible
+            lower_opts = [opt.lower() for opt in torrc_opts]
+            # keep ends when splitting lines, so we can write them out
+            # using writelines() without messing around with "\n"s
+            for line in output.splitlines(True):
+                # check if the first word on the line is a supported option,
+                # preserving empty lines and comment lines
+                sline = line.strip()
+                if (len(sline) == 0
+                    or sline[0] == '#'
+                    or sline.split()[0].lower() in lower_opts):
+                    f.writelines([line])
+                else:
+                    # well, this could get spammy
+                    # TODO: warn once per option per tor binary
+                    # TODO: print tor version?
+                    print ("The tor binary at %r does not support the "
+                           "option in the torrc line:\n"
+                           "%r") % (tor, line.strip())
+                    # we could decide to skip these lines entirely
+                    # TODO: write tor version?
+                    f.writelines(["# " + tor + " unsupported: " + line])
 
     def _getTorrcTemplate(self):
         """Return the template used to write the torrc for this node."""
@@ -757,8 +818,13 @@ def runConfigFile(verb, f):
 
 def main():
     global _BASE_ENVIRON
+    global _TORRC_OPTIONS
     global _THE_NETWORK
     _BASE_ENVIRON = TorEnviron(chutney.Templating.Environ(**DEFAULTS))
+    # _TORRC_OPTIONS gets initialised on demand as a map of
+    # "/path/to/tor" => ["SupportedOption1", "SupportedOption2", ...]
+    # Or it can be pre-populated as a static whitelist of options
+    _TORRC_OPTIONS = dict()
     _THE_NETWORK = Network(_BASE_ENVIRON)
 
     if len(sys.argv) < 3:
