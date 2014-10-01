@@ -1,9 +1,10 @@
-${include:common.i}
-SocksPort 0
-OrPort $orport
-Address $ip
-DirPort $dirport
-#NOTE: Setting TestingServerConsensusDownloadSchedule doesn't
-#      help -- dl_stats.schedule is not DL_SCHED_CONSENSUS
-#      at boostrap time.
-TestingServerDownloadSchedule 10, 2, 2, 4, 4, 8, 13, 18, 25, 40, 60
+${include:relay-non-exit.tmpl}
+
+# This file is named "relay.tmpl" for compatibility with previous
+# chutney versions
+
+# An exit relay that can exit to IPv4 & IPv6 localhost
+# (newer versions of tor need this to be explicitly configured)
+
+${include:exit-v4.i}
+${include:exit-v6.i}
