@@ -7,3 +7,13 @@ TestingV3AuthInitialVotingInterval 300
 TestingV3AuthInitialVoteDelay 2
 TestingV3AuthInitialDistDelay 2
 TestingV3AuthVotingStartOffset 0
+
+# Work around situations where the Exit and Guard flags aren't being set
+# These flags are set eventually, but it takes ~30 minutes
+# We could be more precise here, but it's easiest just to vote everything
+# Clients are sensible enough to filter out Exits without any exit ports, 
+# and Guards without ORPorts
+# If your tor doesn't recognise TestingDirAuthVoteExit, update your chutney
+# to a version that includes the issue-13161-check-torrc-options features
+TestingDirAuthVoteExit *
+TestingDirAuthVoteGuard *
