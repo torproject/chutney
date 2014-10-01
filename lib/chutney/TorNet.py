@@ -556,12 +556,35 @@ class LocalNodeController(NodeController):
                 sys.exit(0)
             else:
                 raise
-        # XXXX this requires that RunAsDaemon is set.
-        p.wait()
-        if p.returncode != 0:
-            print "Couldn't launch %s (%s): %s" % (self._env['nick'],
-                                                   " ".join(cmdline),
-                                                   p.returncode)
+        if self.waitOnLaunch():
+            # this requires that RunAsDaemon is set
+            p.wait()
+        else:
+            # this does not require RunAsDaemon to be set, but is slower.
+            #
+            # poll() only catches failures before the call itself
+            # so let's sleep a little first
+            # this does, of course, slow down process launch
+            # which can require an adjustment to the voting interval
+            #
+            # avoid writing a newline or space when polling
+            # so output comes out neatly
+            sys.stdout.write('.')
+            sys.stdout.flush()
+            time.sleep(self._env['poll_launch_time'])
+            p.poll()
+        if p.returncode != None and p.returncode != 0:
+            if self._env['poll_launch_time'] is None:
+                print "Couldn't launch %s (%s): %s" % (self._env['nick'],
+                                                       " ".join(cmdline),
+                                                       p.returncode)
+            else:
+                print ("Couldn't poll %s (%s) "
+                       "after waiting %s seconds for launch"
+                       ": %s") % (self._env['nick'],
+                                  " ".join(cmdline),
+                                  self._env['poll_launch_time'],
+                                  p.returncode)
             return False
         return True
 
@@ -581,6 +604,33 @@ class LocalNodeController(NodeController):
             self._env['nick'])
         os.remove(lf)
 
+    def waitOnLaunch(self):
+        """Check whether we can wait() for the tor process to launch"""
+        # TODO: is this the best place for this code?
+        # RunAsDaemon default is 0
+        runAsDaemon = False
+        with open(self._getTorrcFname(), 'r') as f:
+            for line in f.readlines():
+                stline = line.strip()
+                # if the line isn't all whitespace or blank
+                if len(stline) > 0:
+                    splline = stline.split()
+                    # if the line has at least two tokens on it
+                    if (len(splline) > 0
+                        and splline[0].lower() == "RunAsDaemon".lower()
+                        and splline[1] == "1"):
+                        # use the RunAsDaemon value from the torrc
+                        # TODO: multiple values?
+                        runAsDaemon = True
+        if runAsDaemon:
+            # we must use wait() instead of poll()
+            self._env['poll_launch_time'] = None
+            return True;
+        else:
+            # we must use poll() instead of wait()
+            if self._env['poll_launch_time'] is None:
+                self._env['poll_launch_time'] = self._env['poll_launch_time_default']
+            return False;
 
 DEFAULTS = {
     'authority': False,
@@ -605,6 +655,12 @@ DEFAULTS = {
     'authorities': "AlternateDirAuthority bleargh bad torrc file!",
     'bridges': "Bridge bleargh bad torrc file!",
     'core': True,
+     # poll_launch_time: None means wait on launch (requires RunAsDaemon),
+     # otherwise, poll after that many seconds (can be fractional/decimal)
+    'poll_launch_time': None,
+     # Used when poll_launch_time is None, but RunAsDaemon is not set
+     # Set low so that we don't interfere with the voting interval
+    'poll_launch_time_default': 0.1,
 }
 
 
@@ -729,8 +785,19 @@ class Network(object):
         self.start()
 
     def start(self):
-        print "Starting nodes"
-        return all([n.getController().start() for n in self._nodes])
+        if self._dfltEnv['poll_launch_time'] is not None:
+            # format polling correctly - avoid printing a newline
+            sys.stdout.write("Starting nodes")
+            sys.stdout.flush()
+        else:
+            print "Starting nodes"
+        rv = all([n.getController().start() for n in self._nodes])
+        # now print a newline unconditionally - this stops poll()ing
+        # output from being squashed together, at the cost of a blank
+        # line in wait()ing output
+        print ""
+        return rv
+    
 
     def hup(self):
         print "Sending SIGHUP to nodes"
