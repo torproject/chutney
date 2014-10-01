@@ -9,5 +9,5 @@ Log notice file ${dir}/notice.log
 Log info file ${dir}/info.log
 ProtocolWarnings 1
 SafeLogging 0
+DisableDebuggerAttachment 0
 ${authorities}
-
