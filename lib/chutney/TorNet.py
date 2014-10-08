@@ -365,8 +365,8 @@ class LocalNodeBuilder(NodeBuilder):
             # only catch file not found error
             if e.errno == errno.ENOENT:
                 print("Cannot find tor-gencert binary %r. Use "
-                       "CHUTNEY_TOR_GENCERT environment variable to set the "
-                       "path, or put the binary into $PATH.") % tor_gencert
+                      "CHUTNEY_TOR_GENCERT environment variable to set the "
+                      "path, or put the binary into $PATH.") % tor_gencert
                 sys.exit(0)
             else:
                 raise
@@ -393,8 +393,8 @@ class LocalNodeBuilder(NodeBuilder):
             # only catch file not found error
             if e.errno == errno.ENOENT:
                 print("Cannot find tor binary %r. Use "
-                       "CHUTNEY_TOR environment variable to set the "
-                       "path, or put the binary into $PATH.") % tor
+                      "CHUTNEY_TOR environment variable to set the "
+                      "path, or put the binary into $PATH.") % tor
                 sys.exit(0)
             else:
                 raise
@@ -513,14 +513,15 @@ class LocalNodeController(NodeController):
         pid = self.getPid()
         nick = self._env['nick']
         datadir = self._env['dir']
+        corefile = "core.%s" % pid
         if self.isRunning(pid):
             if listRunning:
                 print("%s is running with PID %s" % (nick, pid))
             return True
-        elif os.path.exists(os.path.join(datadir, "core.%s" % pid)):
+        elif os.path.exists(os.path.join(datadir, corefile)):
             if listNonRunning:
-                print("%s seems to have crashed, and left core file core.%s" % (
-                    nick, pid))
+                print("%s seems to have crashed, and left core file %s" % (
+                    nick, corefile))
             return False
         else:
             if listNonRunning:
@@ -559,8 +560,8 @@ class LocalNodeController(NodeController):
             # only catch file not found error
             if e.errno == errno.ENOENT:
                 print("Cannot find tor binary %r. Use CHUTNEY_TOR "
-                       "environment variable to set the path, or put the binary "
-                       "into $PATH.") % tor_path
+                      "environment variable to set the path, or put the "
+                      "binary into $PATH.") % tor_path
                 sys.exit(0)
             else:
                 raise
@@ -713,7 +714,8 @@ class TorEnviron(chutney.Templating.Environ):
     def _get_dir(self, my):
         return os.path.abspath(os.path.join(my['net_base_dir'],
                                             "nodes",
-                                            "%03d%s" % (my['nodenum'], my['tag'])))
+                                            "%03d%s" % (
+                                                my['nodenum'], my['tag'])))
 
     def _get_nick(self, my):
         return "test%03d%s" % (my['nodenum'], my['tag'])
@@ -846,7 +848,8 @@ class Network(object):
         tt = chutney.Traffic.TrafficTester(bind_to, tmpdata, TIMEOUT)
         for op in filter(lambda n: n._env['tag'] == 'c', self._nodes):
             tt.add(chutney.Traffic.Source(tt, bind_to, tmpdata,
-                                          ('localhost', int(op._env['socksport']))))
+                                          ('localhost',
+                                           int(op._env['socksport']))))
         return tt.run()
 
 
@@ -862,7 +865,8 @@ def ConfigureNodes(nodelist):
 def usage(network):
     return "\n".join(["Usage: chutney {command} {networkfile}",
                       "Known commands are: %s" % (
-                          " ".join(x for x in dir(network) if not x.startswith("_")))])
+                          " ".join(x for x in dir(network)
+                                   if not x.startswith("_")))])
 
 
 def exit_on_error(err_msg):
