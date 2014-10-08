@@ -25,6 +25,7 @@ import chutney.Templating
 import chutney.Traffic
 
 _BASE_ENVIRON = None
+_TORRC_OPTIONS = None
 _THE_NETWORK = None
 
 
@@ -213,17 +214,77 @@ class LocalNodeBuilder(NodeBuilder):
         self._env = env
 
     def _createTorrcFile(self, checkOnly=False):
-        """Write the torrc file for this node.  If checkOnly, just make sure
-           that the formatting is indeed possible.
+        """Write the torrc file for this node, disabling any options
+           that are not supported by env's tor binary using comments.
+           If checkOnly, just make sure that the formatting is indeed
+           possible.
         """
         fn_out = self._getTorrcFname()
         torrc_template = self._getTorrcTemplate()
         output = torrc_template.format(self._env)
         if checkOnly:
-            # XXXX Is it time-cosuming to format? If so, cache here.
+            # XXXX Is it time-consuming to format? If so, cache here.
             return
+        # now filter the options we're about to write, commenting out
+        # the options that the current tor binary doesn't support
+        tor = self._env['tor']
+        # find the options the current tor binary supports, and cache them
+        if tor not in _TORRC_OPTIONS:
+            # Note: some versions of tor (e.g. 0.2.4.23) require
+            # --list-torrc-options to be the first argument
+            cmdline = [
+                tor,
+                "--list-torrc-options",
+                "--hush"]
+            try:
+                opts = subprocess.check_output(cmdline,
+                                               bufsize=-1,
+                                               universal_newlines=True)
+            except OSError as e:
+                # only catch file not found error
+                if e.errno == errno.ENOENT:
+                    print ("Cannot find tor binary %r. Use "
+                           "CHUTNEY_TOR environment variable to set the "
+                           "path, or put the binary into $PATH.") % tor
+                    sys.exit(0)
+                else:
+                    raise
+            # check we received a list of options, and nothing else
+            assert re.match(r'(^\w+$)+', opts, flags=re.MULTILINE)
+            torrc_opts = opts.split()
+            # cache the options for this tor binary's path
+            _TORRC_OPTIONS[tor] = torrc_opts
+        else:
+            torrc_opts = _TORRC_OPTIONS[tor]
+        # check if each option is supported before writing it
+        # TODO: what about unsupported values?
+        # e.g. tor 0.2.4.23 doesn't support TestingV3AuthInitialVoteDelay 2
+        # but later version do. I say throw this one to the user.
         with open(fn_out, 'w') as f:
-            f.write(output)
+            # we need to do case-insensitive option comparison
+            # even if this is a static whitelist,
+            # so we convert to lowercase as close to the loop as possible
+            lower_opts = [opt.lower() for opt in torrc_opts]
+            # keep ends when splitting lines, so we can write them out
+            # using writelines() without messing around with "\n"s
+            for line in output.splitlines(True):
+                # check if the first word on the line is a supported option,
+                # preserving empty lines and comment lines
+                sline = line.strip()
+                if (len(sline) == 0
+                    or sline[0] == '#'
+                    or sline.split()[0].lower() in lower_opts):
+                    f.writelines([line])
+                else:
+                    # well, this could get spammy
+                    # TODO: warn once per option per tor binary
+                    # TODO: print tor version?
+                    print ("The tor binary at %r does not support the "
+                           "option in the torrc line:\n"
+                           "%r") % (tor, line.strip())
+                    # we could decide to skip these lines entirely
+                    # TODO: write tor version?
+                    f.writelines(["# " + tor + " unsupported: " + line])
 
     def _getTorrcTemplate(self):
         """Return the template used to write the torrc for this node."""
@@ -495,12 +556,35 @@ class LocalNodeController(NodeController):
                 sys.exit(0)
             else:
                 raise
-        # XXXX this requires that RunAsDaemon is set.
-        p.wait()
-        if p.returncode != 0:
-            print "Couldn't launch %s (%s): %s" % (self._env['nick'],
-                                                   " ".join(cmdline),
-                                                   p.returncode)
+        if self.waitOnLaunch():
+            # this requires that RunAsDaemon is set
+            p.wait()
+        else:
+            # this does not require RunAsDaemon to be set, but is slower.
+            #
+            # poll() only catches failures before the call itself
+            # so let's sleep a little first
+            # this does, of course, slow down process launch
+            # which can require an adjustment to the voting interval
+            #
+            # avoid writing a newline or space when polling
+            # so output comes out neatly
+            sys.stdout.write('.')
+            sys.stdout.flush()
+            time.sleep(self._env['poll_launch_time'])
+            p.poll()
+        if p.returncode != None and p.returncode != 0:
+            if self._env['poll_launch_time'] is None:
+                print "Couldn't launch %s (%s): %s" % (self._env['nick'],
+                                                       " ".join(cmdline),
+                                                       p.returncode)
+            else:
+                print ("Couldn't poll %s (%s) "
+                       "after waiting %s seconds for launch"
+                       ": %s") % (self._env['nick'],
+                                  " ".join(cmdline),
+                                  self._env['poll_launch_time'],
+                                  p.returncode)
             return False
         return True
 
@@ -520,6 +604,33 @@ class LocalNodeController(NodeController):
             self._env['nick'])
         os.remove(lf)
 
+    def waitOnLaunch(self):
+        """Check whether we can wait() for the tor process to launch"""
+        # TODO: is this the best place for this code?
+        # RunAsDaemon default is 0
+        runAsDaemon = False
+        with open(self._getTorrcFname(), 'r') as f:
+            for line in f.readlines():
+                stline = line.strip()
+                # if the line isn't all whitespace or blank
+                if len(stline) > 0:
+                    splline = stline.split()
+                    # if the line has at least two tokens on it
+                    if (len(splline) > 0
+                        and splline[0].lower() == "RunAsDaemon".lower()
+                        and splline[1] == "1"):
+                        # use the RunAsDaemon value from the torrc
+                        # TODO: multiple values?
+                        runAsDaemon = True
+        if runAsDaemon:
+            # we must use wait() instead of poll()
+            self._env['poll_launch_time'] = None
+            return True;
+        else:
+            # we must use poll() instead of wait()
+            if self._env['poll_launch_time'] is None:
+                self._env['poll_launch_time'] = self._env['poll_launch_time_default']
+            return False;
 
 DEFAULTS = {
     'authority': False,
@@ -544,6 +655,12 @@ DEFAULTS = {
     'authorities': "AlternateDirAuthority bleargh bad torrc file!",
     'bridges': "Bridge bleargh bad torrc file!",
     'core': True,
+     # poll_launch_time: None means wait on launch (requires RunAsDaemon),
+     # otherwise, poll after that many seconds (can be fractional/decimal)
+    'poll_launch_time': None,
+     # Used when poll_launch_time is None, but RunAsDaemon is not set
+     # Set low so that we don't interfere with the voting interval
+    'poll_launch_time_default': 0.1,
 }
 
 
@@ -668,8 +785,19 @@ class Network(object):
         self.start()
 
     def start(self):
-        print "Starting nodes"
-        return all([n.getController().start() for n in self._nodes])
+        if self._dfltEnv['poll_launch_time'] is not None:
+            # format polling correctly - avoid printing a newline
+            sys.stdout.write("Starting nodes")
+            sys.stdout.flush()
+        else:
+            print "Starting nodes"
+        rv = all([n.getController().start() for n in self._nodes])
+        # now print a newline unconditionally - this stops poll()ing
+        # output from being squashed together, at the cost of a blank
+        # line in wait()ing output
+        print ""
+        return rv
+    
 
     def hup(self):
         print "Sending SIGHUP to nodes"
@@ -757,8 +885,13 @@ def runConfigFile(verb, f):
 
 def main():
     global _BASE_ENVIRON
+    global _TORRC_OPTIONS
     global _THE_NETWORK
     _BASE_ENVIRON = TorEnviron(chutney.Templating.Environ(**DEFAULTS))
+    # _TORRC_OPTIONS gets initialised on demand as a map of
+    # "/path/to/tor" => ["SupportedOption1", "SupportedOption2", ...]
+    # Or it can be pre-populated as a static whitelist of options
+    _TORRC_OPTIONS = dict()
     _THE_NETWORK = Network(_BASE_ENVIRON)
 
     if len(sys.argv) < 3:
