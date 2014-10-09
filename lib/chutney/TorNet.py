@@ -866,6 +866,11 @@ def usage(network):
                           " ".join(x for x in dir(network) if not x.startswith("_")))])
 
 
+def exit_on_error(err_msg):
+    print "Error: {0}\n".format(err_msg)
+    print usage(_THE_NETWORK)
+    sys.exit(1)
+
 def runConfigFile(verb, f):
     _GLOBALS = dict(_BASE_ENVIRON=_BASE_ENVIRON,
                     Node=Node,
@@ -883,6 +888,13 @@ def runConfigFile(verb, f):
     return getattr(network, verb)()
 
 
+def parseArgs():
+    if len(sys.argv) < 3:
+        exit_on_error("Not enough arguments given.")
+    if not os.path.isfile(sys.argv[2]):
+        exit_on_error("Cannot find networkfile: {0}.".format(sys.argv[2]))
+    return {'network_cfg': sys.argv[2], 'action': sys.argv[1]}
+
 def main():
     global _BASE_ENVIRON
     global _TORRC_OPTIONS
@@ -894,13 +906,9 @@ def main():
     _TORRC_OPTIONS = dict()
     _THE_NETWORK = Network(_BASE_ENVIRON)
 
-    if len(sys.argv) < 3:
-        print usage(_THE_NETWORK)
-        print "Error: Not enough arguments given."
-        sys.exit(1)
-
-    f = open(sys.argv[2])
-    result = runConfigFile(sys.argv[1], f)
+    args = parseArgs()
+    f = open(args['network_cfg'])
+    result = runConfigFile(args['action'], f)
     if result is False:
         return -1
     return 0
