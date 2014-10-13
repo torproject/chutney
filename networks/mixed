@@ -8,7 +8,7 @@ OldRelay = Node(tag="rOLD", relay=1, torrc="relay.tmpl", tor=OLD_TOR)
 Client = Node(tag="c", torrc="client.tmpl")
 OldClient = Node(tag="cOLD", torrc="client.tmpl", tor=OLD_TOR)
 
-NODES = (Authority.getN(2) + OldAuthority.getN(2) + OldRelay.getN(3) +
-      Relay.getN(3) + Client.getN(2) + OldClient.getN(2))
+NODES = (Authority.getN(2) + OldAuthority.getN(2) + OldRelay.getN(4) +
+      Relay.getN(4) + Client.getN(2) + OldClient.getN(2))
 
 ConfigureNodes(NODES)
