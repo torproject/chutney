@@ -20,6 +20,7 @@ import sys
 import re
 import errno
 import time
+import shutil
 
 import chutney.Templating
 import chutney.Traffic
@@ -747,11 +748,11 @@ class Network(object):
             n.getBuilder().checkConfig(self)
 
     def configure(self):
+        shutil.rmtree(os.path.join(os.getcwd(),'net','nodes'),ignore_errors=True)
         network = self
         altauthlines = []
         bridgelines = []
         builders = [n.getBuilder() for n in self._nodes]
-
         self._checkConfig()
 
         # XXX don't change node names or types or count if anything is
