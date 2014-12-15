@@ -395,7 +395,10 @@ class LocalNodeBuilder(NodeBuilder):
                 raise
         stdout, stderr = p.communicate()
         fingerprint = "".join(stdout.split()[1:])
-        assert re.match(r'^[A-F0-9]{40}$', fingerprint)
+        if not re.match(r'^[A-F0-9]{40}$', fingerprint):
+            print (("Error when calling %r. It gave %r as a fingerprint "
+                    " and %r on stderr.")%(" ".join(cmdline), stdout, stderr))
+            sys.exit(1)
         self._env['fingerprint'] = fingerprint
 
     def _getAltAuthLines(self, hasbridgeauth=False):
