@@ -199,6 +199,7 @@ class LocalNodeBuilder(NodeBuilder):
     # bridgeauthority -- bool -- are we a bridge authority?
     # relay -- bool -- are we a relay?
     # bridge -- bool -- are we a bridge?
+    # hs -- bool -- are we a hidden service?
     # nodenum -- int -- set by chutney -- which unique node index is this?
     # dir -- path -- set by chutney -- data directory for this tor
     # tor_gencert -- path to tor_gencert binary
@@ -319,6 +320,8 @@ class LocalNodeBuilder(NodeBuilder):
             self._genAuthorityKey()
         if self._env['relay']:
             self._genRouterKey()
+        if self._env['hs']:
+            self._makeHiddenServiceDir()
 
     def config(self, net):
         """Called to configure a node: creates a torrc file for it."""
@@ -335,6 +338,20 @@ class LocalNodeBuilder(NodeBuilder):
         """
         datadir = self._env['dir']
         mkdir_p(os.path.join(datadir, 'keys'))
+
+    def _makeHiddenServiceDir(self):
+        """Create the hidden service subdirectory for this node.
+          
+          The directory name is stored under the 'hs_directory' environment
+          key. It is combined with the 'dir' data directory key to yield the
+          path to the hidden service directory.
+          
+          448 is the decimal representation of the octal number 0700. Since
+          python2 only supports 0700 and python3 only supports 0o700, we can
+          use neither.
+        """
+        datadir = self._env['dir']
+        mkdir_p(os.path.join(datadir, self._env['hs_directory']), 448)
 
     def _genAuthorityKey(self):
         """Generate an authority identity and signing key for this authority,
@@ -647,6 +664,8 @@ DEFAULTS = {
     'hasbridgeauth': False,
     'relay': False,
     'bridge': False,
+    'hs': False,
+    'hs_directory': 'hidden_service',
     'connlimit': 60,
     'net_base_dir': 'net',
     'tor': os.environ.get('CHUTNEY_TOR', 'tor'),
