@@ -7,6 +7,7 @@
 #  restrict, so long as you retain the above notice(s) and this license
 #  in all redistributed copies and derived works.  There is no warranty.
 
+from __future__ import print_function
 from __future__ import with_statement
 
 # Get verbose tracebacks, so we can diagnose better.
@@ -29,13 +30,17 @@ _TORRC_OPTIONS = None
 _THE_NETWORK = None
 
 
-def mkdir_p(d, mode=0777):
+def mkdir_p(d, mode=511):
     """Create directory 'd' and all of its parents as needed.  Unlike
        os.makedirs, does not give an error if d already exists.
+
+       511 is the decimal representation of the octal number 0777. Since
+       python2 only supports 0777 and python3 only supports 0o777, we can use
+       neither.
     """
     try:
         os.makedirs(d, mode=mode)
-    except OSError, e:
+    except OSError as e:
         if e.errno == errno.EEXIST:
             return
         raise
@@ -66,7 +71,7 @@ class Node(object):
         self._controller = None
 
     def getN(self, N):
-        return [Node(self) for _ in xrange(N)]
+        return [Node(self) for _ in range(N)]
 
     def specialize(self, **kwargs):
         return Node(parent=self, **kwargs)
@@ -352,16 +357,16 @@ class LocalNodeBuilder(NodeBuilder):
             '-c', certfile,
             '-m', str(lifetime),
             '-a', addr]
-        print "Creating identity key %s for %s with %s" % (
-            idfile, self._env['nick'], " ".join(cmdline))
+        print("Creating identity key %s for %s with %s" % (
+            idfile, self._env['nick'], " ".join(cmdline)))
         try:
             p = subprocess.Popen(cmdline, stdin=subprocess.PIPE)
         except OSError as e:
             # only catch file not found error
             if e.errno == errno.ENOENT:
-                print ("Cannot find tor-gencert binary %r. Use "
-                       "CHUTNEY_TOR_GENCERT environment variable to set the "
-                       "path, or put the binary into $PATH.") % tor_gencert
+                print("Cannot find tor-gencert binary %r. Use "
+                      "CHUTNEY_TOR_GENCERT environment variable to set the "
+                      "path, or put the binary into $PATH.") % tor_gencert
                 sys.exit(0)
             else:
                 raise
@@ -387,9 +392,9 @@ class LocalNodeBuilder(NodeBuilder):
         except OSError as e:
             # only catch file not found error
             if e.errno == errno.ENOENT:
-                print ("Cannot find tor binary %r. Use "
-                       "CHUTNEY_TOR environment variable to set the "
-                       "path, or put the binary into $PATH.") % tor
+                print("Cannot find tor binary %r. Use "
+                      "CHUTNEY_TOR environment variable to set the "
+                      "path, or put the binary into $PATH.") % tor
                 sys.exit(0)
             else:
                 raise
@@ -488,7 +493,7 @@ class LocalNodeController(NodeController):
 
         try:
             os.kill(pid, 0)  # "kill 0" == "are you there?"
-        except OSError, e:
+        except OSError as e:
             if e.errno == errno.ESRCH:
                 return False
             raise
@@ -508,18 +513,19 @@ class LocalNodeController(NodeController):
         pid = self.getPid()
         nick = self._env['nick']
         datadir = self._env['dir']
+        corefile = "core.%s" % pid
         if self.isRunning(pid):
             if listRunning:
-                print "%s is running with PID %s" % (nick, pid)
+                print("%s is running with PID %s" % (nick, pid))
             return True
-        elif os.path.exists(os.path.join(datadir, "core.%s" % pid)):
+        elif os.path.exists(os.path.join(datadir, corefile)):
             if listNonRunning:
-                print "%s seems to have crashed, and left core file core.%s" % (
-                    nick, pid)
+                print("%s seems to have crashed, and left core file %s" % (
+                    nick, corefile))
             return False
         else:
             if listNonRunning:
-                print "%s is stopped" % nick
+                print("%s is stopped" % nick)
             return False
 
     def hup(self):
@@ -527,11 +533,11 @@ class LocalNodeController(NodeController):
         pid = self.getPid()
         nick = self._env['nick']
         if self.isRunning(pid):
-            print "Sending sighup to %s" % nick
+            print("Sending sighup to %s" % nick)
             os.kill(pid, signal.SIGHUP)
             return True
         else:
-            print "%s is not running" % nick
+            print("%s is not running" % nick)
             return False
 
     def start(self):
@@ -539,7 +545,7 @@ class LocalNodeController(NodeController):
            already running, False if we failed."""
 
         if self.isRunning():
-            print "%s is already running" % self._env['nick']
+            print("%s is already running" % self._env['nick'])
             return True
         tor_path = self._env['tor']
         torrc = self._getTorrcFname()
@@ -553,9 +559,9 @@ class LocalNodeController(NodeController):
         except OSError as e:
             # only catch file not found error
             if e.errno == errno.ENOENT:
-                print ("Cannot find tor binary %r. Use CHUTNEY_TOR "
-                       "environment variable to set the path, or put the binary "
-                       "into $PATH.") % tor_path
+                print("Cannot find tor binary %r. Use CHUTNEY_TOR "
+                      "environment variable to set the path, or put the "
+                      "binary into $PATH.") % tor_path
                 sys.exit(0)
             else:
                 raise
@@ -578,16 +584,16 @@ class LocalNodeController(NodeController):
             p.poll()
         if p.returncode != None and p.returncode != 0:
             if self._env['poll_launch_time'] is None:
-                print "Couldn't launch %s (%s): %s" % (self._env['nick'],
+                print("Couldn't launch %s (%s): %s" % (self._env['nick'],
                                                        " ".join(cmdline),
-                                                       p.returncode)
+                                                       p.returncode))
             else:
-                print ("Couldn't poll %s (%s) "
+                print("Couldn't poll %s (%s) "
                        "after waiting %s seconds for launch"
-                       ": %s") % (self._env['nick'],
+                       ": %s" % (self._env['nick'],
                                   " ".join(cmdline),
                                   self._env['poll_launch_time'],
-                                  p.returncode)
+                                  p.returncode))
             return False
         return True
 
@@ -595,17 +601,16 @@ class LocalNodeController(NodeController):
         """Try to stop this node by sending it the signal 'sig'."""
         pid = self.getPid()
         if not self.isRunning(pid):
-            print "%s is not running" % self._env['nick']
+            print("%s is not running" % self._env['nick'])
             return
         os.kill(pid, sig)
 
     def cleanup_lockfile(self):
         lf = self._env['lockfile']
-        if self.isRunning() or (not os.path.exists(lf)):
-            return
-        print 'Removing stale lock file for {0} ...'.format(
-            self._env['nick'])
-        os.remove(lf)
+        if not self.isRunning() and os.path.exists(lf):
+            print('Removing stale lock file for {0} ...'.format(
+                self._env['nick']))
+            os.remove(lf)
 
     def waitOnLaunch(self):
         """Check whether we can wait() for the tor process to launch"""
@@ -709,16 +714,14 @@ class TorEnviron(chutney.Templating.Environ):
     def _get_dir(self, my):
         return os.path.abspath(os.path.join(my['net_base_dir'],
                                             "nodes",
-                                            "%03d%s" % (my['nodenum'], my['tag'])))
+                                            "%03d%s" % (
+                                                my['nodenum'], my['tag'])))
 
     def _get_nick(self, my):
         return "test%03d%s" % (my['nodenum'], my['tag'])
 
     def _get_tor_gencert(self, my):
-        if my['tor-gencert']:
-            return my['tor-gencert']
-        else:
-            return '{0}-gencert'.format(my['tor'])
+        return my['tor-gencert'] or '{0}-gencert'.format(my['tor'])
 
     def _get_auth_passphrase(self, my):
         return self['nick']  # OMG TEH SECURE!
@@ -778,10 +781,8 @@ class Network(object):
     def status(self):
         statuses = [n.getController().check() for n in self._nodes]
         n_ok = len([x for x in statuses if x])
-        print "%d/%d nodes are running" % (n_ok, len(self._nodes))
-        if n_ok != len(self._nodes):
-            return False
-        return True
+        print("%d/%d nodes are running" % (n_ok, len(self._nodes)))
+        return n_ok == len(self._nodes)
 
     def restart(self):
         self.stop()
@@ -793,17 +794,17 @@ class Network(object):
             sys.stdout.write("Starting nodes")
             sys.stdout.flush()
         else:
-            print "Starting nodes"
+            print("Starting nodes")
         rv = all([n.getController().start() for n in self._nodes])
         # now print a newline unconditionally - this stops poll()ing
         # output from being squashed together, at the cost of a blank
         # line in wait()ing output
-        print ""
+        print("")
         return rv
     
 
     def hup(self):
-        print "Sending SIGHUP to nodes"
+        print("Sending SIGHUP to nodes")
         return all([n.getController().hup() for n in self._nodes])
 
     def stop(self):
@@ -811,12 +812,12 @@ class Network(object):
         for sig, desc in [(signal.SIGINT, "SIGINT"),
                           (signal.SIGINT, "another SIGINT"),
                           (signal.SIGKILL, "SIGKILL")]:
-            print "Sending %s to nodes" % desc
+            print("Sending %s to nodes" % desc)
             for c in controllers:
                 if c.isRunning():
                     c.stop(sig=sig)
-            print "Waiting for nodes to finish."
-            for n in xrange(15):
+            print("Waiting for nodes to finish.")
+            for n in range(15):
                 time.sleep(1)
                 if all(not c.isRunning() for c in controllers):
                     # check for stale lock file when Tor crashes
@@ -832,10 +833,7 @@ class Network(object):
         sys.stdout.write("Verifying data transmission: ")
         sys.stdout.flush()
         status = self._verify_traffic()
-        if status:
-            print("Success")
-        else:
-            print("Failure")
+        print("Success" if status else "Failure")
         return status
 
     def _verify_traffic(self):
@@ -850,7 +848,8 @@ class Network(object):
         tt = chutney.Traffic.TrafficTester(bind_to, tmpdata, TIMEOUT)
         for op in filter(lambda n: n._env['tag'] == 'c', self._nodes):
             tt.add(chutney.Traffic.Source(tt, bind_to, tmpdata,
-                                          ('localhost', int(op._env['socksport']))))
+                                          ('localhost',
+                                           int(op._env['socksport']))))
         return tt.run()
 
 
@@ -866,7 +865,8 @@ def ConfigureNodes(nodelist):
 def usage(network):
     return "\n".join(["Usage: chutney {command} {networkfile}",
                       "Known commands are: %s" % (
-                          " ".join(x for x in dir(network) if not x.startswith("_")))])
+                          " ".join(x for x in dir(network)
+                                   if not x.startswith("_")))])
 
 
 def exit_on_error(err_msg):
@@ -874,18 +874,21 @@ def exit_on_error(err_msg):
     print usage(_THE_NETWORK)
     sys.exit(1)
 
-def runConfigFile(verb, f):
+def runConfigFile(verb, path):
     _GLOBALS = dict(_BASE_ENVIRON=_BASE_ENVIRON,
                     Node=Node,
                     ConfigureNodes=ConfigureNodes,
                     _THE_NETWORK=_THE_NETWORK)
 
-    exec f in _GLOBALS
+    with open(path) as f:
+        data = f.read()
+
+    exec(data, _GLOBALS)
     network = _GLOBALS['_THE_NETWORK']
 
     if not hasattr(network, verb):
-        print usage(network)
-        print "Error: I don't know how to %s." % verb
+        print(usage(network))
+        print("Error: I don't know how to %s." % verb)
         return
 
     return getattr(network, verb)()

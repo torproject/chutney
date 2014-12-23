@@ -20,6 +20,9 @@
 #
 # For example code, see main() below.
 
+from __future__ import print_function
+
+import sys
 import socket
 import select
 import struct
@@ -152,8 +155,7 @@ class Sink(Peer):
         if len(self.inbuf) == len(data):
             if self.inbuf != data:
                 return -1       # Failed verification.
-            else:
-                debug("successful verification")
+            debug("successful verification")
         return len(data) - len(self.inbuf)
 
 
@@ -178,13 +180,10 @@ class Source(Peer):
     def connect(self, endpoint):
         self.dest = endpoint
         self.state = self.CONNECTING
-        if self.proxy is None:
-            dest = self.dest
-        else:
-            dest = self.proxy
+        dest = self.proxy or self.dest
         try:
             self.s.connect(dest)
-        except socket.error, e:
+        except socket.error as e:
             if e[0] != errno.EINPROGRESS:
                 raise
 
@@ -213,11 +212,7 @@ class Source(Peer):
         return 1                # Keep us around for writing.
 
     def want_to_write(self):
-        if self.state == self.CONNECTING:
-            return True
-        if len(self.outbuf) > 0:
-            return True
-        return False
+        return self.state == self.CONNECTING or len(self.outbuf) > 0
 
     def on_writable(self):
         """Invoked when the socket becomes writable.
@@ -235,7 +230,7 @@ class Source(Peer):
                 self.outbuf = socks_cmd(self.dest)
         try:
             n = self.s.send(self.outbuf)
-        except socket.error, e:
+        except socket.error as e:
             if e[0] == errno.ECONNREFUSED:
                 debug("connection refused (fd=%d)" % self.fd())
                 return -1
@@ -284,9 +279,7 @@ class TrafficTester():
         self.pending_close.append(peer.s)
 
     def run(self):
-        while True:
-            if self.tests.all_done() or self.timeout == 0:
-                break
+        while not self.tests.all_done() and self.timeout > 0:
             rset = [self.listener.fd()] + list(self.peers)
             wset = [p.fd() for p in
                     filter(lambda x: x.want_to_write(), self.sources())]
@@ -328,8 +321,6 @@ class TrafficTester():
         for s in self.pending_close:
             s.close()
         return self.tests.all_done() and self.tests.failure_count() == 0
-
-import sys
 
 
 def main():

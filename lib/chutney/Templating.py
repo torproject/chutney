@@ -76,6 +76,7 @@
 
 """
 
+from __future__ import print_function
 from __future__ import with_statement
 
 import string
@@ -369,9 +370,9 @@ if __name__ == '__main__':
     if len(sys.argv) == 1:
         import doctest
         doctest.testmod()
-        print "done"
+        print("done")
     else:
         for fn in sys.argv[1:]:
             with open(fn, 'r') as f:
                 t = Template(f.read())
-                print fn, t.freevars()
+                print(fn, t.freevars())
