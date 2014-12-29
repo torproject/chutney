@@ -23,11 +23,7 @@ myname=$(basename "$0")
 flavour=basic; [ -n "$1" ] && { flavour=$1; shift; }
 
 $CHUTNEY stop networks/$flavour
-[ -d net/nodes ] && {
-    DEST=net/nodes.$(date +%s)
-    echo "$myname: NOTE: renaming net/nodes to $DEST"
-    mv net/nodes $DEST
-}
+
 echo "$myname: boostrapping network: $flavour"
 $CHUTNEY configure networks/$flavour
 
