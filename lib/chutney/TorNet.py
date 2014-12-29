@@ -749,12 +749,28 @@ class Network(object):
         self._nextnodenum += 1
         self._nodes.append(n)
 
+    def move_aside_nodes(self):
+        nodesdir = os.path.join(os.getcwd(),'net','nodes')
+
+        if not os.path.exists(nodesdir):
+            return
+
+        newdir = newdirbase = "%s.%d" % (nodesdir, time.time())
+        i = 0
+        while os.path.exists(newdir):
+            i += 1
+            newdir = "%s.%d" %(newdirbase, i)
+
+        print ("NOTE: renaming %r to %r"%(nodesdir, newdir))
+        os.rename(nodesdir, newdir)
+
     def _checkConfig(self):
         for n in self._nodes:
             n.getBuilder().checkConfig(self)
 
     def configure(self):
-        shutil.rmtree(os.path.join(os.getcwd(),'net','nodes'),ignore_errors=True)
+        # shutil.rmtree(os.path.join(os.getcwd(),'net','nodes'),ignore_errors=True)
+        self.move_aside_nodes()
         network = self
         altauthlines = []
         bridgelines = []
