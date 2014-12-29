@@ -285,9 +285,9 @@ class LocalNodeBuilder(NodeBuilder):
                     # well, this could get spammy
                     # TODO: warn once per option per tor binary
                     # TODO: print tor version?
-                    print ("The tor binary at %r does not support the "
+                    print (("The tor binary at %r does not support the "
                            "option in the torrc line:\n"
-                           "%r") % (tor, line.strip())
+                           "%r") % (tor, line.strip()))
                     # we could decide to skip these lines entirely
                     # TODO: write tor version?
                     f.writelines(["# " + tor + " unsupported: " + line])
@@ -887,18 +887,15 @@ def usage(network):
 
 
 def exit_on_error(err_msg):
-    print "Error: {0}\n".format(err_msg)
-    print usage(_THE_NETWORK)
+    print ("Error: {0}\n".format(err_msg))
+    print (usage(_THE_NETWORK))
     sys.exit(1)
 
-def runConfigFile(verb, path):
+def runConfigFile(verb, data):
     _GLOBALS = dict(_BASE_ENVIRON=_BASE_ENVIRON,
                     Node=Node,
                     ConfigureNodes=ConfigureNodes,
                     _THE_NETWORK=_THE_NETWORK)
-
-    with open(path) as f:
-        data = f.read()
 
     exec(data, _GLOBALS)
     network = _GLOBALS['_THE_NETWORK']
