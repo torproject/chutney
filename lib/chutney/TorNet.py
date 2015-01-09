@@ -882,7 +882,9 @@ class Network(object):
             tmpdata = randfp.read(DATALEN)
         bind_to = ('127.0.0.1', LISTEN_PORT)
         tt = chutney.Traffic.TrafficTester(bind_to, tmpdata, TIMEOUT)
-        for op in filter(lambda n: n._env['tag'] == 'c', self._nodes):
+        for op in filter(lambda n:
+                         n._env['tag'] == 'c' or n._env['tag'] == 'bc',
+                         self._nodes):
             tt.add(chutney.Traffic.Source(tt, bind_to, tmpdata,
                                           ('localhost',
                                            int(op._env['socksport']))))
