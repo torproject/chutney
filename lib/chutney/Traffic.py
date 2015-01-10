@@ -56,6 +56,7 @@ def socks_cmd(addr_port):
     except socket.error:
         addr = '\x00\x00\x00\x01'
         dnsname = '%s\x00' % host
+    debug("Socks 4a request to %s:%d" % (host, port))
     return struct.pack('!BBH', ver, cmd, port) + addr + user + dnsname
 
 

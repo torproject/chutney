@@ -312,8 +312,8 @@ class LocalNodeBuilder(NodeBuilder):
         self._createTorrcFile(checkOnly=True)
 
     def preConfig(self, net):
-        """Called on all nodes before any nodes configure: generates keys as
-           needed.
+        """Called on all nodes before any nodes configure: generates keys and
+           hidden service directories as needed.
         """
         self._makeDataDir()
         if self._env['authority']:
@@ -666,6 +666,7 @@ DEFAULTS = {
     'bridge': False,
     'hs': False,
     'hs_directory': 'hidden_service',
+    'hs-hostname': None,
     'connlimit': 60,
     'net_base_dir': 'net',
     'tor': os.environ.get('CHUTNEY_TOR', 'tor'),
@@ -705,13 +706,19 @@ class TorEnviron(chutney.Templating.Environ):
           tor_gencert:
           auth_passphrase:
           torrc_template_path:
+          hs_hostname:
 
        Environment fields used:
           nodenum
           tag
           orport_base, controlport_base, socksport_base, dirport_base
+          tor-gencert (note hyphen)
           chutney_dir
           tor
+          dir
+          hs_directory
+          nick (debugging only)
+          hs-hostname (note hyphen)
 
        XXXX document the above.  Or document all fields in one place?
     """
@@ -751,6 +758,29 @@ class TorEnviron(chutney.Templating.Environ):
 
     def _get_lockfile(self, my):
         return os.path.join(self['dir'], 'lock')
+
+    # A hs generates its key on first run,
+    # so check for it at the last possible moment,
+    # but cache it in memory to avoid repeatedly reading the file
+    # XXXX - this is not like the other functions in this class,
+    # as it reads from a file created by the hidden service
+    def _get_hs_hostname(self, my):
+        if my['hs-hostname'] is None:
+            datadir = my['dir']
+            # a file containing a single line with the hs' .onion address
+            hs_hostname_file = os.path.join(datadir,
+                                            my['hs_directory'],
+                                            'hostname')
+            try:
+                with open(hs_hostname_file, 'r') as hostnamefp:
+                    hostname = hostnamefp.read()
+                # the hostname file ends with a newline
+                hostname = hostname.strip()
+                my['hs-hostname'] = hostname
+            except IOError as e:
+                print("Error: hs %r error %d: %r opening hostname file '%r'"
+                      %(my['nick'], e.errno, e.strerror, hs_hostname_file))
+        return my['hs-hostname']
 
 
 class Network(object):
@@ -866,28 +896,57 @@ class Network(object):
                 c.check(listNonRunning=False)
 
     def verify(self):
-        sys.stdout.write("Verifying data transmission: ")
-        sys.stdout.flush()
+        print("Verifying data transmission:")
         status = self._verify_traffic()
-        print("Success" if status else "Failure")
+        print("Transmission: %s" % ("Success" if status else "Failure"))
         return status
 
     def _verify_traffic(self):
         """Verify (parts of) the network by sending traffic through it
         and verify what is received."""
-        LISTEN_PORT = 4747  # FIXME: Do better! Note the default exit policy.
+        LISTEN_PORT = 4747 # FIXME: Do better! Note the default exit policy.
+        # HSs must have a HiddenServiceDir with
+        # "HiddenServicePort <HS_PORT> 127.0.0.1:<LISTEN_PORT>"
+        HS_PORT = 5858
         DATALEN = 10 * 1024               # Octets.
         TIMEOUT = 3                     # Seconds.
         with open('/dev/urandom', 'r') as randfp:
             tmpdata = randfp.read(DATALEN)
         bind_to = ('127.0.0.1', LISTEN_PORT)
         tt = chutney.Traffic.TrafficTester(bind_to, tmpdata, TIMEOUT)
-        for op in filter(lambda n:
-                         n._env['tag'] == 'c' or n._env['tag'] == 'bc',
-                         self._nodes):
+        client_list = filter(lambda n:
+                             n._env['tag'] == 'c' or n._env['tag'] == 'bc',
+                             self._nodes)
+        if len(client_list) == 0:
+            print("  Unable to verify network: no client nodes available")
+            return False
+        # Each client binds directly to 127.0.0.1:LISTEN_PORT via an Exit relay
+        for op in client_list:
+            print("  Exit to %s:%d via client %s:%s"
+                   % ('127.0.0.1', LISTEN_PORT,
+                      'localhost', op._env['socksport']))
             tt.add(chutney.Traffic.Source(tt, bind_to, tmpdata,
                                           ('localhost',
                                            int(op._env['socksport']))))
+        # The HS redirects .onion connections made to hs_hostname:HS_PORT
+        # to the Traffic Tester's 127.0.0.1:LISTEN_PORT
+        # We must have at least one working client for the hs test to succeed
+        for hs in filter(lambda n:
+                         n._env['tag'] == 'h',
+                         self._nodes):
+            # Instead of binding directly to LISTEN_PORT via an Exit relay,
+            # we bind to hs_hostname:HS_PORT via a hidden service connection
+            # through the first available client
+            bind_to = (hs._env['hs_hostname'], HS_PORT)
+            # Just choose the first client
+            client = client_list[0]
+            print("  HS to %s:%d (%s:%d) via client %s:%s"
+                  % (hs._env['hs_hostname'], HS_PORT,
+                     '127.0.0.1', LISTEN_PORT,
+                     'localhost', client._env['socksport']))
+            tt.add(chutney.Traffic.Source(tt, bind_to, tmpdata,
+                                          ('localhost',
+                                           int(client._env['socksport']))))
         return tt.run()
 
 

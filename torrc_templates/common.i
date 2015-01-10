@@ -1,11 +1,13 @@
 TestingTorNetwork 1
 
 ## Comprehensive Bootstrap Testing Options ##
-# These typically launch a working minimal Tor network in 25s-30s
+# These typically launch a working minimal Tor network in 25s-30s,
+# and a working HS Tor network in 40-45s.
 # See authority.tmpl for a partial explanation
 #AssumeReachable 0
 #Default PathsNeededToBuildCircuits 0.6
 #Disable TestingDirAuthVoteExit
+#Disable TestingDirAuthVoteHSDir
 #Default V3AuthNIntervalsValid 3
 
 ## Rapid Bootstrap Testing Options ##
@@ -16,6 +18,7 @@ TestingTorNetwork 1
 AssumeReachable 1
 PathsNeededToBuildCircuits 0.25
 TestingDirAuthVoteExit *
+TestingDirAuthVoteHSDir *
 V3AuthNIntervalsValid 2
 
 ## Always On Testing Options ##
@@ -23,6 +26,8 @@ V3AuthNIntervalsValid 2
 TestingDirAuthVoteGuard *
 # We set TestingMinExitFlagThreshold to 0 to avoid Exit bandwidth requirements
 TestingMinExitFlagThreshold 0
+# VoteOnHidServDirectoriesV2 needs to be set for HSDirs to get the HSDir flag
+#Default VoteOnHidServDirectoriesV2 1
 
 DataDirectory $dir
 RunAsDaemon 1
