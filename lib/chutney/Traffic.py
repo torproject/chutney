@@ -47,8 +47,8 @@ def socks_cmd(addr_port):
     SOCKSv4: https://en.wikipedia.org/wiki/SOCKS#Protocol
     SOCKSv5: RFC1928, RFC1929
     """
-    ver = 4                     # Only SOCKSv4 for now.
-    cmd = 1                     # Stream connection.
+    ver = 4  # Only SOCKSv4 for now.
+    cmd = 1  # Stream connection.
     user = '\x00'
     dnsname = ''
     host, port = addr_port
@@ -101,7 +101,7 @@ class Peer(object):
 
     def __init__(self, ptype, tt, s=None):
         self.type = ptype
-        self.tt = tt            # TrafficTester
+        self.tt = tt  # TrafficTester
         if s is not None:
             self.s = s
         else:
@@ -156,18 +156,17 @@ class Sink(Peer):
         # shortcut read when we don't ever expect any data
         if self.repetitions == 0 or len(self.tt.data) == 0:
             debug("no verification required - no data")
-            return 0;
+            return 0
         self.inbuf += self.s.recv(len(data) - len(self.inbuf))
         debug("successfully received (bytes=%d)" % len(self.inbuf))
         while len(self.inbuf) >= len(data):
             assert(len(self.inbuf) <= len(data) or self.repetitions > 1)
             if self.inbuf[:len(data)] != data:
                 debug("receive comparison failed (bytes=%d)" % len(data))
-                return -1       # Failed verification.
+                return -1  # Failed verification.
             # if we're not debugging, print a dot every dot_repetitions reps
-            elif (not debug_flag
-                  and self.tt.dot_repetitions > 0
-                  and self.repetitions % self.tt.dot_repetitions == 0):
+            elif (not debug_flag and self.tt.dot_repetitions > 0 and
+                  self.repetitions % self.tt.dot_repetitions == 0):
                 sys.stdout.write('.')
                 sys.stdout.flush()
             # repeatedly check data against self.inbuf if required
@@ -246,11 +245,11 @@ class Source(Peer):
                     return -1
             assert(8 - len(self.inbuf) > 0)
             return 8 - len(self.inbuf)
-        return self.want_to_write()     # Keep us around for writing if needed
+        return self.want_to_write()  # Keep us around for writing if needed
 
     def want_to_write(self):
-        return (self.state == self.CONNECTING or len(self.outbuf) > 0
-                or (self.repetitions > 0 and len(self.data) > 0))
+        return (self.state == self.CONNECTING or len(self.outbuf) > 0 or
+                (self.repetitions > 0 and len(self.data) > 0))
 
     def on_writable(self):
         """Invoked when the socket becomes writable.
@@ -287,18 +286,19 @@ class Source(Peer):
         # it should print length of the data sent
         # but the code works as long as this doesn't keep on happening
         if n > 0:
-          debug("successfully sent (bytes=%d)" % n)
-          self._sent_no_bytes = 0
+            debug("successfully sent (bytes=%d)" % n)
+            self._sent_no_bytes = 0
         else:
-          debug("BUG: sent no bytes")
-          self._sent_no_bytes += 1
-          if self._sent_no_bytes >= 10:
-            print("Send no data %d times. Stalled." % (self._sent_no_bytes))
-            sys.exit(-1)
-          time.sleep(1)
+            debug("BUG: sent no bytes")
+            self._sent_no_bytes += 1
+            if self._sent_no_bytes >= 10:
+                print("Send no data %d times. Stalled." %
+                      (self._sent_no_bytes))
+                sys.exit(-1)
+            time.sleep(1)
         self.outbuf = self.outbuf[n:]
         if self.state == self.CONNECTING_THROUGH_PROXY:
-            return 1            # Keep us around.
+            return 1  # Keep us around.
         debug("bytes remaining on outbuf (bytes=%d)" % len(self.outbuf))
         # calculate the actual length of data remaining, including reps
         # When 0, we're being removed.
@@ -336,7 +336,7 @@ class TrafficTester():
             self.data = {}
         self.dot_repetitions = dot_repetitions
         debug("listener fd=%d" % self.listener.fd())
-        self.peers = {}         # fd:Peer
+        self.peers = {}  # fd:Peer
 
     def sinks(self):
         return self.get_by_ptype(Peer.SINK)
@@ -385,7 +385,7 @@ class TrafficTester():
                         print("verification failed!")
                     self.remove(p)
 
-            for fd in sets[1]:             # writable fd's
+            for fd in sets[1]:  # writable fd's
                 p = self.peers.get(fd)
                 if p is not None:  # Might have been removed above.
                     n = p.on_writable()

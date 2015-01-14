@@ -10,10 +10,7 @@
 from __future__ import print_function
 from __future__ import with_statement
 
-# Get verbose tracebacks, so we can diagnose better.
 import cgitb
-cgitb.enable(format="plain")
-
 import os
 import signal
 import subprocess
@@ -29,6 +26,9 @@ import chutney.Traffic
 _BASE_ENVIRON = None
 _TORRC_OPTIONS = None
 _THE_NETWORK = None
+
+# Get verbose tracebacks, so we can diagnose better.
+cgitb.enable(format="plain")
 
 
 def mkdir_p(d, mode=511):
@@ -244,15 +244,14 @@ class LocalNodeBuilder(NodeBuilder):
                 "--list-torrc-options",
                 "--hush"]
             try:
-                opts = subprocess.check_output(cmdline,
-                                               bufsize=-1,
+                opts = subprocess.check_output(cmdline, bufsize=-1,
                                                universal_newlines=True)
             except OSError as e:
                 # only catch file not found error
                 if e.errno == errno.ENOENT:
-                    print ("Cannot find tor binary %r. Use "
-                           "CHUTNEY_TOR environment variable to set the "
-                           "path, or put the binary into $PATH." % tor)
+                    print("Cannot find tor binary %r. Use "
+                          "CHUTNEY_TOR environment variable to set the "
+                          "path, or put the binary into $PATH." % tor)
                     sys.exit(0)
                 else:
                     raise
@@ -278,15 +277,15 @@ class LocalNodeBuilder(NodeBuilder):
                 # check if the first word on the line is a supported option,
                 # preserving empty lines and comment lines
                 sline = line.strip()
-                if (len(sline) == 0
-                    or sline[0] == '#'
-                    or sline.split()[0].lower() in lower_opts):
+                if (len(sline) == 0 or
+                        sline[0] == '#' or
+                        sline.split()[0].lower() in lower_opts):
                     f.writelines([line])
                 else:
                     # well, this could get spammy
                     # TODO: warn once per option per tor binary
                     # TODO: print tor version?
-                    print (("The tor binary at %r does not support the "
+                    print(("The tor binary at %r does not support the "
                            "option in the torrc line:\n"
                            "%r") % (tor, line.strip()))
                     # we could decide to skip these lines entirely
@@ -341,11 +340,11 @@ class LocalNodeBuilder(NodeBuilder):
 
     def _makeHiddenServiceDir(self):
         """Create the hidden service subdirectory for this node.
-          
+
           The directory name is stored under the 'hs_directory' environment
           key. It is combined with the 'dir' data directory key to yield the
           path to the hidden service directory.
-          
+
           448 is the decimal representation of the octal number 0700. Since
           python2 only supports 0700 and python3 only supports 0o700, we can
           use neither.
@@ -420,8 +419,8 @@ class LocalNodeBuilder(NodeBuilder):
         stdout, stderr = p.communicate()
         fingerprint = "".join((stdout.rstrip().split('\n')[-1]).split()[1:])
         if not re.match(r'^[A-F0-9]{40}$', fingerprint):
-            print (("Error when calling %r. It gave %r as a fingerprint "
-                    " and %r on stderr.")%(" ".join(cmdline), stdout, stderr))
+            print(("Error when calling %r. It gave %r as a fingerprint "
+                   " and %r on stderr.") % (" ".join(cmdline), stdout, stderr))
             sys.exit(1)
         self._env['fingerprint'] = fingerprint
 
@@ -601,18 +600,18 @@ class LocalNodeController(NodeController):
             sys.stdout.flush()
             time.sleep(self._env['poll_launch_time'])
             p.poll()
-        if p.returncode != None and p.returncode != 0:
+        if p.returncode is not None and p.returncode != 0:
             if self._env['poll_launch_time'] is None:
                 print("Couldn't launch %s (%s): %s" % (self._env['nick'],
                                                        " ".join(cmdline),
                                                        p.returncode))
             else:
                 print("Couldn't poll %s (%s) "
-                       "after waiting %s seconds for launch"
-                       ": %s" % (self._env['nick'],
-                                  " ".join(cmdline),
-                                  self._env['poll_launch_time'],
-                                  p.returncode))
+                      "after waiting %s seconds for launch"
+                      ": %s" % (self._env['nick'],
+                                " ".join(cmdline),
+                                self._env['poll_launch_time'],
+                                p.returncode))
             return False
         return True
 
@@ -643,21 +642,22 @@ class LocalNodeController(NodeController):
                 if len(stline) > 0:
                     splline = stline.split()
                     # if the line has at least two tokens on it
-                    if (len(splline) > 0
-                        and splline[0].lower() == "RunAsDaemon".lower()
-                        and splline[1] == "1"):
+                    if (len(splline) > 0 and
+                            splline[0].lower() == "RunAsDaemon".lower() and
+                            splline[1] == "1"):
                         # use the RunAsDaemon value from the torrc
                         # TODO: multiple values?
                         runAsDaemon = True
         if runAsDaemon:
             # we must use wait() instead of poll()
             self._env['poll_launch_time'] = None
-            return True;
+            return True
         else:
             # we must use poll() instead of wait()
             if self._env['poll_launch_time'] is None:
-                self._env['poll_launch_time'] = self._env['poll_launch_time_default']
-            return False;
+                self._env['poll_launch_time'] = \
+                    self._env['poll_launch_time_default']
+            return False
 
 DEFAULTS = {
     'authority': False,
@@ -685,11 +685,11 @@ DEFAULTS = {
     'authorities': "AlternateDirAuthority bleargh bad torrc file!",
     'bridges': "Bridge bleargh bad torrc file!",
     'core': True,
-     # poll_launch_time: None means wait on launch (requires RunAsDaemon),
-     # otherwise, poll after that many seconds (can be fractional/decimal)
+    # poll_launch_time: None means wait on launch (requires RunAsDaemon),
+    # otherwise, poll after that many seconds (can be fractional/decimal)
     'poll_launch_time': None,
-     # Used when poll_launch_time is None, but RunAsDaemon is not set
-     # Set low so that we don't interfere with the voting interval
+    # Used when poll_launch_time is None, but RunAsDaemon is not set
+    # Set low so that we don't interfere with the voting interval
     'poll_launch_time_default': 0.1,
     # the number of bytes of random data we send on each connection
     'data_bytes': int(os.environ.get('CHUTNEY_DATA_BYTES', 10 * 1024)),
@@ -777,8 +777,7 @@ class TorEnviron(chutney.Templating.Environ):
         if my['hs-hostname'] is None:
             datadir = my['dir']
             # a file containing a single line with the hs' .onion address
-            hs_hostname_file = os.path.join(datadir,
-                                            my['hs_directory'],
+            hs_hostname_file = os.path.join(datadir, my['hs_directory'],
                                             'hostname')
             try:
                 with open(hs_hostname_file, 'r') as hostnamefp:
@@ -787,8 +786,8 @@ class TorEnviron(chutney.Templating.Environ):
                 hostname = hostname.strip()
                 my['hs-hostname'] = hostname
             except IOError as e:
-                print("Error: hs %r error %d: %r opening hostname file '%r'"
-                      %(my['nick'], e.errno, e.strerror, hs_hostname_file))
+                print("Error: hs %r error %d: %r opening hostname file '%r'" %
+                      (my['nick'], e.errno, e.strerror, hs_hostname_file))
         return my['hs-hostname']
 
 
@@ -808,7 +807,7 @@ class Network(object):
         self._nodes.append(n)
 
     def move_aside_nodes(self):
-        nodesdir = os.path.join(os.getcwd(),'net','nodes')
+        nodesdir = os.path.join(os.getcwd(), 'net', 'nodes')
 
         if not os.path.exists(nodesdir):
             return
@@ -817,9 +816,9 @@ class Network(object):
         i = 0
         while os.path.exists(newdir):
             i += 1
-            newdir = "%s.%d" %(newdirbase, i)
+            newdir = "%s.%d" % (newdirbase, i)
 
-        print ("NOTE: renaming %r to %r"%(nodesdir, newdir))
+        print("NOTE: renaming %r to %r" % (nodesdir, newdir))
         os.rename(nodesdir, newdir)
 
     def _checkConfig(self):
@@ -876,7 +875,6 @@ class Network(object):
         # line in wait()ing output
         print("")
         return rv
-    
 
     def hup(self):
         print("Sending SIGHUP to nodes")
@@ -917,7 +915,7 @@ class Network(object):
     def _verify_traffic(self):
         """Verify (parts of) the network by sending traffic through it
         and verify what is received."""
-        LISTEN_PORT = 4747 # FIXME: Do better! Note the default exit policy.
+        LISTEN_PORT = 4747  # FIXME: Do better! Note the default exit policy.
         # HSs must have a HiddenServiceDir with
         # "HiddenServicePort <HS_PORT> 127.0.0.1:<LISTEN_PORT>"
         HS_PORT = 5858
@@ -927,8 +925,8 @@ class Network(object):
         # and a source-sink pair for a (bridge) client to each hidden service
         DATALEN = self._dfltEnv['data_bytes']
         # Print a dot each time a sink verifies this much data
-        DOTDATALEN = 5 * 1024 * 1024 # Octets.
-        TIMEOUT = 3                  # Seconds.
+        DOTDATALEN = 5 * 1024 * 1024  # Octets.
+        TIMEOUT = 3                   # Seconds.
         # Calculate the amount of random data we should use
         randomlen = self._calculate_randomlen(DATALEN)
         reps = self._calculate_reps(DATALEN, randomlen)
@@ -948,10 +946,7 @@ class Network(object):
             tmpdata = {}
         # now make the connections
         bind_to = ('127.0.0.1', LISTEN_PORT)
-        tt = chutney.Traffic.TrafficTester(bind_to,
-                                           tmpdata,
-                                           TIMEOUT,
-                                           reps,
+        tt = chutney.Traffic.TrafficTester(bind_to, tmpdata, TIMEOUT, reps,
                                            dot_reps)
         client_list = filter(lambda n:
                              n._env['tag'] == 'c' or n._env['tag'] == 'bc',
@@ -975,15 +970,12 @@ class Network(object):
         # if a node is used in two paths, we count it twice
         # this is a lower bound, as cannabilised circuits are one node longer
         total_path_node_count = 0
-        total_path_node_count += self._configure_exits(tt, bind_to,
-                                                       tmpdata, reps,
-                                                       client_list, exit_list,
-                                                       LISTEN_PORT)
-        total_path_node_count += self._configure_hs(tt,
-                                                    tmpdata, reps,
+        total_path_node_count += self._configure_exits(tt, bind_to, tmpdata,
+                                                       reps, client_list,
+                                                       exit_list, LISTEN_PORT)
+        total_path_node_count += self._configure_hs(tt, tmpdata, reps,
                                                     client_list, hs_list,
-                                                    HS_PORT,
-                                                    LISTEN_PORT)
+                                                    HS_PORT, LISTEN_PORT)
         print("Transmitting Data:")
         start_time = time.clock()
         status = tt.run()
@@ -1020,27 +1012,22 @@ class Network(object):
     # if there are any exits, each client / bridge client transmits
     # via 4 nodes (including the client) to an arbitrary exit
     # Each client binds directly to 127.0.0.1:LISTEN_PORT via an Exit relay
-    def _configure_exits(self, tt, bind_to,
-                         tmpdata, reps,
-                         client_list, exit_list,
-                         LISTEN_PORT):
+    def _configure_exits(self, tt, bind_to, tmpdata, reps, client_list,
+                         exit_list, LISTEN_PORT):
         CLIENT_EXIT_PATH_NODES = 4
         connection_count = self._dfltEnv['connection_count']
         exit_path_node_count = 0
         if len(exit_list) > 0:
-            exit_path_node_count += (len(client_list)
-                                     * CLIENT_EXIT_PATH_NODES
-                                     * connection_count)
+            exit_path_node_count += (len(client_list) *
+                                     CLIENT_EXIT_PATH_NODES *
+                                     connection_count)
             for op in client_list:
                 print("  Exit to %s:%d via client %s:%s"
                       % ('127.0.0.1', LISTEN_PORT,
                          'localhost', op._env['socksport']))
                 for i in range(connection_count):
-                    tt.add(chutney.Traffic.Source(tt,
-                                                  bind_to,
-                                                  tmpdata,
-                                                  ('localhost',
-                                                   int(op._env['socksport'])),
+                    proxy = ('localhost', int(op._env['socksport']))
+                    tt.add(chutney.Traffic.Source(tt, bind_to, tmpdata, proxy,
                                                   reps))
         return exit_path_node_count
 
@@ -1050,16 +1037,12 @@ class Network(object):
     # (including the client and hs) to each hidden service
     # Instead of binding directly to LISTEN_PORT via an Exit relay,
     # we bind to hs_hostname:HS_PORT via a hidden service connection
-    def _configure_hs(self, tt,
-                      tmpdata, reps,
-                      client_list, hs_list,
-                      HS_PORT,
+    def _configure_hs(self, tt, tmpdata, reps, client_list, hs_list, HS_PORT,
                       LISTEN_PORT):
         CLIENT_HS_PATH_NODES = 8
         connection_count = self._dfltEnv['connection_count']
-        hs_path_node_count = (len(hs_list)
-                              * CLIENT_HS_PATH_NODES
-                              * connection_count)
+        hs_path_node_count = (len(hs_list) * CLIENT_HS_PATH_NODES *
+                              connection_count)
         # Each client in hs_client_list connects to each hs
         if self._dfltEnv['hs_multi_client']:
             hs_client_list = client_list
@@ -1073,15 +1056,12 @@ class Network(object):
             for client in hs_client_list:
                 print("  HS to %s:%d (%s:%d) via client %s:%s"
                       % (hs._env['hs_hostname'], HS_PORT,
-                     '127.0.0.1', LISTEN_PORT,
-                     'localhost', client._env['socksport']))
+                         '127.0.0.1', LISTEN_PORT,
+                         'localhost', client._env['socksport']))
                 for i in range(connection_count):
-                    tt.add(chutney.Traffic.Source(tt,
-                                          hs_bind_to,
-                                          tmpdata,
-                                          ('localhost',
-                                           int(client._env['socksport'])),
-                                          reps))
+                    proxy = ('localhost', int(client._env['socksport']))
+                    tt.add(chutney.Traffic.Source(tt, hs_bind_to, tmpdata,
+                                                  proxy, reps))
         return hs_path_node_count
 
     # calculate the single stream bandwidth and overall tor bandwidth
@@ -1098,20 +1078,17 @@ class Network(object):
                           start_time, end_time):
         # otherwise, if we sent at least 5 MB cumulative total, and
         # it took us at least a second to send, report bandwidth
-        MIN_BWDATA = 5 * 1024 * 1024 # Octets.
-        MIN_ELAPSED_TIME = 1.0       # Seconds.
+        MIN_BWDATA = 5 * 1024 * 1024  # Octets.
+        MIN_ELAPSED_TIME = 1.0        # Seconds.
         cumulative_data_sent = total_path_node_count * data_length
         elapsed_time = end_time - start_time
-        if (cumulative_data_sent >= MIN_BWDATA
-            and elapsed_time >= MIN_ELAPSED_TIME):
+        if (cumulative_data_sent >= MIN_BWDATA and
+                elapsed_time >= MIN_ELAPSED_TIME):
             # Report megabytes per second
             BWDIVISOR = 1024*1024
-            single_stream_bandwidth = (data_length
-                                       / elapsed_time
-                                       / BWDIVISOR)
-            overall_bandwidth = (cumulative_data_sent
-                                 / elapsed_time
-                                 / BWDIVISOR)
+            single_stream_bandwidth = (data_length / elapsed_time / BWDIVISOR)
+            overall_bandwidth = (cumulative_data_sent / elapsed_time /
+                                 BWDIVISOR)
             print("Single Stream Bandwidth: %.2f MBytes/s"
                   % single_stream_bandwidth)
             print("Overall tor Bandwidth: %.2f MBytes/s"
@@ -1135,9 +1112,10 @@ def usage(network):
 
 
 def exit_on_error(err_msg):
-    print ("Error: {0}\n".format(err_msg))
-    print (usage(_THE_NETWORK))
+    print("Error: {0}\n".format(err_msg))
+    print(usage(_THE_NETWORK))
     sys.exit(1)
+
 
 def runConfigFile(verb, data):
     _GLOBALS = dict(_BASE_ENVIRON=_BASE_ENVIRON,
@@ -1162,6 +1140,7 @@ def parseArgs():
     if not os.path.isfile(sys.argv[2]):
         exit_on_error("Cannot find networkfile: {0}.".format(sys.argv[2]))
     return {'network_cfg': sys.argv[2], 'action': sys.argv[1]}
+
 
 def main():
     global _BASE_ENVIRON

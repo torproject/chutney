@@ -144,7 +144,8 @@ class Environ(_DictWrapper):
        Environ, any keys not found in this Environ are searched for in
        the parent.
 
-       >>> animal = Environ(mobile=True,legs=4,can_program=False,can_meow=False)
+       >>> animal = Environ(mobile=True,legs=4,can_program=False,
+                            can_meow=False)
        >>> biped = Environ(animal,legs=2)
        >>> cat = Environ(animal,can_meow=True)
        >>> human = Environ(biped,feathers=False,can_program=True)
