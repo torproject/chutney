@@ -37,5 +37,6 @@ for file in net/nodes/*a/torrc; do
 done
 
 $CHUTNEY start networks/$flavour
+sleep 1
 $CHUTNEY status networks/$flavour
 #echo "tail -F net/nodes/*/notice.log"
