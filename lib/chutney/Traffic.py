@@ -141,6 +141,7 @@ class Sink(Peer):
     def __init__(self, tt, s):
         super(Sink, self).__init__(Peer.SINK, tt, s)
         self.inbuf = ''
+        self.repetitions = self.tt.repetitions
 
     def on_readable(self):
         """Invoked when the socket becomes readable.
@@ -151,13 +152,35 @@ class Sink(Peer):
         return self.verify(self.tt.data)
 
     def verify(self, data):
+        # shortcut read when we don't ever expect any data
+        if self.repetitions == 0 or len(self.tt.data) == 0:
+            debug("no verification required - no data")
+            return 0;
         self.inbuf += self.s.recv(len(data) - len(self.inbuf))
-        assert(len(self.inbuf) <= len(data))
-        if len(self.inbuf) == len(data):
-            if self.inbuf != data:
+        debug("successfully received (bytes=%d)" % len(self.inbuf))
+        while len(self.inbuf) >= len(data):
+            assert(len(self.inbuf) <= len(data) or self.repetitions > 1)
+            if self.inbuf[:len(data)] != data:
+                debug("receive comparison failed (bytes=%d)" % len(data))
                 return -1       # Failed verification.
+            # if we're not debugging, print a dot every dot_repetitions reps
+            elif (not debug_flag
+                  and self.tt.dot_repetitions > 0
+                  and self.repetitions % self.tt.dot_repetitions == 0):
+                sys.stdout.write('.')
+                sys.stdout.flush()
+            # repeatedly check data against self.inbuf if required
+            debug("receive comparison success (bytes=%d)" % len(data))
+            self.inbuf = self.inbuf[len(data):]
+            debug("receive leftover bytes (bytes=%d)" % len(self.inbuf))
+            self.repetitions -= 1
+            debug("receive remaining repetitions (reps=%d)" % self.repetitions)
+        if self.repetitions == 0 and len(self.inbuf) == 0:
             debug("successful verification")
-        return len(data) - len(self.inbuf)
+        # calculate the actual length of data remaining, including reps
+        debug("receive remaining bytes (bytes=%d)"
+              % (self.repetitions*len(data) - len(self.inbuf)))
+        return self.repetitions*len(data) - len(self.inbuf)
 
 
 class Source(Peer):
@@ -169,13 +192,19 @@ class Source(Peer):
     CONNECTING_THROUGH_PROXY = 2
     CONNECTED = 5
 
-    def __init__(self, tt, server, buf, proxy=None):
+    def __init__(self, tt, server, buf, proxy=None, repetitions=1):
         super(Source, self).__init__(Peer.SOURCE, tt)
         self.state = self.NOT_CONNECTED
         self.data = buf
         self.outbuf = ''
         self.inbuf = ''
         self.proxy = proxy
+        self.repetitions = repetitions
+        # sanity checks
+        if len(self.data) == 0:
+            self.repetitions = 0
+        if self.repetitions == 0:
+            self.data = {}
         self.connect(server)
 
     def connect(self, endpoint):
@@ -200,9 +229,14 @@ class Source(Peer):
                     debug("proxy handshake successful (fd=%d)" % self.fd())
                     self.state = self.CONNECTED
                     self.inbuf = ''
-                    self.outbuf = self.data
                     debug("successfully connected (fd=%d)" % self.fd())
-                    return 1    # Keep us around for writing.
+                    # if we have no reps or no data, skip sending actual data
+                    if self.want_to_write():
+                        return 1    # Keep us around for writing.
+                    else:
+                        # shortcut write when we don't ever expect any data
+                        debug("no connection required - no data")
+                        return 0
                 else:
                     debug("proxy handshake failed (0x%x)! (fd=%d)" %
                           (ord(self.inbuf[1]), self.fd()))
@@ -210,10 +244,11 @@ class Source(Peer):
                     return -1
             assert(8 - len(self.inbuf) > 0)
             return 8 - len(self.inbuf)
-        return 1                # Keep us around for writing.
+        return self.want_to_write()     # Keep us around for writing if needed
 
     def want_to_write(self):
-        return self.state == self.CONNECTING or len(self.outbuf) > 0
+        return (self.state == self.CONNECTING or len(self.outbuf) > 0
+                or (self.repetitions > 0 and len(self.data) > 0))
 
     def on_writable(self):
         """Invoked when the socket becomes writable.
@@ -224,11 +259,21 @@ class Source(Peer):
         if self.state == self.CONNECTING:
             if self.proxy is None:
                 self.state = self.CONNECTED
-                self.outbuf = self.data
                 debug("successfully connected (fd=%d)" % self.fd())
             else:
                 self.state = self.CONNECTING_THROUGH_PROXY
                 self.outbuf = socks_cmd(self.dest)
+                # we write socks_cmd() to the proxy, then read the response
+                # if we get the correct response, we're CONNECTED
+        if self.state == self.CONNECTED:
+            # repeat self.data into self.outbuf if required
+            if (len(self.outbuf) < len(self.data) and self.repetitions > 0):
+                self.outbuf += self.data
+                self.repetitions -= 1
+                debug("adding more data to send (bytes=%d)" % len(self.data))
+                debug("now have data to send (bytes=%d)" % len(self.outbuf))
+                debug("send repetitions remaining (reps=%d)"
+                      % self.repetitions)
         try:
             n = self.s.send(self.outbuf)
         except socket.error as e:
@@ -236,10 +281,19 @@ class Source(Peer):
                 debug("connection refused (fd=%d)" % self.fd())
                 return -1
             raise
+        # sometimes, this debug statement prints 0
+        # it should print length of the data sent
+        # but the code works regardless of this error
+        debug("successfully sent (bytes=%d)" % n)
         self.outbuf = self.outbuf[n:]
         if self.state == self.CONNECTING_THROUGH_PROXY:
             return 1            # Keep us around.
-        return len(self.outbuf)  # When 0, we're being removed.
+        debug("bytes remaining on outbuf (bytes=%d)" % len(self.outbuf))
+        # calculate the actual length of data remaining, including reps
+        # When 0, we're being removed.
+        debug("bytes remaining overall (bytes=%d)"
+              % (self.repetitions*len(self.data) + len(self.outbuf)))
+        return self.repetitions*len(self.data) + len(self.outbuf)
 
 
 class TrafficTester():
@@ -252,12 +306,24 @@ class TrafficTester():
     Return True if all tests succeed, else False.
     """
 
-    def __init__(self, endpoint, data={}, timeout=3):
+    def __init__(self,
+                 endpoint,
+                 data={},
+                 timeout=3,
+                 repetitions=1,
+                 dot_repetitions=0):
         self.listener = Listener(self, endpoint)
         self.pending_close = []
         self.timeout = timeout
         self.tests = TestSuite()
         self.data = data
+        self.repetitions = repetitions
+        # sanity checks
+        if len(self.data) == 0:
+            self.repetitions = 0
+        if self.repetitions == 0:
+            self.data = {}
+        self.dot_repetitions = dot_repetitions
         debug("listener fd=%d" % self.listener.fd())
         self.peers = {}         # fd:Peer
 
@@ -318,9 +384,16 @@ class TrafficTester():
                         self.tests.failure()
                         self.remove(p)
 
+        for fd in self.peers:
+            peer = self.peers[fd]
+            debug("peer fd=%d never pending close, never read or wrote" % fd)
+            self.pending_close.append(peer.s)
         self.listener.s.close()
         for s in self.pending_close:
             s.close()
+        if not debug_flag:
+            sys.stdout.write('\n')
+            sys.stdout.flush()
         return self.tests.all_done() and self.tests.failure_count() == 0
 
 
