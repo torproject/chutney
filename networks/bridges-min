@@ -1,0 +1,20 @@
+# By default, Authorities are not configured as exits
+Authority = Node(tag="a", authority=1, relay=1, torrc="authority.tmpl")
+ExitRelay = Node(tag="r", relay=1, exit=1, torrc="relay.tmpl")
+
+BridgeAuthority = Node(tag="ba", authority=1, bridgeauthority=1,
+                       relay=1, torrc="bridgeauthority.tmpl")
+Bridge = Node(tag="br", bridge=1, relay=1, torrc="bridge.tmpl")
+BridgeClient = Node(tag="bc", torrc="bridgeclient.tmpl")
+
+# Since only 25% of relays get the guard flag,
+# TestingDirAuthVoteGuard * may need to be used in small networks
+# (However, bridge clients use bridges instead of guards, so this
+# is only an issue for the exit bootstrapping)
+
+# The minimum number of authorities/relays/exits is 3, the minimum path length
+# But bridge networks with 3 relays don't bootstrap, so we use 4
+NODES = Authority.getN(1) + BridgeAuthority.getN(1) + ExitRelay.getN(1) + \
+        Bridge.getN(1) + BridgeClient.getN(1)
+
+ConfigureNodes(NODES)

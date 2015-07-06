@@ -1,0 +1,12 @@
+# By default, Authorities are not configured as exits
+Authority = Node(tag="a", authority=1, relay=1, torrc="authority.tmpl")
+IPv6ExitRelay = Node(tag="r", relay=1, exit=1, torrc="relay-exit-v6-only.tmpl")
+Client = Node(tag="c", torrc="client.tmpl")
+
+# Since only 25% of relays get the guard flag,
+# TestingDirAuthVoteGuard * may need to be used in small networks
+
+# The minimum number of authorities/relays/exits is 3, the minimum path length
+NODES = Authority.getN(2) + IPv6ExitRelay.getN(1) + Client.getN(1)
+
+ConfigureNodes(NODES)

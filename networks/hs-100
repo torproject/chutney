@@ -1,0 +1,12 @@
+# WARNING: This network can bring down a low-specced machine
+
+# By default, Authorities are not configured as exits
+Authority = Node(tag="a", authority=1, relay=1, torrc="authority.tmpl")
+NonExitRelay = Node(tag="r", relay=1, torrc="relay-non-exit.tmpl")
+Client = Node(tag="c", torrc="client.tmpl")
+HS = Node(tag="h", hs=1, torrc="hs.tmpl")
+
+NODES = Authority.getN(5) + NonExitRelay.getN(25) + \
+        Client.getN(10) + HS.getN(60)
+
+ConfigureNodes(NODES)
