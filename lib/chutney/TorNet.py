@@ -673,7 +673,7 @@ DEFAULTS = {
     'tor': os.environ.get('CHUTNEY_TOR', 'tor'),
     'tor-gencert': os.environ.get('CHUTNEY_TOR_GENCERT', None),
     'auth_cert_lifetime': 12,
-    'ip': '127.0.0.1',
+    'ip': os.environ.get('CHUTNEY_LISTEN_ADDRESS', '127.0.0.1'),
     'ipv6_addr': None,
     'dirserver_flags': 'no-v2',
     'chutney_dir': '.',
@@ -918,7 +918,7 @@ class Network(object):
         and verify what is received."""
         LISTEN_PORT = 4747  # FIXME: Do better! Note the default exit policy.
         # HSs must have a HiddenServiceDir with
-        # "HiddenServicePort <HS_PORT> 127.0.0.1:<LISTEN_PORT>"
+        # "HiddenServicePort <HS_PORT> <CHUTNEY_LISTEN_ADDRESS>:<LISTEN_PORT>"
         HS_PORT = 5858
         # The amount of data to send between each source-sink pair,
         # each time the source connects.
@@ -946,7 +946,7 @@ class Network(object):
             dot_reps = 0
             tmpdata = {}
         # now make the connections
-        bind_to = ('127.0.0.1', LISTEN_PORT)
+        bind_to = (DEFAULTS['ip'], LISTEN_PORT)
         tt = chutney.Traffic.TrafficTester(bind_to, tmpdata, TIMEOUT, reps,
                                            dot_reps)
         client_list = filter(lambda n:
@@ -1012,7 +1012,8 @@ class Network(object):
 
     # if there are any exits, each client / bridge client transmits
     # via 4 nodes (including the client) to an arbitrary exit
-    # Each client binds directly to 127.0.0.1:LISTEN_PORT via an Exit relay
+    # Each client binds directly to <CHUTNEY_LISTEN_ADDRESS>:LISTEN_PORT
+    # via an Exit relay
     def _configure_exits(self, tt, bind_to, tmpdata, reps, client_list,
                          exit_list, LISTEN_PORT):
         CLIENT_EXIT_PATH_NODES = 4
@@ -1024,7 +1025,7 @@ class Network(object):
                                      connection_count)
             for op in client_list:
                 print("  Exit to %s:%d via client %s:%s"
-                      % ('127.0.0.1', LISTEN_PORT,
+                      % (DEFAULTS['ip'], LISTEN_PORT,
                          'localhost', op._env['socksport']))
                 for i in range(connection_count):
                     proxy = ('localhost', int(op._env['socksport']))
@@ -1033,7 +1034,7 @@ class Network(object):
         return exit_path_node_count
 
     # The HS redirects .onion connections made to hs_hostname:HS_PORT
-    # to the Traffic Tester's 127.0.0.1:LISTEN_PORT
+    # to the Traffic Tester's CHUTNEY_LISTEN_ADDRESS:LISTEN_PORT
     # an arbitrary client / bridge client transmits via 8 nodes
     # (including the client and hs) to each hidden service
     # Instead of binding directly to LISTEN_PORT via an Exit relay,
@@ -1057,7 +1058,7 @@ class Network(object):
             for client in hs_client_list:
                 print("  HS to %s:%d (%s:%d) via client %s:%s"
                       % (hs._env['hs_hostname'], HS_PORT,
-                         '127.0.0.1', LISTEN_PORT,
+                         DEFAULTS['ip'], LISTEN_PORT,
                          'localhost', client._env['socksport']))
                 for i in range(connection_count):
                     proxy = ('localhost', int(client._env['socksport']))
