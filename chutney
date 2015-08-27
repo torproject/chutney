@@ -1,4 +1,12 @@
 #!/bin/sh
 
 export PYTHONPATH="`dirname $0`/lib:${PYTHONPATH}"
+# Use python2, python, python3 in that order
+[ -n "$PYTHON" ] || {
+    command -v python2 >/dev/null 2>&1 && PYTHON=python2 || \
+    command -v python >/dev/null 2>&1 && PYTHON=python # || \
+#   Not yet supported 
+#   command -v python3 >/dev/null 2>&1 && PYTHON=python3
+}
+# Use python2 if the checks that use "command" fail
 ${PYTHON:=python2} -m chutney.TorNet "$@"
