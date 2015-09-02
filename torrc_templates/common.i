@@ -29,6 +29,9 @@ TestingMinExitFlagThreshold 0
 # VoteOnHidServDirectoriesV2 needs to be set for HSDirs to get the HSDir flag
 #Default VoteOnHidServDirectoriesV2 1
 
+## Options that we always want to test ##
+Sandbox 1
+
 DataDirectory $dir
 RunAsDaemon 1
 ConnLimit $connlimit
