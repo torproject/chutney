@@ -200,6 +200,7 @@ class Source(Peer):
         self.inbuf = ''
         self.proxy = proxy
         self.repetitions = repetitions
+        self._sent_no_bytes = 0
         # sanity checks
         if len(self.data) == 0:
             self.repetitions = 0
@@ -283,8 +284,16 @@ class Source(Peer):
             raise
         # sometimes, this debug statement prints 0
         # it should print length of the data sent
-        # but the code works regardless of this error
-        debug("successfully sent (bytes=%d)" % n)
+        # but the code works as long as this doesn't keep on happening
+        if n > 0:
+          debug("successfully sent (bytes=%d)" % n)
+          self._sent_no_bytes = 0
+        else:
+          debug("BUG: sent no bytes")
+          self._sent_no_bytes += 1
+          if self._sent_no_bytes >= 10000:
+            print("Send no data %d times. Stalled." % (self._sent_no_bytes))
+            sys.exit(-1)
         self.outbuf = self.outbuf[n:]
         if self.state == self.CONNECTING_THROUGH_PROXY:
             return 1            # Keep us around.
