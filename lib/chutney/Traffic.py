@@ -27,6 +27,7 @@ import socket
 import select
 import struct
 import errno
+import time
 
 # Set debug_flag=True in order to debug this program or to get hints
 # about what's going wrong in your system.
@@ -291,9 +292,10 @@ class Source(Peer):
         else:
           debug("BUG: sent no bytes")
           self._sent_no_bytes += 1
-          if self._sent_no_bytes >= 10000:
+          if self._sent_no_bytes >= 10:
             print("Send no data %d times. Stalled." % (self._sent_no_bytes))
             sys.exit(-1)
+          time.sleep(1)
         self.outbuf = self.outbuf[n:]
         if self.state == self.CONNECTING_THROUGH_PROXY:
             return 1            # Keep us around.
