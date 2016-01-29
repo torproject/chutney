@@ -6,7 +6,7 @@
 # Output: for each node outputs its warnings and the number of times that
 # warning has ocurred. If the argument node is specified, it only shows
 # the warnings of that node.
-# Examples: tools/warnings.sh 
+# Examples: tools/warnings.sh
 #           tools/warnings.sh 000a
 
 function show_warnings() {
@@ -29,15 +29,15 @@ NAME=$(basename "$0")
 DEST=net/nodes
 
 [ -d net/nodes ] || { echo "$NAME: no logs available"; exit 1; }
-if [ $# -eq 0 ]; 
-then    
+if [ $# -eq 0 ];
+then
     for dir in $DEST/*;
     do
         [ -e ${dir}/info.log ] || continue
-        show_warnings $dir 
+        show_warnings $dir
     done
 elif [ $# -eq 1 ];
-then 
+then
     [ -e $DEST/$1/info.log ] || { echo "$NAME: no log available"; exit 1; }
     show_warnings $DEST/$1
 else

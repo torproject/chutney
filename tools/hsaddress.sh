@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Usage: 
+# Usage:
 #    cd YOUR-CHUTNEY-DIRECTORY
 #    tools/hsaddress.sh [hs_node]
 # Output: for each HS outputs its onion address. If the argument node is
@@ -14,7 +14,7 @@ TARGET=hidden_service/hostname
 
 function usage() {
     echo "Usage: $NAME [hs_node]"
-    exit 1 
+    exit 1
 }
 
 function show_address() {
