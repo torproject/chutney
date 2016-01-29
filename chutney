@@ -1,12 +1,50 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
-export PYTHONPATH="`dirname $0`/lib:${PYTHONPATH}"
-# Use python2, python, python3 in that order
-[ -n "$PYTHON" ] || {
-    command -v python2 >/dev/null 2>&1 && PYTHON=python2 || \
-    command -v python >/dev/null 2>&1 && PYTHON=python # || \
-#   Not yet supported 
-#   command -v python3 >/dev/null 2>&1 && PYTHON=python3
-}
-# Use python2 if the checks that use "command" fail
-${PYTHON:=python2} -m chutney.TorNet "$@"
+set -o errexit
+set -o nounset
+
+export PYTHONPATH="$(dirname "${0}")/lib:${PYTHONPATH-}"
+
+binaries="python2 python"
+
+if ! test "${PYTHON+y}"
+then
+    saved_IFS="${IFS}"
+    for binary in ${binaries}
+    do
+        IFS=":"
+        for directory in ${PATH}
+        do
+            case "${directory}" in
+                "") directory="./"
+                    ;;
+                */)
+                    ;;
+                *) directory="${directory}/"
+                    ;;
+            esac
+            abs_path="${directory}${binary}"
+            if test -f "${abs_path}" && test -x "${abs_path}"
+            then
+                PYTHON="${abs_path}"
+                break
+            fi
+        done
+
+        if test "${PYTHON+y}"
+        then
+            break
+        fi
+    done
+    IFS="${saved_IFS}"
+fi
+
+if ! test "${PYTHON+y}"
+then
+    printf "No compatible Python version found.\n" >&2
+    printf "Is Python installed and in your PATH?\n" >&2
+    exit 1
+fi
+
+printf "Using %s\n" "$("${PYTHON}" --version 2>&1)"
+"${PYTHON}" -m chutney.TorNet "${@}"
