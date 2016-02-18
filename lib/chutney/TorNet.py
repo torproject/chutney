@@ -252,7 +252,7 @@ class LocalNodeBuilder(NodeBuilder):
                 if e.errno == errno.ENOENT:
                     print ("Cannot find tor binary %r. Use "
                            "CHUTNEY_TOR environment variable to set the "
-                           "path, or put the binary into $PATH.") % tor
+                           "path, or put the binary into $PATH." % tor)
                     sys.exit(0)
                 else:
                     raise
@@ -384,7 +384,7 @@ class LocalNodeBuilder(NodeBuilder):
             if e.errno == errno.ENOENT:
                 print("Cannot find tor-gencert binary %r. Use "
                       "CHUTNEY_TOR_GENCERT environment variable to set the "
-                      "path, or put the binary into $PATH.") % tor_gencert
+                      "path, or put the binary into $PATH." % tor_gencert)
                 sys.exit(0)
             else:
                 raise
@@ -412,7 +412,7 @@ class LocalNodeBuilder(NodeBuilder):
             if e.errno == errno.ENOENT:
                 print("Cannot find tor binary %r. Use "
                       "CHUTNEY_TOR environment variable to set the "
-                      "path, or put the binary into $PATH.") % tor
+                      "path, or put the binary into $PATH." % tor)
                 sys.exit(0)
             else:
                 raise
@@ -579,7 +579,7 @@ class LocalNodeController(NodeController):
             if e.errno == errno.ENOENT:
                 print("Cannot find tor binary %r. Use CHUTNEY_TOR "
                       "environment variable to set the path, or put the "
-                      "binary into $PATH.") % tor_path
+                      "binary into $PATH." % tor_path)
                 sys.exit(0)
             else:
                 raise
