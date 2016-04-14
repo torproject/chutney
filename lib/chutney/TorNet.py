@@ -669,7 +669,7 @@ DEFAULTS = {
     'hs_directory': 'hidden_service',
     'hs-hostname': None,
     'connlimit': 60,
-    'net_base_dir': 'net',
+    'net_base_dir': os.environ.get('CHUTNEY_DATA_DIR', 'net'),
     'tor': os.environ.get('CHUTNEY_TOR', 'tor'),
     'tor-gencert': os.environ.get('CHUTNEY_TOR_GENCERT', None),
     'auth_cert_lifetime': 12,
