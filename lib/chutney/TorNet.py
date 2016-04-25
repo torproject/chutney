@@ -397,13 +397,14 @@ class LocalNodeBuilder(NodeBuilder):
         """
         datadir = self._env['dir']
         tor = self._env['tor']
+        torrc = self._getTorrcFname()
         cmdline = [
             tor,
             "--quiet",
+            "--ignore-missing-torrc",
+            "-f", torrc,
             "--list-fingerprint",
             "--orport", "1",
-            "--dirserver",
-            "xyzzy 127.0.0.1:1 ffffffffffffffffffffffffffffffffffffffff",
             "--datadirectory", datadir]
         try:
             p = subprocess.Popen(cmdline, stdout=subprocess.PIPE)
@@ -417,7 +418,7 @@ class LocalNodeBuilder(NodeBuilder):
             else:
                 raise
         stdout, stderr = p.communicate()
-        fingerprint = "".join(stdout.split()[1:])
+        fingerprint = "".join((stdout.rstrip().split('\n')[-1]).split()[1:])
         if not re.match(r'^[A-F0-9]{40}$', fingerprint):
             print (("Error when calling %r. It gave %r as a fingerprint "
                     " and %r on stderr.")%(" ".join(cmdline), stdout, stderr))
