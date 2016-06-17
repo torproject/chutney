@@ -66,3 +66,6 @@ The configuration files:
 The working files:
   chutney sticks its working files, including all data directories, log
   files, etc, in ./net/.  Each tor instance gets a subdirectory of net/nodes.
+
+  You can override the directory "./net" with the CHUTNEY_DATA_DIR
+  environment variable.
