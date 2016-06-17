@@ -908,6 +908,10 @@ class Network(object):
         print("Verifying data transmission:")
         status = self._verify_traffic()
         print("Transmission: %s" % ("Success" if status else "Failure"))
+        if not status:
+            # TODO: allow the debug flag to be passed as an argument to
+            # src/test/test-network.sh and chutney
+            print("Set 'debug_flag = True' in Traffic.py to diagnose.")
         return status
 
     def _verify_traffic(self):
