@@ -807,7 +807,8 @@ class Network(object):
         self._nodes.append(n)
 
     def move_aside_nodes(self):
-        nodesdir = os.path.join(os.getcwd(), 'net', 'nodes')
+        net_base_dir = os.environ.get('CHUTNEY_DATA_DIR', 'net')
+        nodesdir = os.path.join(net_base_dir, 'nodes')
 
         if not os.path.exists(nodesdir):
             return
