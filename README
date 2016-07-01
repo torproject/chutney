@@ -69,3 +69,8 @@ The working files:
 
   You can override the directory "./net" with the CHUTNEY_DATA_DIR
   environment variable.
+
+Test scripts:
+  The test scripts are stored in the "scripts/chutney_tests" directory. These
+  Python files must define a "run_test(network)" function. Files starting with
+  an underscore ("_") are ignored.

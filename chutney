@@ -3,7 +3,7 @@
 set -o errexit
 set -o nounset
 
-export PYTHONPATH="$(dirname "${0}")/lib:${PYTHONPATH-}"
+export PYTHONPATH="$(dirname "${0}")/lib:$(dirname "${0}")/scripts:${PYTHONPATH-}"
 
 binaries="python2 python"
 
