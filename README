@@ -59,6 +59,17 @@ HS Connection Tests:
   # Default behavior is one client connects to each HS
   ./chutney stop networks/hs-025
 
+Changing the network address:
+
+   Chutney defaults to binding to localhost. To change the bind address,
+   set the CHUTNEY_LISTEN_ADDRESS environment variable. Setting it to some
+   interface's IP address allows us to make the simulated Tor network
+   available on the network.
+
+   IPv6 support for both Tor and Chutney is a work in progress. If your system
+   returns IPv6 ::1 as the (first) address for localhost, you might need to
+   set CHUTNEY_LISTEN_ADDRESS="127.0.0.1" for chutney to work.
+
 The configuration files:
   networks/basic holds the configuration for the network you're configuring
   above.  It refers to some torrc template files in torrc_templates/.
