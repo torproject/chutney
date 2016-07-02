@@ -74,3 +74,12 @@ Test scripts:
   The test scripts are stored in the "scripts/chutney_tests" directory. These
   Python files must define a "run_test(network)" function. Files starting with
   an underscore ("_") are ignored.
+
+  Test scripts can be run using the following syntax:
+  ./chutney <script-name> networks/<network-name>
+
+  The chutney verify command is implemented using a test script.
+
+  Test scripts in the test directory with the same name as standard commands
+  are run instead of that standard command. This allows expert users to replace
+  the standard chutney commands with modified versions.
