@@ -11,7 +11,9 @@ HS = Node(tag="h", hs=1, torrc="hs.tmpl")
 # connections:
 # a minimum path length of 3, plus the client-nominated rendezvous point,
 # plus a seperate introduction point
-NODES = Authority.getN(3) + NonExitRelay.getN(2) + \
+# But we use 6 HSDirs: when the hidden service is not up, the client fails to
+# find the descriptor at the first 3-5 HSDirs
+NODES = Authority.getN(3) + NonExitRelay.getN(3) + \
         Client.getN(1) + HS.getN(1)
 
 ConfigureNodes(NODES)
