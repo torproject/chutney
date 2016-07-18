@@ -3,8 +3,20 @@ import chutney
 
 
 def run_test(network):
-    print("Verifying data transmission:")
-    status = _verify_traffic(network)
+    wait_time = network._dfltEnv['bootstrap_time']
+    start_time = time.time()
+    end_time = start_time + wait_time
+    print("Verifying data transmission: (retrying for up to %d seconds)"
+          % wait_time)
+    status = False
+    # Keep on retrying the verify until it succeeds or times out
+    while not status and time.time() < end_time:
+        # TrafficTester connections time out after ~3 seconds
+        # a TrafficTester times out after ~10 seconds if no data is being sent
+        status = _verify_traffic(network)
+        # Avoid madly spewing output if we fail immediately each time
+        if not status:
+            time.sleep(2)
     print("Transmission: %s" % ("Success" if status else "Failure"))
     if not status:
         # TODO: allow the debug flag to be passed as an argument to

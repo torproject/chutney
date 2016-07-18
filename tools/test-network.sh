@@ -21,7 +21,7 @@ do
       shift
     ;;
     --delay|--sleep|--bootstrap-time|--time)
-      export BOOTSTRAP_TIME="$2"
+      export CHUTNEY_BOOTSTRAP_TIME="$2"
       shift
     ;;
     # Environmental variables used by chutney verify performance tests
@@ -137,13 +137,12 @@ fi
 cd "$CHUTNEY_PATH"
 ./tools/bootstrap-network.sh $NETWORK_FLAVOUR || exit 2
 
-# Sleep some, waiting for the network to bootstrap.
-# TODO: Add chutney command 'bootstrap-status' and use that instead.
-BOOTSTRAP_TIME=${BOOTSTRAP_TIME:-35}
-$ECHO_N "$myname: sleeping for $BOOTSTRAP_TIME seconds"
-n=$BOOTSTRAP_TIME; while [ $n -gt 0 ]; do
-    sleep 1; n=$(expr $n - 1); $ECHO_N .
-done; echo ""
+# chutney verify starts immediately, and keeps on trying for 60 seconds
+CHUTNEY_BOOTSTRAP_TIME=${CHUTNEY_BOOTSTRAP_TIME:-60}
+# but even the fastest tor networks take 5 seconds for their first consensus
+# and then 10 seconds after that for relays to bootstrap and upload descriptors
+echo "Waiting 15 seconds for a consensus containing relaysto be generated..."
+sleep 15
 ./chutney verify $CHUTNEY_NETWORK
 VERIFY_EXIT_STATUS=$?
 # work around a bug/feature in make -j2 (or more)

@@ -64,6 +64,16 @@ HS Connection Tests:
   # Default behavior is one client connects to each HS
   ./chutney stop networks/hs-025
 
+Waiting for the network to bootstrap:
+
+  Commands like "chutney verify" start immediately, and keep trying for
+  CHUTNEY_BOOTSTRAP_TIME seconds. If they haven't been successful after that
+  time, they fail.
+
+  The tools/test-network.sh script waits 15 seconds before calling chutney
+  verify, because that's the minimum amount of time it takes to bootstrap a
+  consensus containing relays.
+
 Changing the network address:
 
    Chutney defaults to binding to localhost. To change the bind address,

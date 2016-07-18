@@ -700,6 +700,13 @@ DEFAULTS = {
     # to connect to each HS?
     # (Clients choose an exit at random, so this doesn't apply to exits.)
     'hs_multi_client': int(os.environ.get('CHUTNEY_HS_MULTI_CLIENT', 0)),
+    # How long should verify (and similar commands) wait for a successful
+    # outcome? (seconds)
+    # We check BOOTSTRAP_TIME for compatibility with old versions of
+    # test-network.sh
+    'bootstrap_time': int(os.environ.get('CHUTNEY_BOOTSTRAP_TIME',
+                                         os.environ.get('BOOTSTRAP_TIME',
+                                                        60))),
 }
 
 
