@@ -17,6 +17,11 @@ You will need, at the moment:
 
 Stuff to try:
 
+Automated Setup, Verification, and Shutdown:
+  ./tools/test-network.sh --flavor basic-min
+  ./tools/test-network.sh --tor-path <tor-build-directory>
+  ./tools/test-network.sh --coverage
+
 Standard Actions:
   ./chutney configure networks/basic
   ./chutney start networks/basic
