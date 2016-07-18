@@ -19,8 +19,12 @@ Stuff to try:
 
 Automated Setup, Verification, and Shutdown:
   ./tools/test-network.sh --flavor basic-min
-  ./tools/test-network.sh --tor-path <tor-build-directory>
   ./tools/test-network.sh --coverage
+  ./tools/test-network.sh --tor-path <tor-build-directory>
+  ./tools/test-network.sh --tor <name-or-path> --tor-gencert <name-or-path>
+  (--tor-path and $TOR_DIR override --tor and --tor-gencert.)
+
+The environmental variables documented below also work with test-network.sh.
 
 Standard Actions:
   ./chutney configure networks/basic

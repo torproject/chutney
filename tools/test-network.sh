@@ -13,7 +13,19 @@ do
       shift
     ;;
     --tor-path)
+      # the path of a tor build directory
+      # --tor-path overrides --tor and --tor-gencert
       export TOR_DIR="$2"
+      shift
+    ;;
+    --tor)
+      # the name or path of a tor binary
+      export CHUTNEY_TOR="$2"
+      shift
+    ;;
+    --tor-gencert)
+      # the name or path of a tor-gencert binary
+      export CHUTNEY_TOR_GENCERT="$2"
       shift
     ;;
     --flavor|--flavour|--network-flavor|--network-flavour)
@@ -113,7 +125,9 @@ CHUTNEY_PATH=\`pwd\`/chutney"
 fi
 
 # For picking up the right tor binaries.
-# If these varibles aren't set, chutney looks for tor binaries in $PATH
+# If $TOR_DIR isn't set, chutney looks for tor binaries by name or path
+# using $CHUTNEY_TOR and $CHUTNEY_TOR_GENCERT, and then falls back to
+# looking for tor and tor-gencert in $PATH
 if [ -d "$TOR_DIR" ]; then
     tor_name=tor
     tor_gencert_name=tor-gencert
