@@ -55,7 +55,7 @@ do
     *)
       echo "$myname: Sorry, I don't know what to do with '$1'."
       # continue processing arguments during a dry run
-      if [ "$NETWORK_DRY_RUN" != true]; then
+      if [ "$NETWORK_DRY_RUN" != true ]; then
           exit 2
       fi
     ;;
@@ -141,7 +141,7 @@ cd "$CHUTNEY_PATH"
 CHUTNEY_BOOTSTRAP_TIME=${CHUTNEY_BOOTSTRAP_TIME:-60}
 # but even the fastest tor networks take 5 seconds for their first consensus
 # and then 10 seconds after that for relays to bootstrap and upload descriptors
-echo "Waiting 15 seconds for a consensus containing relaysto be generated..."
+echo "Waiting 15 seconds for a consensus containing relays to be generated..."
 sleep 15
 ./chutney verify $CHUTNEY_NETWORK
 VERIFY_EXIT_STATUS=$?
