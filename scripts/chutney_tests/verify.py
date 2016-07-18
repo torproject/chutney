@@ -94,9 +94,9 @@ def _verify_traffic(network):
                                            LISTEN_PORT, connection_count,
                                            network._dfltEnv['hs_multi_client'])
     print("Transmitting Data:")
-    start_time = time.clock()
+    start_time = time.time()
     status = tt.run()
-    end_time = time.clock()
+    end_time = time.time()
     # if we fail, don't report the bandwidth
     if not status:
         return status
