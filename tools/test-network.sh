@@ -113,6 +113,10 @@ if [ ! -d "$CHUTNEY_PATH" -o ! -x "$CHUTNEY_PATH/chutney" ]; then
     if [ -x "$PWD/chutney" ]; then
         echo "$myname: \$CHUTNEY_PATH not valid, trying \$PWD"
         export CHUTNEY_PATH="$PWD"
+    elif [ -d "`dirname \"$0\"`/.." -a \
+	   -x "`dirname \"$0\"`/../chutney" ]; then
+        echo "$myname: \$CHUTNEY_PATH not valid, using this script's location"
+        export CHUTNEY_PATH="`dirname \"$0\"`/.."
     elif [ -d "$TOR_DIR" -a -d "$TOR_DIR/../chutney" -a \
            -x "$TOR_DIR/../chutney/chutney" ]; then
         echo "$myname: \$CHUTNEY_PATH not valid, trying \$TOR_DIR/../chutney"
