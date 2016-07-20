@@ -23,8 +23,21 @@ Automated Setup, Verification, and Shutdown:
   ./tools/test-network.sh --tor-path <tor-build-directory>
   ./tools/test-network.sh --tor <name-or-path> --tor-gencert <name-or-path>
   (--tor-path and $TOR_DIR override --tor and --tor-gencert.)
+  ./tools/test-network.sh --chutney-path <chutney-directory>
+  (The script is pretty good at guessing this.)
 
-The environmental variables documented below also work with test-network.sh.
+test-network.sh looks for some tor binaries (either in a nearby build
+directory or in your $PATH), configures a comprehensive tor test network,
+launches it, then verifies data transmission through it, and cleans up after
+itself.
+
+You can modify its configuration using command-line arguments, or use the
+chutney environmental variables documented below:
+
+  --delay            CHUTNEY_BOOTSTRAP_TIME
+  --data             CHUTNEY_DATA_BYTES
+  --connections      CHUTNEY_CONNECTIONS
+  --hs-multi-client  CHUTNEY_HS_MULTI_CLIENT
 
 Standard Actions:
   ./chutney configure networks/basic
