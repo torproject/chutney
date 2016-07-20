@@ -92,6 +92,12 @@ if [ ! -d "$TOR_DIR" ]; then
         # But only if it looks like one
         echo "$myname: \$TOR_DIR not set, trying \$PWD"
         export TOR_DIR="$PWD"
+    elif [ -d "$PWD/../tor" -a -d "$PWD/../tor/src/or" -a \
+	   -d "$PWD/../tor/src/tools" ]; then
+        # Guess the tor directory is next to the current directory
+        # But only if it looks like one
+        echo "$myname: \$TOR_DIR not set, trying \$PWD/../tor"
+        export TOR_DIR="$PWD/../tor"
     else
         echo "$myname: no \$TOR_DIR, chutney will use \$PATH for tor binaries"
         unset TOR_DIR
