@@ -46,3 +46,5 @@ ProtocolWarnings 1
 SafeLogging 0
 DisableDebuggerAttachment 0
 ${authorities}
+
+ControlPort $controlport
