@@ -32,8 +32,24 @@ do
       export NETWORK_FLAVOUR="$2"
       shift
     ;;
-    --delay|--sleep|--bootstrap-time|--time)
+    # The amount of time chutney will wait before starting to verify
+    # If negative, chutney exits straight after launching the network
+    --start-time)
+      export CHUTNEY_START_TIME="$2"
+      shift
+    ;;
+    # The amount of time chutney will try to verify, before failing
+    # If negative, chutney exits without verifying
+    --delay|--sleep|--bootstrap-time|--time|--verify-time)
+      # This isn't the best name for this variable, but we kept it the same
+      # for backwards compatibility
       export CHUTNEY_BOOTSTRAP_TIME="$2"
+      shift
+    ;;
+    # The amount of time chutney will wait after successfully verifying
+    # If negative, chutney exits without stopping
+    --stop-time)
+      export CHUTNEY_STOP_TIME="$2"
       shift
     ;;
     # Environmental variables used by chutney verify performance tests
@@ -161,15 +177,44 @@ fi
 cd "$CHUTNEY_PATH"
 ./tools/bootstrap-network.sh $NETWORK_FLAVOUR || exit 2
 
-# chutney verify starts immediately, and keeps on trying for 60 seconds
-CHUTNEY_BOOTSTRAP_TIME=${CHUTNEY_BOOTSTRAP_TIME:-60}
-# but even the fastest tor networks take 5 seconds for their first consensus
+# chutney starts verifying after 15 seconds, keeps on trying for 60 seconds,
+# and then stops immediately (by default)
+# Even the fastest chutney networks take 5 seconds for their first consensus
 # and then 10 seconds after that for relays to bootstrap and upload descriptors
-echo "Waiting 15 seconds for a consensus containing relays to be generated..."
-sleep 15
-./chutney verify $CHUTNEY_NETWORK
-VERIFY_EXIT_STATUS=$?
-# work around a bug/feature in make -j2 (or more)
-# where make hangs if any child processes are still alive
-./chutney stop $CHUTNEY_NETWORK
-exit $VERIFY_EXIT_STATUS
+CHUTNEY_START_TIME=${CHUTNEY_START_TIME:-15}
+CHUTNEY_BOOTSTRAP_TIME=${CHUTNEY_BOOTSTRAP_TIME:-60}
+CHUTNEY_STOP_TIME=${CHUTNEY_STOP_TIME:-0}
+
+if [ "$CHUTNEY_START_TIME" -ge 0 ]; then
+  echo "Waiting ${CHUTNEY_START_TIME} seconds for a consensus containing relays to be generated..."
+  sleep "$CHUTNEY_START_TIME"
+else
+  echo "Chutney network launched and running. To stop the network, use:"
+  echo "$PWD/chutney stop $CHUTNEY_NETWORK"
+  exit 0
+fi
+
+if [ "$CHUTNEY_BOOTSTRAP_TIME" -ge 0 ]; then
+  # Chutney will try to verify for $CHUTNEY_BOOTSTRAP_TIME seconds
+  ./chutney verify $CHUTNEY_NETWORK
+  VERIFY_EXIT_STATUS=$?
+else
+  echo "Chutney network ready and running. To stop the network, use:"
+  echo "$PWD/chutney stop $CHUTNEY_NETWORK"
+  exit 0
+fi
+
+if [ "$CHUTNEY_STOP_TIME" -ge 0 ]; then
+  if [ "$CHUTNEY_STOP_TIME" -gt 0 ]; then
+    echo "Waiting ${CHUTNEY_STOP_TIME} seconds before stopping the network..."
+  fi
+  sleep "$CHUTNEY_STOP_TIME"
+  # work around a bug/feature in make -j2 (or more)
+  # where make hangs if any child processes are still alive
+  ./chutney stop $CHUTNEY_NETWORK
+  exit $VERIFY_EXIT_STATUS
+else
+  echo "Chutney network verified and running. To stop the network, use:"
+  echo "$PWD/chutney stop $CHUTNEY_NETWORK"
+  exit 0
+fi

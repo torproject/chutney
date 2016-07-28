@@ -34,7 +34,12 @@ itself.
 You can modify its configuration using command-line arguments, or use the
 chutney environmental variables documented below:
 
-  --delay            CHUTNEY_BOOTSTRAP_TIME
+Timing Options:
+  --start-time       CHUTNEY_START_TIME
+  --bootstrap-time   CHUTNEY_BOOTSTRAP_TIME
+  --stop-time        CHUTNEY_STOP_TIME
+
+Traffic Options:
   --data             CHUTNEY_DATA_BYTES
   --connections      CHUTNEY_CONNECTIONS
   --hs-multi-client  CHUTNEY_HS_MULTI_CLIENT
@@ -81,15 +86,25 @@ HS Connection Tests:
   # Default behavior is one client connects to each HS
   ./chutney stop networks/hs-025
 
-Waiting for the network to bootstrap:
+Waiting for the network:
+
+  The tools/test-network.sh script waits CHUTNEY_START_TIME seconds
+  (default: 15) before calling chutney verify, because that's the minimum
+  amount of time it takes to bootstrap a consensus containing relays.
+  (It takes 5 seconds for the authorities to create the first consensus,
+  then 10 seconds for relays to bootstrap, submit their descriptors, and be
+  included in the next consensus.) If CHUTNEY_START_TIME is negative, the
+  script leaves the network running, and exits immediately (without verifying).
 
   Commands like "chutney verify" start immediately, and keep trying for
-  CHUTNEY_BOOTSTRAP_TIME seconds. If they haven't been successful after that
-  time, they fail.
+  CHUTNEY_BOOTSTRAP_TIME seconds (default: 60). If it hasn't been
+  successful after that time, it fails. If CHUTNEY_BOOTSTRAP_TIME is negative,
+  the script leaves the network running, and exits after CHUTNEY_START_TIME
+  (without verifying).
 
-  The tools/test-network.sh script waits 15 seconds before calling chutney
-  verify, because that's the minimum amount of time it takes to bootstrap a
-  consensus containing relays.
+  The tools/test-network.sh script waits CHUTNEY_STOP_TIME seconds
+  after verifying, then exits (default: immediately). If CHUTNEY_STOP_TIME is
+  negative, the script leaves the network running, and exits after verifying.
 
 Changing the network address:
 
