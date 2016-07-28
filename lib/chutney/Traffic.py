@@ -292,11 +292,11 @@ class Source(Peer):
             debug("BUG: sent no bytes")
             self._sent_no_bytes += 1
             # We can't retry too fast, otherwise clients burn all their HSDirs
-            if self._sent_no_bytes >= 3:
-                print("Send no data %d times. Stalled." %
+            if self._sent_no_bytes >= 2:
+                print("Sent no data %d times. Stalled." %
                       (self._sent_no_bytes))
                 return -1
-            time.sleep(3)
+            time.sleep(5)
         self.outbuf = self.outbuf[n:]
         if self.state == self.CONNECTING_THROUGH_PROXY:
             return 1  # Keep us around.

@@ -16,7 +16,7 @@ def run_test(network):
         status = _verify_traffic(network)
         # Avoid madly spewing output if we fail immediately each time
         if not status:
-            time.sleep(2)
+            time.sleep(5)
     print("Transmission: %s" % ("Success" if status else "Failure"))
     if not status:
         # TODO: allow the debug flag to be passed as an argument to
