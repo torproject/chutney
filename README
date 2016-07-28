@@ -89,9 +89,9 @@ HS Connection Tests:
 Waiting for the network:
 
   The tools/test-network.sh script waits CHUTNEY_START_TIME seconds
-  (default: 15) before calling chutney verify, because that's the minimum
+  (default: 20) before calling chutney verify, because that's the minimum
   amount of time it takes to bootstrap a consensus containing relays.
-  (It takes 5 seconds for the authorities to create the first consensus,
+  (It takes 5-10 seconds for the authorities to create the first consensus,
   then 10 seconds for relays to bootstrap, submit their descriptors, and be
   included in the next consensus.) If CHUTNEY_START_TIME is negative, the
   script leaves the network running, and exits immediately (without verifying).
