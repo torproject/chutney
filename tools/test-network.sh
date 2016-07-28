@@ -3,7 +3,7 @@
 ECHO_N="/bin/echo -n"
 
 # Output is prefixed with the name of the script
-myname=$(basename $0)
+myname=$(basename "$0")
 
 until [ -z "$1" ]
 do
@@ -166,7 +166,7 @@ fi
 
 # Set the variables for the chutney network flavour
 export NETWORK_FLAVOUR=${NETWORK_FLAVOUR:-"bridges+hs"}
-export CHUTNEY_NETWORK=networks/$NETWORK_FLAVOUR
+export CHUTNEY_NETWORK="networks/$NETWORK_FLAVOUR"
 
 # And finish up if we're doing a dry run
 if [ "$NETWORK_DRY_RUN" = true ]; then
@@ -175,7 +175,7 @@ if [ "$NETWORK_DRY_RUN" = true ]; then
 fi
 
 cd "$CHUTNEY_PATH"
-./tools/bootstrap-network.sh $NETWORK_FLAVOUR || exit 2
+./tools/bootstrap-network.sh "$NETWORK_FLAVOUR" || exit 2
 
 # chutney starts verifying after 15 seconds, keeps on trying for 60 seconds,
 # and then stops immediately (by default)
@@ -196,8 +196,8 @@ fi
 
 if [ "$CHUTNEY_BOOTSTRAP_TIME" -ge 0 ]; then
   # Chutney will try to verify for $CHUTNEY_BOOTSTRAP_TIME seconds
-  ./chutney verify $CHUTNEY_NETWORK
-  VERIFY_EXIT_STATUS=$?
+  ./chutney verify "$CHUTNEY_NETWORK"
+  VERIFY_EXIT_STATUS="$?"
 else
   echo "Chutney network ready and running. To stop the network, use:"
   echo "$PWD/chutney stop $CHUTNEY_NETWORK"
@@ -211,8 +211,8 @@ if [ "$CHUTNEY_STOP_TIME" -ge 0 ]; then
   sleep "$CHUTNEY_STOP_TIME"
   # work around a bug/feature in make -j2 (or more)
   # where make hangs if any child processes are still alive
-  ./chutney stop $CHUTNEY_NETWORK
-  exit $VERIFY_EXIT_STATUS
+  ./chutney stop "$CHUTNEY_NETWORK"
+  exit "$VERIFY_EXIT_STATUS"
 else
   echo "Chutney network verified and running. To stop the network, use:"
   echo "$PWD/chutney stop $CHUTNEY_NETWORK"
