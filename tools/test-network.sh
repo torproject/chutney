@@ -125,16 +125,19 @@ fi
 #  - if $PWD looks like a chutney directory, set it to $PWD, or
 #  - set it based on $TOR_DIR, expecting chutney to be next to tor, or
 #  - fail and tell the user how to clone the chutney repository
-if [ ! -d "$CHUTNEY_PATH" -o ! -x "$CHUTNEY_PATH/chutney" ]; then
-    if [ -x "$PWD/chutney" ]; then
+if [ ! -d "$CHUTNEY_PATH" -o ! -x "$CHUTNEY_PATH/chutney" -o \
+     ! -f "$CHUTNEY_PATH/chutney" ]; then
+    if [ -x "$PWD/chutney" -a -f "$PWD/chutney" ]; then
         echo "$myname: \$CHUTNEY_PATH not valid, trying \$PWD"
         export CHUTNEY_PATH="$PWD"
     elif [ -d "`dirname \"$0\"`/.." -a \
-	   -x "`dirname \"$0\"`/../chutney" ]; then
+	   -x "`dirname \"$0\"`/../chutney" -a \
+	   -f "`dirname \"$0\"`/../chutney" ]; then
         echo "$myname: \$CHUTNEY_PATH not valid, using this script's location"
         export CHUTNEY_PATH="`dirname \"$0\"`/.."
     elif [ -d "$TOR_DIR" -a -d "$TOR_DIR/../chutney" -a \
-           -x "$TOR_DIR/../chutney/chutney" ]; then
+           -x "$TOR_DIR/../chutney/chutney" -a \
+	   -f "$TOR_DIR/../chutney/chutney" ]; then
         echo "$myname: \$CHUTNEY_PATH not valid, trying \$TOR_DIR/../chutney"
         export CHUTNEY_PATH="$TOR_DIR/../chutney"
     else
