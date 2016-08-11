@@ -181,9 +181,9 @@ cd "$CHUTNEY_PATH"
 # and then stops immediately (by default)
 # Even the fastest chutney networks take 5-10 seconds for their first consensus
 # and then 10 seconds after that for relays to bootstrap and upload descriptors
-CHUTNEY_START_TIME=${CHUTNEY_START_TIME:-20}
-CHUTNEY_BOOTSTRAP_TIME=${CHUTNEY_BOOTSTRAP_TIME:-60}
-CHUTNEY_STOP_TIME=${CHUTNEY_STOP_TIME:-0}
+export CHUTNEY_START_TIME=${CHUTNEY_START_TIME:-20}
+export CHUTNEY_BOOTSTRAP_TIME=${CHUTNEY_BOOTSTRAP_TIME:-60}
+export CHUTNEY_STOP_TIME=${CHUTNEY_STOP_TIME:-0}
 
 if [ "$CHUTNEY_START_TIME" -ge 0 ]; then
   echo "Waiting ${CHUTNEY_START_TIME} seconds for a consensus containing relays to be generated..."
