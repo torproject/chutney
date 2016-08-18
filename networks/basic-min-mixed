@@ -1,0 +1,47 @@
+# This network generates a random mix of tor versions each time it is run
+# You'll need at least 4 runs to cover all possibilities
+
+import random
+rng = random.SystemRandom()
+
+# We have to use the same tags for old and new versions, otherwise switching
+# between them at random does not work
+OLD_TOR="tor-stable"
+
+# By default, Authorities are not configured as exits
+Authority = Node(tag="a", authority=1, relay=1, torrc="authority.tmpl")
+OldAuthority = Node(tag="a", authority=1, relay=1, torrc="authority.tmpl",
+                    tor=OLD_TOR)
+
+ExitRelay = Node(tag="r", relay=1, exit=1, torrc="relay.tmpl")
+OldExitRelay = Node(tag="r", relay=1, exit=1, torrc="relay.tmpl",
+                    tor=OLD_TOR)
+
+Client = Node(tag="c", torrc="client.tmpl")
+OldClient = Node(tag="c", torrc="client.tmpl", tor=OLD_TOR)
+
+# Choose old or new Exit and Client at random
+OldNewExitRelay = rng.choice([OldExitRelay, ExitRelay])
+OldNewClient = rng.choice([OldClient, Client])
+
+def version(node):
+  if node._env["tor"] == Authority._env["tor"]:
+    return "new"
+  elif node._env["tor"] == OldAuthority._env["tor"]:
+    return "old"
+  else:
+    return "unk"
+
+# Every time chutney takes an action, it will pick versions at random
+# It will likely choose different versions for each action
+# This could be confusing, so log a message each time
+print("Chose 1 %s authority, 1 %s authority, 1 %s exit and 1 %s client"
+      % (version(Authority),
+         version(OldAuthority),
+         version(OldNewExitRelay),
+         version(OldNewClient)))
+
+# The minimum number of authorities/relays/exits is 3, the minimum path length
+NODES = Authority.getN(1) + OldAuthority.getN(1) + OldExitRelay.getN(1) + OldClient.getN(1)
+
+ConfigureNodes(NODES)

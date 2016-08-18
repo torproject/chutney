@@ -1,0 +1,61 @@
+# This network generates a random mix of tor versions each time it is run
+# You'll need at least 8 runs to cover all possibilities
+
+import random
+rng = random.SystemRandom()
+
+# We have to use the same tags for old and new versions, otherwise switching
+# between them at random does not work
+OLD_TOR="tor-stable"
+
+# By default, Authorities are not configured as exits
+Authority = Node(tag="a", authority=1, relay=1, torrc="authority.tmpl")
+OldAuthority = Node(tag="a", authority=1, relay=1, torrc="authority.tmpl",
+                    tor=OLD_TOR)
+
+NonExitRelay = Node(tag="r", relay=1, torrc="relay-non-exit.tmpl")
+OldNonExitRelay = Node(tag="r", relay=1, torrc="relay-non-exit.tmpl",
+                       tor=OLD_TOR)
+
+Client = Node(tag="c", torrc="client.tmpl")
+OldClient = Node(tag="c", torrc="client.tmpl", tor=OLD_TOR)
+
+HS = Node(tag="h", hs=1, torrc="hs.tmpl")
+OldHS = Node(tag="h", hs=1, torrc="hs.tmpl", tor=OLD_TOR)
+
+# Choose old or new Relay, Client, and HS at random
+OldNewNonExitRelay = rng.choice([OldNonExitRelay, NonExitRelay])
+OldNewClient = rng.choice([OldClient, Client])
+OldNewHS = rng.choice([OldHS, HS])
+
+def version(node):
+  if node._env["tor"] == Authority._env["tor"]:
+    return "new"
+  elif node._env["tor"] == OldAuthority._env["tor"]:
+    return "old"
+  else:
+    return "unk"
+
+# Every time chutney takes an action, it will pick versions at random
+# It will likely choose different versions for each action
+# This could be confusing, so log a message each time
+print(("Chose 1 %s authority, 1 %s authority, %d %s non-exit relay, " +
+       "%d %s non-exit relay, 1 %s client and 1 %s hidden service")
+      % (version(Authority),
+         version(OldAuthority),
+         2 if OldNewNonExitRelay == NonExitRelay else 1,
+	 version(NonExitRelay),
+         2 if OldNewNonExitRelay == OldNonExitRelay else 1,
+	 version(OldNonExitRelay),
+	 version(OldNewClient),
+         version(OldNewHS)))
+
+# A hidden service needs 5 authorities/relays to ensure it can build HS
+# connections:
+# a minimum path length of 3, plus the client-nominated rendezvous point,
+# plus a seperate introduction point
+NODES = Authority.getN(1) + OldAuthority.getN(1) + NonExitRelay.getN(1) + \
+        OldNonExitRelay.getN(1) + OldNewNonExitRelay.getN(1) + \
+        OldNewClient.getN(1) + OldNewHS.getN(1)
+
+ConfigureNodes(NODES)
