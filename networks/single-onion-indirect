@@ -1,0 +1,20 @@
+# Check that a single onion service makes 3-hop connections to
+# unreachable intro points and rend points, by forcing it to connect
+# through only one guard
+# It should act exactly like a hidden service, except that it might make
+# direct connections to that one guard if that guard is also intro or rend
+
+# By default, Authorities are not configured as exits
+Authority = Node(tag="a", authority=1, relay=1, torrc="authority.tmpl")
+NonExitRelay = Node(tag="r", relay=1, torrc="relay-non-exit.tmpl")
+Client = Node(tag="c", torrc="client.tmpl")
+SingleOnionIndirect = Node(tag="h", hs=1, torrc="single-onion-indirect.tmpl")
+
+# A hidden service needs 5 authorities/relays to ensure it can build HS
+# connections:
+# a minimum path length of 3, plus the client-nominated rendezvous point,
+# plus a seperate introduction point
+NODES = Authority.getN(2) + NonExitRelay.getN(3) + \
+        Client.getN(1) + SingleOnionIndirect.getN(1)
+
+ConfigureNodes(NODES)

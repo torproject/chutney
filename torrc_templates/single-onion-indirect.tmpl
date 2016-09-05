@@ -1,0 +1,6 @@
+${include:single-onion.tmpl}
+
+# Only allow direct connections to the first directory authority's ORPort
+# This checks that a single onion service makes 3-hop connections to
+# unreachable intro points and rend points
+ReachableAddresses 127.0.0.1:5000
