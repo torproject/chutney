@@ -28,10 +28,12 @@ def run_test(network):
 def _verify_traffic(network):
     """Verify (parts of) the network by sending traffic through it
     and verify what is received."""
+    # TODO: IPv6 SOCKSPorts, SOCKSPorts with IPv6Traffic, and IPv6 Exits
     LISTEN_ADDR = network._dfltEnv['ip']
     LISTEN_PORT = 4747  # FIXME: Do better! Note the default exit policy.
     # HSs must have a HiddenServiceDir with
     # "HiddenServicePort <HS_PORT> <CHUTNEY_LISTEN_ADDRESS>:<LISTEN_PORT>"
+    # TODO: Test <CHUTNEY_LISTEN_ADDRESS_V6>:<LISTEN_PORT>
     HS_PORT = 5858
     # The amount of data to send between each source-sink pair,
     # each time the source connects.
