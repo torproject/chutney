@@ -44,6 +44,10 @@ Traffic Options:
   --connections      CHUTNEY_CONNECTIONS
   --hs-multi-client  CHUTNEY_HS_MULTI_CLIENT
 
+Address Options:
+  --ipv4             CHUTNEY_LISTEN_ADDRESS
+  --ipv6             CHUTNEY_LISTEN_ADDRESS_V6
+
 Standard Actions:
   ./chutney configure networks/basic
   ./chutney start networks/basic
@@ -108,14 +112,15 @@ Waiting for the network:
 
 Changing the network address:
 
-   Chutney defaults to binding to localhost. To change the bind address,
-   set the CHUTNEY_LISTEN_ADDRESS environment variable. Setting it to some
-   interface's IP address allows us to make the simulated Tor network
-   available on the network.
+   Chutney defaults to binding to localhost. To change the IPv4 bind address,
+   set the CHUTNEY_LISTEN_ADDRESS environment variable. Similarly, change
+   CHUTNEY_LISTEN_ADDRESS_V6 for IPv6: it defaults to "no IPv6 address".
+   Setting it to some interface's IP address allows us to make the simulated
+   Tor network available on the network.
 
-   IPv6 support for both Tor and Chutney is a work in progress. If your system
-   returns IPv6 ::1 as the (first) address for localhost, you might need to
-   set CHUTNEY_LISTEN_ADDRESS="127.0.0.1" for chutney to work.
+   IPv6 support for both Tor and Chutney is a work in progress. Currently,
+   chutney verifies IPv6 client, bridge client, and hidden service
+   connections. It does not use IPv6 SOCKSPort or Exit traffic.
 
 The configuration files:
   networks/basic holds the configuration for the network you're configuring

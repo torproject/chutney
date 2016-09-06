@@ -206,9 +206,9 @@ class LocalNodeBuilder(NodeBuilder):
     # tor_gencert -- path to tor_gencert binary
     # tor -- path to tor binary
     # auth_cert_lifetime -- lifetime of authority certs, in months.
-    # ip -- IP to listen on (used only if authority or bridge)
-    # ipv6_addr -- IPv6 address to listen on (used only if ipv6 bridge)
-    # orport, dirport -- (used only if authority)
+    # ip -- IP to listen on
+    # ipv6_addr -- IPv6 address to listen on
+    # orport, dirport -- used on authorities, relays, and bridges
     # fingerprint -- used only if authority
     # dirserver_flags -- used only if authority
     # nick -- nickname of this router
@@ -461,8 +461,14 @@ class LocalNodeBuilder(NodeBuilder):
 
         authlines = ""
         for authopt in options:
-            authlines += "%s %s orport=%s %s %s:%s %s\n" % (
-                authopt, self._env['nick'], self._env['orport'],
+            authlines += "%s %s orport=%s" % (
+                authopt, self._env['nick'], self._env['orport'])
+            # It's ok to give an authority's IPv6 address to an IPv4-only
+            # client or relay: it will and must ignore it
+            if self._env['ipv6_addr'] is not None:
+                authlines += " ipv6=%s:%s" % (self._env['ipv6_addr'],
+                                              self._env['orport'])
+            authlines += " %s %s:%s %s\n" % (
                 self._env['dirserver_flags'], self._env['ip'],
                 self._env['dirport'], self._env['fingerprint'])
         return authlines
@@ -675,7 +681,9 @@ DEFAULTS = {
     'tor-gencert': os.environ.get('CHUTNEY_TOR_GENCERT', None),
     'auth_cert_lifetime': 12,
     'ip': os.environ.get('CHUTNEY_LISTEN_ADDRESS', '127.0.0.1'),
-    'ipv6_addr': None,
+    # Pre-0.2.8 clients will fail to parse ipv6 auth lines,
+    # so we default to ipv6_addr None
+    'ipv6_addr': os.environ.get('CHUTNEY_LISTEN_ADDRESS_V6', None),
     'dirserver_flags': 'no-v2',
     'chutney_dir': '.',
     'torrc_fname': '${dir}/torrc',

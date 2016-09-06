@@ -73,6 +73,16 @@ do
       export CHUTNEY_HS_MULTI_CLIENT="$2"
       shift
       ;;
+    # The IPv4 address to bind to, defaults to 127.0.0.1
+    --ipv4|--v4|-4|--ip)
+      export CHUTNEY_LISTEN_ADDRESS="$2"
+      shift
+      ;;
+    # The IPv6 address to bind to, default is not to bind to an IPv6 address
+    --ipv6|--v6|-6)
+      export CHUTNEY_LISTEN_ADDRESS_V6="$2"
+      shift
+      ;;
     --coverage)
       export USE_COVERAGE_BINARY=true
       ;;
