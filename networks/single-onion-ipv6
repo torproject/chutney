@@ -1,0 +1,25 @@
+import os
+# By default, Authorities are not configured as exits
+Authority6 = Node(tag="a", authority=1, relay=1,
+                  ipv6_addr=os.environ.get('CHUTNEY_LISTEN_ADDRESS_V6',
+                                           '[::1]'),
+                  torrc="authority-orport-v6.tmpl")
+NonExitRelay6 = Node(tag="r", relay=1,
+                     ipv6_addr=os.environ.get('CHUTNEY_LISTEN_ADDRESS_V6',
+                                              '[::1]'),
+                     torrc="relay-orport-v6-non-exit.tmpl")
+Client = Node(tag="c", torrc="client.tmpl")
+Client6 = Node(tag="c", torrc="client-only-v6.tmpl")
+SingleOnion6 = Node(tag="h", hs=1, torrc="single-onion-only-v6.tmpl")
+
+# Since only 25% of relays get the guard flag,
+# TestingDirAuthVoteGuard * may need to be used in small networks
+
+# A hidden service needs 5 authorities/relays to ensure it can build HS
+# connections:
+# a minimum path length of 3, plus the client-nominated rendezvous point,
+# plus a seperate introduction point
+NODES = Authority6.getN(2) + NonExitRelay6.getN(3) + \
+        Client.getN(1) + Client6.getN(1) + SingleOnion6.getN(1)
+
+ConfigureNodes(NODES)
