@@ -24,7 +24,7 @@ flavour=basic; [ -n "$1" ] && { flavour=$1; shift; }
 
 $CHUTNEY stop networks/$flavour
 
-echo "$myname: boostrapping network: $flavour"
+echo "$myname: bootstrapping network: $flavour"
 $CHUTNEY configure networks/$flavour
 
 # TODO: Make 'chutney configure' take an optional offset argument and
