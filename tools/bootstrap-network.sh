@@ -8,7 +8,6 @@
 #       and creating a new net/nodes
 #
 # Usage:
-#    cd YOUR-CHUTNEY-DIRECTORY
 #    tools/bootstrap-network.sh [network-flavour]
 #    network-flavour: one of the files in the networks directory,
 #                     (default: 'basic')
@@ -17,6 +16,12 @@
 VOTING_OFFSET=6
 CHUTNEY=./chutney
 myname=$(basename "$0")
+
+if [ ! -z "$CHUTNEY_PATH" ]; then
+    cd "$CHUTNEY_PATH"
+    # tell chutney to use the current directory
+    export CHUTNEY_PATH=.
+fi
 
 [ -x $CHUTNEY ] || { echo "$myname: missing $CHUTNEY"; exit 1; }
 [ -d networks ] || { echo "$myname: missing directory: networks"; exit 1; }

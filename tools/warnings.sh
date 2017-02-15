@@ -1,13 +1,16 @@
 #!/bin/bash
 #
 # Usage:
-#    cd YOUR-CHUTNEY-DIRECTORY
 #    tools/warnings.sh [node]
 # Output: for each node outputs its warnings and the number of times that
 # warning has ocurred. If the argument node is specified, it only shows
 # the warnings of that node.
 # Examples: tools/warnings.sh
 #           tools/warnings.sh 000a
+
+if [ ! -z "$CHUTNEY_PATH" ]; then
+    cd "$CHUTNEY_PATH"
+fi
 
 function show_warnings() {
     echo "${GREEN}Node `basename $1`:${NC}"

@@ -1,12 +1,15 @@
 #!/bin/bash
 #
 # Usage:
-#    cd YOUR-CHUTNEY-DIRECTORY
 #    tools/hsaddress.sh [hs_node]
 # Output: for each HS outputs its onion address. If the argument node is
 #    specified, it only shows the onion address of that node.
 # Examples: tools/hsaddress.sh
 #           tools/hsaddress.sh 025h
+
+if [ ! -z "$CHUTNEY_PATH" ]; then
+    cd "$CHUTNEY_PATH"
+fi
 
 NAME=$(basename "$0")
 DEST=net/nodes

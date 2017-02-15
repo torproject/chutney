@@ -188,6 +188,8 @@ if [ "$NETWORK_DRY_RUN" = true ]; then
 fi
 
 cd "$CHUTNEY_PATH"
+# tell chutney to use the current directory
+export CHUTNEY_PATH=.
 ./tools/bootstrap-network.sh "$NETWORK_FLAVOUR" || exit 2
 
 # chutney starts verifying after 20 seconds, keeps on trying for 60 seconds,
