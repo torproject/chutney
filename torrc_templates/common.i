@@ -48,3 +48,4 @@ DisableDebuggerAttachment 0
 ${authorities}
 
 ControlPort $controlport
+CookieAuthentication 1
