@@ -37,17 +37,19 @@ RunAsDaemon 1
 ConnLimit $connlimit
 Nickname $nick
 ShutdownWaitLength 0
+DisableDebuggerAttachment 0
+
+ControlPort $controlport
+# Use ControlSocket rather than ControlPort unix: to support older tors
+ControlSocket ${dir}/control
+CookieAuthentication 1
 PidFile ${dir}/pid
+
 Log notice file ${dir}/notice.log
 Log info file ${dir}/info.log
 # Turn this off to save space
 #Log debug file ${dir}/debug.log
 ProtocolWarnings 1
 SafeLogging 0
-DisableDebuggerAttachment 0
-${authorities}
 
-ControlPort $controlport
-# Use ControlSocket rather than ControlPort unix: to support older tors
-ControlSocket ${dir}/control
-CookieAuthentication 1
+${authorities}
