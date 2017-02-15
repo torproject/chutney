@@ -335,9 +335,13 @@ class LocalNodeBuilder(NodeBuilder):
 
     def _makeDataDir(self):
         """Create the data directory (with keys subdirectory) for this node.
+
+          448 is the decimal representation of the octal number 0700. Since
+          python2 only supports 0700 and python3 only supports 0o700, we can
+          use neither.
         """
         datadir = self._env['dir']
-        mkdir_p(os.path.join(datadir, 'keys'))
+        mkdir_p(os.path.join(datadir, 'keys'), 448)
 
     def _makeHiddenServiceDir(self):
         """Create the hidden service subdirectory for this node.
