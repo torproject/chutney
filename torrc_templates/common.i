@@ -48,4 +48,6 @@ DisableDebuggerAttachment 0
 ${authorities}
 
 ControlPort $controlport
+# Use ControlSocket rather than ControlPort unix: to support older tors
+ControlSocket ${dir}/control
 CookieAuthentication 1
