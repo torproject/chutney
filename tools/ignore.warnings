@@ -1,0 +1,40 @@
+# these patterns are ignored by warnings.sh when IGNORE_EXPECTED is set to 1
+expands into rules which apply to all private IPv4 and IPv6 addresses
+good signatures from recognized authorities for us to accept it
+Cannot open fingerprint file
+Consensus with empty bandwidth
+Could not open.*sr-state.*No such file or directory
+Currently, sandboxing is only implemented on Linux
+Failed to choose an exit server
+Failed to find node for hop [0-1] of our path
+# Tor Bug 21524
+IPv4 address.*private.*with accept6/reject6 field type in exit policy
+In a future version of Tor, ExitRelay 0 may become the default when no ExitPolicy is given
+No available nodes when trying to choose node
+Not enough info to publish pending .* consensus
+# Necessary to make IPv4 and IPv6 exit templates work
+Option 'ExitPolicyRejectPrivate' used more than once
+Option 'ExitRelay' used more than once
+Received http status code 404 .* from server .* while fetching
+# Tor Bug 21525
+Rejected vote from .*Bad valid-after time
+Rejecting vote from .* with valid-after time of .* we were expecting 1970-01-01 00:00:00
+SR: Unable to read SR state file
+# Tor Bug 21522
+Testing options override the deprecated option ClientDNSRejectInternalAddresses
+TestingTorNetwork is set
+# Older versions might need them, we should remove them at some point in 0.3.*
+The DirAuthority options 'hs' and 'no-hs' are obsolete
+# Chutney Bug 17090
+# Don't ignore it, we want to make sure there are no regressions
+##Tor is running as an exit relay
+# Tor Bug 21525?
+Unable to store signatures posted by .* Valid-After times do not match
+# We ignore consensus failure warnings: we set this low to bootstrap fast
+V3AuthVotingInterval is very low
+We don't have enough votes to generate a consensus
+You have used DirAuthority or AlternateDirAuthority
+Your log may contain sensitive information
+# Tor Bug 21525
+http status 400.*Bad valid-after time.*after uploading vote
+http status 400.*Valid-After times do not match.*after uploading signatures
