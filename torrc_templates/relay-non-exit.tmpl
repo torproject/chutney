@@ -4,6 +4,9 @@ OrPort $orport
 Address $ip
 DirPort $dirport
 
+# Must be included before exit-v{4,6}.i
+ExitRelay 0
+
 #NOTE: Setting TestingServerConsensusDownloadSchedule doesn't
 #      help -- dl_stats.schedule is not DL_SCHED_CONSENSUS
 #      at boostrap time.

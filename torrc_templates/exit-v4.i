@@ -1,3 +1,5 @@
+# Must be included after relay-non-exit.tmpl
+ExitRelay 1
 
 # 1. Allow exiting to IPv4 localhost and private networks by default
 # -------------------------------------------------------------
