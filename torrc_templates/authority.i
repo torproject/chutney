@@ -29,12 +29,4 @@ V3AuthDistDelay 2
 # either update your chutney to a 2015 version,
 # or update your tor to a later version, most likely 0.2.6.2-final
 
-# These are all set in common.i in the Comprehensive/Rapid sections
-# Work around Exit requirements
-#TestingDirAuthVoteExit *
-# Work around bandwidth thresholds for exits
-#TestingMinExitFlagThreshold 0
-# Work around Guard uptime requirements
-#TestingDirAuthVoteGuard *
-# Work around HSDir uptime and ORPort connectivity requirements
-#TestingDirAuthVoteHSDir *
+# See common.i in the Comprehensive/Rapid sections for the relevant options
