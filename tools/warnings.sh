@@ -15,7 +15,7 @@ fi
 function show_warnings() {
     echo "${GREEN}Node `basename $1`:${NC}"
     sed -n 's/^.*\[warn\]//p' $1/info.log | sort | uniq -c | \
-    sed -e 's/^\s*//' -e "s/\([0-9][0-9]*\) \(.*\)/${YELLOW}Warning:${NC}\2${YELLOW} Number: \1${NC}/"
+    sed -e 's/^\s*//' -e "s/ *\([0-9][0-9]*\) *\(.*\)/ ${YELLOW}Warning:${NC} \2${YELLOW} Number: \1${NC}/"
     echo ""
 }
 
