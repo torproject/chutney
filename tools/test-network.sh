@@ -8,6 +8,7 @@ myname=$(basename "$0")
 until [ -z "$1" ]
 do
   case "$1" in
+    # the path to the chutney directory
     --chutney-path)
       export CHUTNEY_PATH="$2"
       shift
@@ -130,6 +131,11 @@ if [ ! -d "$TOR_DIR" ]; then
     fi
 fi
 
+# make TOR_DIR absolute
+if [ -d "$PWD/$TOR_DIR" ]; then
+    export TOR_DIR="$PWD/$TOR_DIR"
+fi
+
 # mandatory: $CHUTNEY_PATH is the path to the chutney launch script
 # if it's not set:
 #  - if $PWD looks like a chutney directory, set it to $PWD, or
@@ -163,6 +169,11 @@ CHUTNEY_PATH=\`pwd\`/chutney"
     fi
 fi
 
+# make chutney path absolute
+if [ -d "$PWD/$CHUTNEY_PATH" ]; then
+    export CHUTNEY_PATH="$PWD/$CHUTNEY_PATH"
+fi
+
 # For picking up the right tor binaries.
 # If $TOR_DIR isn't set, chutney looks for tor binaries by name or path
 # using $CHUTNEY_TOR and $CHUTNEY_TOR_GENCERT, and then falls back to
@@ -175,11 +186,19 @@ if [ -d "$TOR_DIR" ]; then
     fi
     export CHUTNEY_TOR="${TOR_DIR}/src/or/${tor_name}"
     export CHUTNEY_TOR_GENCERT="${TOR_DIR}/src/tools/${tor_gencert_name}"
+else
+    # make binary paths absolute
+    if [ -x "$PWD/$CHUTNEY_TOR" ]; then
+        export CHUTNEY_TOR="$PWD/$CHUTNEY_TOR"
+    fi
+    if [ -x "$PWD/$CHUTNEY_TOR_GENCERT" ]; then
+        export CHUTNEY_TOR_GENCERT="$PWD/$CHUTNEY_TOR_GENCERT"
+    fi
 fi
 
 # Set the variables for the chutney network flavour
 export NETWORK_FLAVOUR=${NETWORK_FLAVOUR:-"bridges+hs"}
-export CHUTNEY_NETWORK="networks/$NETWORK_FLAVOUR"
+export CHUTNEY_NETWORK="$CHUTNEY_PATH/networks/$NETWORK_FLAVOUR"
 
 # And finish up if we're doing a dry run
 if [ "$NETWORK_DRY_RUN" = true ]; then
@@ -187,10 +206,10 @@ if [ "$NETWORK_DRY_RUN" = true ]; then
     return
 fi
 
+# Chutney must be launched at $CHUTNEY_PATH, at least until #21521 is fixed
 cd "$CHUTNEY_PATH"
-# tell chutney to use the current directory
-export CHUTNEY_PATH=.
-./tools/bootstrap-network.sh "$NETWORK_FLAVOUR" || exit 2
+
+"$CHUTNEY_PATH/tools/bootstrap-network.sh" "$NETWORK_FLAVOUR" || exit 2
 
 # chutney starts verifying after 20 seconds, keeps on trying for 60 seconds,
 # and then stops immediately (by default)
@@ -200,23 +219,24 @@ export CHUTNEY_START_TIME=${CHUTNEY_START_TIME:-20}
 export CHUTNEY_BOOTSTRAP_TIME=${CHUTNEY_BOOTSTRAP_TIME:-60}
 export CHUTNEY_STOP_TIME=${CHUTNEY_STOP_TIME:-0}
 
+CHUTNEY="$CHUTNEY_PATH/chutney"
 if [ "$CHUTNEY_START_TIME" -ge 0 ]; then
   echo "Waiting ${CHUTNEY_START_TIME} seconds for a consensus containing relays to be generated..."
   sleep "$CHUTNEY_START_TIME"
 else
   echo "Chutney network launched and running. To stop the network, use:"
-  echo "$PWD/chutney stop $PWD/$CHUTNEY_NETWORK"
+  echo "$CHUTNEY stop $CHUTNEY_NETWORK"
   CHUTNEY_WARNINGS_IGNORE_EXPECTED=1 "$CHUTNEY_PATH/tools/warnings.sh"
   exit 0
 fi
 
 if [ "$CHUTNEY_BOOTSTRAP_TIME" -ge 0 ]; then
   # Chutney will try to verify for $CHUTNEY_BOOTSTRAP_TIME seconds
-  ./chutney verify "$CHUTNEY_NETWORK"
+  "$CHUTNEY" verify "$CHUTNEY_NETWORK"
   VERIFY_EXIT_STATUS="$?"
 else
   echo "Chutney network ready and running. To stop the network, use:"
-  echo "$PWD/chutney stop $PWD/$CHUTNEY_NETWORK"
+  echo "$CHUTNEY" stop "$CHUTNEY_NETWORK"
   CHUTNEY_WARNINGS_IGNORE_EXPECTED=1 "$CHUTNEY_PATH/tools/warnings.sh"
   exit 0
 fi
@@ -228,11 +248,11 @@ if [ "$CHUTNEY_STOP_TIME" -ge 0 ]; then
   sleep "$CHUTNEY_STOP_TIME"
   # work around a bug/feature in make -j2 (or more)
   # where make hangs if any child processes are still alive
-  ./chutney stop "$CHUTNEY_NETWORK"
+  "$CHUTNEY" stop "$CHUTNEY_NETWORK"
   exit "$VERIFY_EXIT_STATUS"
 else
   echo "Chutney network verified and running. To stop the network, use:"
-  echo "$PWD/chutney stop $PWD/$CHUTNEY_NETWORK"
+  echo "$CHUTNEY stop $CHUTNEY_NETWORK"
   CHUTNEY_WARNINGS_IGNORE_EXPECTED=1 "$CHUTNEY_PATH/tools/warnings.sh"
   exit 0
 fi

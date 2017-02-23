@@ -13,35 +13,46 @@
 #                     (default: 'basic')
 #
 
-VOTING_OFFSET=6
-CHUTNEY=./chutney
-myname=$(basename "$0")
-
-if [ ! -z "$CHUTNEY_PATH" ]; then
-    cd "$CHUTNEY_PATH"
-    # tell chutney to use the current directory
-    export CHUTNEY_PATH=.
+# make chutney path absolute
+if [ -d "$PWD/$CHUTNEY_PATH" ]; then
+    export CHUTNEY_PATH="$PWD/$CHUTNEY_PATH"
+elif [ ! -d "$CHUTNEY_PATH" ]; then
+    export CHUTNEY_PATH="$PWD"
 fi
 
-[ -x $CHUTNEY ] || { echo "$myname: missing $CHUTNEY"; exit 1; }
-[ -d networks ] || { echo "$myname: missing directory: networks"; exit 1; }
+VOTING_OFFSET=6
+CHUTNEY="$CHUTNEY_PATH/chutney"
+myname=$(basename "$0")
+
+[ -d "$CHUTNEY_PATH" ] || \
+    { echo "$myname: missing chutney directory: $CHUTNEY_PATH"; exit 1; }
+[ -x "$CHUTNEY" ] || \
+    { echo "$myname: missing chutney: $CHUTNEY"; exit 1; }
 flavour=basic; [ -n "$1" ] && { flavour=$1; shift; }
 
-$CHUTNEY stop networks/$flavour
+export CHUTNEY_NETWORK="$CHUTNEY_PATH/networks/$NETWORK_FLAVOUR"
+
+[ -e "$CHUTNEY_NETWORK" ] || \
+  { echo "$myname: missing network file: $CHUTNEY_NETWORK"; exit 1; }
+
+# Chutney must be launched at $CHUTNEY_PATH, at least until #21521 is fixed
+cd "$CHUTNEY_PATH"
+
+"$CHUTNEY" stop "$CHUTNEY_NETWORK"
 
 echo "$myname: bootstrapping network: $flavour"
-$CHUTNEY configure networks/$flavour
+"$CHUTNEY" configure "$CHUTNEY_NETWORK"
 
 # TODO: Make 'chutney configure' take an optional offset argument and
 # use the templating system in Chutney to set this instead of editing
 # files like this.
 offset=$(expr \( $(date +%s) + $VOTING_OFFSET \) % 300)
 CONFOPT="TestingV3AuthVotingStartOffset"
-for file in net/nodes/*a/torrc; do
+for file in "$CHUTNEY_PATH"/net/nodes/*a/torrc ; do
     sed -i.bak -e "s/^${CONFOPT}.*$/${CONFOPT} $offset/1" $file
 done
 
-$CHUTNEY start networks/$flavour
+"$CHUTNEY" start "$CHUTNEY_NETWORK"
 sleep 1
-$CHUTNEY status networks/$flavour
+"$CHUTNEY" status "$CHUTNEY_NETWORK"
 #echo "tail -F net/nodes/*/notice.log"

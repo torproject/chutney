@@ -11,8 +11,11 @@
 # CHUTNEY_WARNINGS_IGNORE_EXPECTED: set to 1 to filter out expected warnings
 # CHUTNEY_WARNINGS_SUMMARY: set to 1 to merge warnings from all instances
 
-if [ ! -z "$CHUTNEY_PATH" ]; then
-    cd "$CHUTNEY_PATH"
+# make chutney path absolute
+if [ -d "$PWD/$CHUTNEY_PATH" ]; then
+    export CHUTNEY_PATH="$PWD/$CHUTNEY_PATH"
+elif [ ! -d "$CHUTNEY_PATH" ]; then
+    export CHUTNEY_PATH="$PWD"
 fi
 
 function show_warnings() {
@@ -47,9 +50,9 @@ function usage() {
 NC=$(tput sgr0)
 YELLOW=$(tput setaf 3)
 GREEN=$(tput setaf 2)
-CHUTNEY=./chutney
+CHUTNEY="$CHUTNEY_PATH/chutney"
 NAME=$(basename "$0")
-DEST=net/nodes
+DEST="$CHUTNEY_PATH/net/nodes"
 LOG_FILE=info.log
 # ignore warnings we expect to get every time chutney runs
 CHUTNEY_WARNINGS_IGNORE_EXPECTED=${CHUTNEY_WARNINGS_IGNORE_EXPECTED:-0}
@@ -58,7 +61,7 @@ IGNORE_FILE="$CHUTNEY_PATH/tools/ignore.warnings"
 # merge all log files into one before counting entries
 CHUTNEY_WARNINGS_SUMMARY=${CHUTNEY_WARNINGS_SUMMARY:-0}
 
-[ -d net/nodes ] || { echo "$NAME: no logs available"; exit 1; }
+[ -d "$DEST" ] || { echo "$NAME: no logs available"; exit 1; }
 if [ $# -eq 0 ];
 then
     if [ "$CHUTNEY_WARNINGS_SUMMARY" -ne 0 ]; then

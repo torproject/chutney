@@ -7,12 +7,15 @@
 # Examples: tools/hsaddress.sh
 #           tools/hsaddress.sh 025h
 
-if [ ! -z "$CHUTNEY_PATH" ]; then
-    cd "$CHUTNEY_PATH"
+# make chutney path absolute
+if [ -d "$PWD/$CHUTNEY_PATH" ]; then
+    export CHUTNEY_PATH="$PWD/$CHUTNEY_PATH"
+elif [ ! -d "$CHUTNEY_PATH" ]; then
+    export CHUTNEY_PATH="$PWD"
 fi
 
 NAME=$(basename "$0")
-DEST=net/nodes
+DEST="$CHUTNEY_PATH/net/nodes"
 TARGET=hidden_service/hostname
 
 function usage() {
@@ -21,28 +24,28 @@ function usage() {
 }
 
 function show_address() {
-    cat $1
+    cat "$1"
 }
 
-[ -d $DEST ] || { echo "$NAME: no nodes available"; exit 1; }
+[ -d "$DEST" ] || { echo "$NAME: no nodes available"; exit 1; }
 if [ $# -eq 0 ];
 then
     # support hOLD
     for dir in "$DEST"/*h*;
     do
-        FILE=${dir}/$TARGET
-        [ -e $FILE ] || continue
+        FILE="${dir}/$TARGET"
+        [ -e "$FILE" ] || continue
         echo -n "Node `basename ${dir}`: "
-        show_address $FILE
+        show_address "$FILE"
     done
 elif [ $# -eq 1 ];
 then
-    [ -d $DEST/$1 ] || { echo "$NAME: $1 not found"; exit 1; }
+    [ -d "$DEST/$1" ] || { echo "$NAME: $1 not found"; exit 1; }
     # support hOLD
     [[ "$1" =~ .*h.* ]] || { echo "$NAME: $1 is not a HS"; exit 1; }
-    FILE=$DEST/$1/$TARGET
-    [ -e $FILE ] || { echo "$NAME: $FILE not found"; exit 1; }
-    show_address $FILE
+    FILE="$DEST/$1/$TARGET"
+    [ -e "$FILE" ] || { echo "$NAME: $FILE not found"; exit 1; }
+    show_address "$FILE"
 else
     usage
 fi
