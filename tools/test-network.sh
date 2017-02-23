@@ -206,6 +206,7 @@ if [ "$CHUTNEY_START_TIME" -ge 0 ]; then
 else
   echo "Chutney network launched and running. To stop the network, use:"
   echo "$PWD/chutney stop $PWD/$CHUTNEY_NETWORK"
+  CHUTNEY_WARNINGS_IGNORE_EXPECTED=1 "$CHUTNEY_PATH/tools/warnings.sh"
   exit 0
 fi
 
@@ -216,6 +217,7 @@ if [ "$CHUTNEY_BOOTSTRAP_TIME" -ge 0 ]; then
 else
   echo "Chutney network ready and running. To stop the network, use:"
   echo "$PWD/chutney stop $PWD/$CHUTNEY_NETWORK"
+  CHUTNEY_WARNINGS_IGNORE_EXPECTED=1 "$CHUTNEY_PATH/tools/warnings.sh"
   exit 0
 fi
 
@@ -231,5 +233,6 @@ if [ "$CHUTNEY_STOP_TIME" -ge 0 ]; then
 else
   echo "Chutney network verified and running. To stop the network, use:"
   echo "$PWD/chutney stop $PWD/$CHUTNEY_NETWORK"
+  CHUTNEY_WARNINGS_IGNORE_EXPECTED=1 "$CHUTNEY_PATH/tools/warnings.sh"
   exit 0
 fi
