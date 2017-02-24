@@ -1,20 +1,41 @@
 # these patterns are ignored by warnings.sh when IGNORE_EXPECTED is set to 1
 expands into rules which apply to all private IPv4 and IPv6 addresses
+# We ignore consensus failure warnings
 good signatures from recognized authorities for us to accept it
+# Tor Bug 21525
+http status 400.*Bad valid-after time.*after uploading vote
+http status 400.*Mismatched digest.*after uploading signatures
+http status 400.*Valid-After times do not match.*after uploading signatures
+# We ignore consensus failure warnings
+Attempt by .* to open a stream from unknown relay
 Cannot open fingerprint file
+# Tor Bug 21534
+Client asked me to extend back to the previous hop
+circuit_receive_relay_cell (forward) failed
+connection_edge_process_relay_cell (away from origin) failed
+# We ignore consensus failure warnings
+Consensus does not include configured authority
 Consensus with empty bandwidth
+Could not add queued signature to new consensus: Mismatched digest
+Could not add queued signature to new consensus: Valid-After times do not match
 Could not open.*sr-state.*No such file or directory
 Currently, sandboxing is only implemented on Linux
+# We ignore consensus failure warnings
+Error publishing .* consensus
+Every hidden service on this tor instance is NON-ANONYMOUS
+# We ignore consensus failure warnings
 Failed to choose an exit server
 Failed to find node for hop [0-1] of our path
 # Tor Bug 21524
 IPv4 address.*private.*with accept6/reject6 field type in exit policy
 In a future version of Tor, ExitRelay 0 may become the default when no ExitPolicy is given
+# We ignore consensus failure warnings
 No available nodes when trying to choose node
 Not enough info to publish pending .* consensus
 # Necessary to make IPv4 and IPv6 exit templates work
 Option 'ExitPolicyRejectPrivate' used more than once
 Option 'ExitRelay' used more than once
+# We ignore consensus failure warnings
 Received http status code 404 .* from server .* while fetching
 # Tor Bug 21525
 Rejected vote from .*Bad valid-after time
@@ -25,16 +46,17 @@ Testing options override the deprecated option ClientDNSRejectInternalAddresses
 TestingTorNetwork is set
 # Older versions might need them, we should remove them at some point in 0.3.*
 The DirAuthority options 'hs' and 'no-hs' are obsolete
+This copy of Tor was compiled.*to run in a non-anonymous mode
 # Chutney Bug 17090
 # Don't ignore it, we want to make sure there are no regressions
 ##Tor is running as an exit relay
 # Tor Bug 21525?
+Unable to store signatures posted by .* Mismatched digest
 Unable to store signatures posted by .* Valid-After times do not match
-# We ignore consensus failure warnings: we set this low to bootstrap fast
+# We ignore consensus failure warnings
 V3AuthVotingInterval is very low
+We don't have a consensus, so we can't perform v2 rendezvous operations
 We don't have enough votes to generate a consensus
+We only have [1-4] introduction points established for
 You have used DirAuthority or AlternateDirAuthority
 Your log may contain sensitive information
-# Tor Bug 21525
-http status 400.*Bad valid-after time.*after uploading vote
-http status 400.*Valid-After times do not match.*after uploading signatures
