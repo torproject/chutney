@@ -48,9 +48,12 @@ function usage() {
     exit 1
 }
 
-NC=$(tput sgr0)
-YELLOW=$(tput setaf 3)
-GREEN=$(tput setaf 2)
+# Don't colour in log files
+if [ -t 1 ]; then
+    NC=$(tput sgr0)
+    YELLOW=$(tput setaf 3)
+    GREEN=$(tput setaf 2)
+fi
 CHUTNEY="$CHUTNEY_PATH/chutney"
 NAME=$(basename "$0")
 DEST="$CHUTNEY_PATH/net/nodes"
