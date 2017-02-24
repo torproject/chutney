@@ -32,12 +32,12 @@ _THE_NETWORK = None
 cgitb.enable(format="plain")
 
 
-def mkdir_p(d, mode=511):
+def mkdir_p(d, mode=448):
     """Create directory 'd' and all of its parents as needed.  Unlike
        os.makedirs, does not give an error if d already exists.
 
-       511 is the decimal representation of the octal number 0777. Since
-       python2 only supports 0777 and python3 only supports 0o777, we can use
+       448 is the decimal representation of the octal number 0700. Since
+       python2 only supports 0700 and python3 only supports 0o700, we can use
        neither.
     """
     try:
@@ -335,13 +335,9 @@ class LocalNodeBuilder(NodeBuilder):
 
     def _makeDataDir(self):
         """Create the data directory (with keys subdirectory) for this node.
-
-          448 is the decimal representation of the octal number 0700. Since
-          python2 only supports 0700 and python3 only supports 0o700, we can
-          use neither.
         """
         datadir = self._env['dir']
-        mkdir_p(os.path.join(datadir, 'keys'), 448)
+        mkdir_p(os.path.join(datadir, 'keys'))
 
     def _makeHiddenServiceDir(self):
         """Create the hidden service subdirectory for this node.
@@ -349,13 +345,9 @@ class LocalNodeBuilder(NodeBuilder):
           The directory name is stored under the 'hs_directory' environment
           key. It is combined with the 'dir' data directory key to yield the
           path to the hidden service directory.
-
-          448 is the decimal representation of the octal number 0700. Since
-          python2 only supports 0700 and python3 only supports 0o700, we can
-          use neither.
         """
         datadir = self._env['dir']
-        mkdir_p(os.path.join(datadir, self._env['hs_directory']), 448)
+        mkdir_p(os.path.join(datadir, self._env['hs_directory']))
 
     def _genAuthorityKey(self):
         """Generate an authority identity and signing key for this authority,
