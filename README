@@ -48,6 +48,15 @@ Address Options:
   --ipv4             CHUTNEY_LISTEN_ADDRESS
   --ipv6             CHUTNEY_LISTEN_ADDRESS_V6
 
+Warning Options:
+  --all-warnings     CHUTNEY_WARNINGS_IGNORE_EXPECTED=false
+                     CHUTNEY_WARNINGS_SUMMARY=false
+  --no-warnings      CHUTNEY_WARNINGS_SKIP=true
+
+Other Options:
+  --coverage         USE_COVERAGE_BINARY=true
+  --dry-run          NETWORK_DRY_RUN=true
+
 Standard Actions:
   ./chutney configure networks/basic
   ./chutney start networks/basic

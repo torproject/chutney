@@ -5,6 +5,10 @@ ECHO_N="/bin/echo -n"
 # Output is prefixed with the name of the script
 myname=$(basename "$0")
 
+# default to summarising unexpected warnings
+export CHUTNEY_WARNINGS_IGNORE_EXPECTED=${CHUTNEY_WARNINGS_IGNORE_EXPECTED:-true}
+export CHUTNEY_WARNINGS_SUMMARY=${CHUTNEY_WARNINGS_SUMMARY:-true}
+
 until [ -z "$1" ]
 do
   case "$1" in
@@ -90,6 +94,16 @@ do
     --dry-run)
       # process arguments, but don't call any other scripts
       export NETWORK_DRY_RUN=true
+      ;;
+    # we summarise unexpected warnings by default
+    # this shows all warnings per-node
+    --all-warnings)
+      export CHUTNEY_WARNINGS_IGNORE_EXPECTED=false
+      export CHUTNEY_WARNINGS_SUMMARY=false
+      ;;
+    # this skips warnings entirely
+    --no-warnings)
+      export CHUTNEY_WARNINGS_SKIP=true
       ;;
     *)
       echo "$myname: Sorry, I don't know what to do with '$1'."
@@ -220,13 +234,19 @@ export CHUTNEY_BOOTSTRAP_TIME=${CHUTNEY_BOOTSTRAP_TIME:-60}
 export CHUTNEY_STOP_TIME=${CHUTNEY_STOP_TIME:-0}
 
 CHUTNEY="$CHUTNEY_PATH/chutney"
+if [ "$CHUTNEY_WARNINGS_SKIP" = true ]; then
+  WARNINGS=true
+else
+  WARNINGS="$CHUTNEY_PATH/tools/warnings.sh"
+fi
+
 if [ "$CHUTNEY_START_TIME" -ge 0 ]; then
   echo "Waiting ${CHUTNEY_START_TIME} seconds for a consensus containing relays to be generated..."
   sleep "$CHUTNEY_START_TIME"
 else
   echo "Chutney network launched and running. To stop the network, use:"
   echo "$CHUTNEY stop $CHUTNEY_NETWORK"
-  CHUTNEY_WARNINGS_IGNORE_EXPECTED=1 "$CHUTNEY_PATH/tools/warnings.sh"
+  "$WARNINGS"
   exit 0
 fi
 
@@ -237,7 +257,7 @@ if [ "$CHUTNEY_BOOTSTRAP_TIME" -ge 0 ]; then
 else
   echo "Chutney network ready and running. To stop the network, use:"
   echo "$CHUTNEY" stop "$CHUTNEY_NETWORK"
-  CHUTNEY_WARNINGS_IGNORE_EXPECTED=1 "$CHUTNEY_PATH/tools/warnings.sh"
+  "$WARNINGS"
   exit 0
 fi
 
@@ -249,10 +269,11 @@ if [ "$CHUTNEY_STOP_TIME" -ge 0 ]; then
   # work around a bug/feature in make -j2 (or more)
   # where make hangs if any child processes are still alive
   "$CHUTNEY" stop "$CHUTNEY_NETWORK"
+  "$WARNINGS"
   exit "$VERIFY_EXIT_STATUS"
 else
   echo "Chutney network verified and running. To stop the network, use:"
   echo "$CHUTNEY stop $CHUTNEY_NETWORK"
-  CHUTNEY_WARNINGS_IGNORE_EXPECTED=1 "$CHUTNEY_PATH/tools/warnings.sh"
+  "$WARNINGS"
   exit 0
 fi

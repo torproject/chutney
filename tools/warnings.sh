@@ -8,8 +8,8 @@
 # Examples: tools/warnings.sh
 #           tools/warnings.sh 000a
 # Environmental variables:
-# CHUTNEY_WARNINGS_IGNORE_EXPECTED: set to 1 to filter out expected warnings
-# CHUTNEY_WARNINGS_SUMMARY: set to 1 to merge warnings from all instances
+# CHUTNEY_WARNINGS_IGNORE_EXPECTED: set to "true" to filter expected warnings
+# CHUTNEY_WARNINGS_SUMMARY: set to "true" to merge warnings from all instances
 
 # make chutney path absolute
 if [ -d "$PWD/$CHUTNEY_PATH" ]; then
@@ -19,14 +19,15 @@ elif [ ! -d "$CHUTNEY_PATH" ]; then
 fi
 
 function show_warnings() {
-    if [ "$CHUTNEY_WARNINGS_SUMMARY" -ne 0 ]; then
+    if [ "$CHUTNEY_WARNINGS_SUMMARY" = true ]; then
         echo "${GREEN}All `basename $1`:${NC}"
         FILE="$1/*/$LOG_FILE"
     else
         echo "${GREEN}Node `basename $1`:${NC}"
         FILE="$1/$LOG_FILE"
     fi
-    if [ "$CHUTNEY_WARNINGS_IGNORE_EXPECTED" -ne 0 -a -e "$IGNORE_FILE" ]; then
+    if [ "$CHUTNEY_WARNINGS_IGNORE_EXPECTED" = true -a \
+        -e "$IGNORE_FILE" ]; then
         CAT="grep -v -f"
         echo " ${GREEN}(Ignoring expected warnings, run chutney/tools/warnings.sh to see all warnings)${NC}"
     else
@@ -37,7 +38,7 @@ function show_warnings() {
     $CAT $IGNORE_FILE $FILE | \
     sed -n -E 's/^.*\[(warn|err)\]//p' | sort | uniq -c | \
     sed -e 's/^\s*//' -e "s/ *\([0-9][0-9]*\) *\(.*\)/ ${YELLOW}Warning:${NC} \2${YELLOW} Number: \1${NC}/"
-    if [ "$CHUTNEY_WARNINGS_SUMMARY" -eq 0 ]; then
+    if [ "$CHUTNEY_WARNINGS_SUMMARY" != true ]; then
         echo ""
     fi
 }
@@ -64,7 +65,7 @@ CHUTNEY_WARNINGS_SUMMARY=${CHUTNEY_WARNINGS_SUMMARY:-0}
 [ -d "$DEST" ] || { echo "$NAME: no logs available"; exit 1; }
 if [ $# -eq 0 ];
 then
-    if [ "$CHUTNEY_WARNINGS_SUMMARY" -ne 0 ]; then
+    if [ "$CHUTNEY_WARNINGS_SUMMARY" = true ]; then
         show_warnings "$DEST"
         exit 0
     fi
