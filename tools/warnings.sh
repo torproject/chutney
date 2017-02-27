@@ -57,14 +57,14 @@ function show_warnings() {
     fi
     # Give context to the warnings we're about to display
     if [ "$CHUTNEY_WARNINGS_SUMMARY" = true ]; then
-        $ECHO_Q "${GREEN}Summary `basename $1`:${NC}"
+        $ECHO_Q "${GREEN}Summary: `basename $1`${NC}"
     else
-        $ECHO_Q "${GREEN}Node `basename $1`:${NC}"
+        $ECHO_Q "${GREEN}Node: `basename $1`${NC}"
     fi
     if [ "$CHUTNEY_WARNINGS_IGNORE_EXPECTED" = true -a \
         -e "$IGNORE_FILE" ]; then
         PERMANENT_DIR=`readlink -n "$1"`
-        $ECHO_A "${GREEN}(Detail: chutney/tools/warnings.sh $PERMANENT_DIR)${NC}"
+        $ECHO_A "${GREEN}Detail: chutney/tools/warnings.sh $PERMANENT_DIR${NC}"
     fi
     # Display the warnings, after filtering and counting occurrences
     # must be kept in sync with the filter commands above
