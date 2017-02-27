@@ -10,7 +10,7 @@ export CHUTNEY_WARNINGS_IGNORE_EXPECTED=${CHUTNEY_WARNINGS_IGNORE_EXPECTED:-true
 export CHUTNEY_WARNINGS_SUMMARY=${CHUTNEY_WARNINGS_SUMMARY:-true}
 
 # what we say when we fail
-UPDATE_YOUR_CHUTNEY="Please update your chutney uisng 'git pull'."
+UPDATE_YOUR_CHUTNEY="Please update your chutney using 'git pull'."
 
 until [ -z "$1" ]
 do
