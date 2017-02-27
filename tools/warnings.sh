@@ -50,8 +50,6 @@ function show_warnings() {
     if [ `$CAT $IGNORE_FILE $FILE | $SED_E "$FILTER" | wc -c` -eq 0 -a \
         "$CHUTNEY_WARNINGS_SUMMARY" = true ]; then
         ECHO=true
-    else
-        ECHO=echo
     fi
     # Give context to the warnings we're about to display
     if [ "$CHUTNEY_WARNINGS_SUMMARY" = true ]; then
@@ -96,6 +94,8 @@ CHUTNEY_WARNINGS_SUMMARY=${CHUTNEY_WARNINGS_SUMMARY:-0}
 SED_E='sed -n -E'
 # Label errs as "Warning:", they're infrequent enough it doesn't matter
 FILTER='s/^.*\[(warn|err)\]//p'
+# use the --quiet setting from test-network.sh, if available
+ECHO=${ECHO:-"echo"}
 
 [ -d "$DEST" ] || { echo "$NAME: no logs available"; exit 1; }
 if [ $# -eq 0 ];

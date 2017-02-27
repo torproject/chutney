@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-ECHO_N="/bin/echo -n"
+export ECHO=${ECHO:-"echo"}
 
 # Output is prefixed with the name of the script
 myname=$(basename "$0")
@@ -117,10 +117,14 @@ do
       export CHUTNEY_DATA_DIR="$2"
       shift
       ;;
+    # Try not to say anything (applies only to this script)
+    --quiet)
+      export ECHO=true
+      ;;
     # Oops
     *)
-      echo "$myname: Sorry, I don't know what to do with '$1'."
-      echo "$UPDATE_YOUR_CHUTNEY"
+      $ECHO "$myname: Sorry, I don't know what to do with '$1'."
+      $ECHO "$UPDATE_YOUR_CHUTNEY"
       # continue processing arguments during a dry run
       if [ "$NETWORK_DRY_RUN" != true ]; then
           exit 2
@@ -140,21 +144,21 @@ if [ ! -d "$TOR_DIR" ]; then
     if [ -d "$BUILDDIR/src/or" -a -d "$BUILDDIR/src/tools" ]; then
         # Choose the build directory
         # But only if it looks like one
-        echo "$myname: \$TOR_DIR not set, trying \$BUILDDIR"
+        $ECHO "$myname: \$TOR_DIR not set, trying \$BUILDDIR"
         export TOR_DIR="$BUILDDIR"
     elif [ -d "$PWD/src/or" -a -d "$PWD/src/tools" ]; then
         # Guess the tor directory is the current directory
         # But only if it looks like one
-        echo "$myname: \$TOR_DIR not set, trying \$PWD"
+        $ECHO "$myname: \$TOR_DIR not set, trying \$PWD"
         export TOR_DIR="$PWD"
     elif [ -d "$PWD/../tor" -a -d "$PWD/../tor/src/or" -a \
 	   -d "$PWD/../tor/src/tools" ]; then
         # Guess the tor directory is next to the current directory
         # But only if it looks like one
-        echo "$myname: \$TOR_DIR not set, trying \$PWD/../tor"
+        $ECHO "$myname: \$TOR_DIR not set, trying \$PWD/../tor"
         export TOR_DIR="$PWD/../tor"
     else
-        echo "$myname: no \$TOR_DIR, chutney will use \$PATH for tor binaries"
+        $ECHO "$myname: no \$TOR_DIR, chutney will use \$PATH for tor binaries"
         unset TOR_DIR
     fi
 fi
@@ -173,25 +177,25 @@ fi
 if [ ! -d "$CHUTNEY_PATH" -o ! -x "$CHUTNEY_PATH/chutney" -o \
      ! -f "$CHUTNEY_PATH/chutney" ]; then
     if [ -x "$PWD/chutney" -a -f "$PWD/chutney" ]; then
-        echo "$myname: \$CHUTNEY_PATH not valid, trying \$PWD"
+        $ECHO "$myname: \$CHUTNEY_PATH not valid, trying \$PWD"
         export CHUTNEY_PATH="$PWD"
     elif [ -d "`dirname \"$0\"`/.." -a \
 	   -x "`dirname \"$0\"`/../chutney" -a \
 	   -f "`dirname \"$0\"`/../chutney" ]; then
-        echo "$myname: \$CHUTNEY_PATH not valid, using this script's location"
+        $ECHO "$myname: \$CHUTNEY_PATH not valid, using this script's location"
         export CHUTNEY_PATH="`dirname \"$0\"`/.."
     elif [ -d "$TOR_DIR" -a -d "$TOR_DIR/../chutney" -a \
            -x "$TOR_DIR/../chutney/chutney" -a \
 	   -f "$TOR_DIR/../chutney/chutney" ]; then
-        echo "$myname: \$CHUTNEY_PATH not valid, trying \$TOR_DIR/../chutney"
+        $ECHO "$myname: \$CHUTNEY_PATH not valid, trying \$TOR_DIR/../chutney"
         export CHUTNEY_PATH="$TOR_DIR/../chutney"
     else
         # TODO: work out how to package and install chutney,
         # so users can find it in $PATH
-        echo "$myname: missing 'chutney' in \$CHUTNEY_PATH ($CHUTNEY_PATH)"
-        echo "$myname: Get chutney: git clone https://git.torproject.org/\
+        $ECHO "$myname: missing 'chutney' in \$CHUTNEY_PATH ($CHUTNEY_PATH)"
+        $ECHO "$myname: Get chutney: git clone https://git.torproject.org/\
 chutney.git"
-        echo "$myname: Set \$CHUTNEY_PATH to a non-standard location: export \
+        $ECHO "$myname: Set \$CHUTNEY_PATH to a non-standard location: export \
 CHUTNEY_PATH=\`pwd\`/chutney"
         unset CHUTNEY_PATH
         exit 1
@@ -252,11 +256,11 @@ else
 fi
 
 if [ "$CHUTNEY_START_TIME" -ge 0 ]; then
-  echo "Waiting ${CHUTNEY_START_TIME} seconds for a consensus containing relays to be generated..."
+  $ECHO "Waiting ${CHUTNEY_START_TIME} seconds for a consensus containing relays to be generated..."
   sleep "$CHUTNEY_START_TIME"
 else
-  echo "Chutney network launched and running. To stop the network, use:"
-  echo "$CHUTNEY stop $CHUTNEY_NETWORK"
+  $ECHO "Chutney network launched and running. To stop the network, use:"
+  $ECHO "$CHUTNEY stop $CHUTNEY_NETWORK"
   "$WARNINGS"
   exit 0
 fi
@@ -266,15 +270,15 @@ if [ "$CHUTNEY_BOOTSTRAP_TIME" -ge 0 ]; then
   "$CHUTNEY" verify "$CHUTNEY_NETWORK"
   VERIFY_EXIT_STATUS="$?"
 else
-  echo "Chutney network ready and running. To stop the network, use:"
-  echo "$CHUTNEY" stop "$CHUTNEY_NETWORK"
+  $ECHO "Chutney network ready and running. To stop the network, use:"
+  $ECHO "$CHUTNEY" stop "$CHUTNEY_NETWORK"
   "$WARNINGS"
   exit 0
 fi
 
 if [ "$CHUTNEY_STOP_TIME" -ge 0 ]; then
   if [ "$CHUTNEY_STOP_TIME" -gt 0 ]; then
-    echo "Waiting ${CHUTNEY_STOP_TIME} seconds before stopping the network..."
+    $ECHO "Waiting ${CHUTNEY_STOP_TIME} seconds before stopping the network..."
   fi
   sleep "$CHUTNEY_STOP_TIME"
   # work around a bug/feature in make -j2 (or more)
@@ -283,8 +287,8 @@ if [ "$CHUTNEY_STOP_TIME" -ge 0 ]; then
   "$WARNINGS"
   exit "$VERIFY_EXIT_STATUS"
 else
-  echo "Chutney network verified and running. To stop the network, use:"
-  echo "$CHUTNEY stop $CHUTNEY_NETWORK"
+  $ECHO "Chutney network verified and running. To stop the network, use:"
+  $ECHO "$CHUTNEY stop $CHUTNEY_NETWORK"
   "$WARNINGS"
   exit 0
 fi

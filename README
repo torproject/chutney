@@ -59,6 +59,7 @@ Expert Options:
   --coverage         USE_COVERAGE_BINARY=true
   --net-dir          CHUTNEY_DATA_DIR
   --dry-run          NETWORK_DRY_RUN=true
+  --quiet            ECHO=true
   (These are advanced options: in the past, they have had long-standing bugs.)
 
 Standard Actions:
