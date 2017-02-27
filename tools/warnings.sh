@@ -49,25 +49,29 @@ function show_warnings() {
     # must be kept in sync with the filter commands below
     if [ `$CAT $IGNORE_FILE $FILE | $SED_E "$FILTER" | wc -c` -eq 0 -a \
         "$CHUTNEY_WARNINGS_SUMMARY" = true ]; then
-        ECHO=true
+        ECHO_Q=true
+        ECHO_A=true
+     else
+        # if there is output, always echo the detail message
+        ECHO_A=echo
     fi
     # Give context to the warnings we're about to display
     if [ "$CHUTNEY_WARNINGS_SUMMARY" = true ]; then
-        $ECHO "${GREEN}Summary `basename $1`:${NC}"
+        $ECHO_Q "${GREEN}Summary `basename $1`:${NC}"
     else
-        $ECHO "${GREEN}Node `basename $1`:${NC}"
+        $ECHO_Q "${GREEN}Node `basename $1`:${NC}"
     fi
     if [ "$CHUTNEY_WARNINGS_IGNORE_EXPECTED" = true -a \
         -e "$IGNORE_FILE" ]; then
         PERMANENT_DIR=`readlink -n "$1"`
-        $ECHO "${GREEN}(Detail: chutney/tools/warnings.sh $PERMANENT_DIR)${NC}"
+        $ECHO_A "${GREEN}(Detail: chutney/tools/warnings.sh $PERMANENT_DIR)${NC}"
     fi
     # Display the warnings, after filtering and counting occurrences
     # must be kept in sync with the filter commands above
     $CAT $IGNORE_FILE $FILE | $SED_E "$FILTER" | sort | uniq -c | \
     sed -e 's/^\s*//' -e "s/ *\([0-9][0-9]*\) *\(.*\)/${YELLOW}Warning:${NC} \2${YELLOW} Number: \1${NC}/"
     if [ "$CHUTNEY_WARNINGS_SUMMARY" != true ]; then
-        $ECHO ""
+        $ECHO_Q ""
     fi
 }
 
@@ -96,7 +100,7 @@ SED_E='sed -n -E'
 # Label errs as "Warning:", they're infrequent enough it doesn't matter
 FILTER='s/^.*\[(warn|err)\]//p'
 # use the --quiet setting from test-network.sh, if available
-ECHO=${ECHO:-"echo"}
+ECHO_Q=${ECHO:-"echo"}
 
 [ -d "$DEST" ] || { echo "$NAME: no logs available"; exit 1; }
 if [ $# -eq 0 ];
