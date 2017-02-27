@@ -251,7 +251,7 @@ if [ "$NETWORK_DRY_RUN" = true -o "$CHUTNEY_WARNINGS_ONLY" = true ]; then
     return 2>/dev/null || exit
 fi
 
-"$CHUTNEY_PATH/tools/bootstrap-network.sh" "$NETWORK_FLAVOUR" || exit 2
+"$CHUTNEY_PATH/tools/bootstrap-network.sh" "$NETWORK_FLAVOUR" || exit 3
 
 # chutney starts verifying after 20 seconds, keeps on trying for 60 seconds,
 # and then stops immediately (by default)
