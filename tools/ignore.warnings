@@ -47,9 +47,6 @@ TestingTorNetwork is set
 # Older versions might need them, we should remove them at some point in 0.3.*
 The DirAuthority options 'hs' and 'no-hs' are obsolete
 This copy of Tor was compiled.*to run in a non-anonymous mode
-# Chutney Bug 17090
-# Don't ignore it, we want to make sure there are no regressions
-##Tor is running as an exit relay
 # Tor Bug 21525?
 Unable to store signatures posted by .* Mismatched digest
 Unable to store signatures posted by .* Valid-After times do not match
