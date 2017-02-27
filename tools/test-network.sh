@@ -9,6 +9,9 @@ myname=$(basename "$0")
 export CHUTNEY_WARNINGS_IGNORE_EXPECTED=${CHUTNEY_WARNINGS_IGNORE_EXPECTED:-true}
 export CHUTNEY_WARNINGS_SUMMARY=${CHUTNEY_WARNINGS_SUMMARY:-true}
 
+# what we say when we fail
+UPDATE_YOUR_CHUTNEY="Please update your chutney uisng 'git pull'."
+
 until [ -z "$1" ]
 do
   case "$1" in
@@ -107,6 +110,7 @@ do
       ;;
     *)
       echo "$myname: Sorry, I don't know what to do with '$1'."
+      echo "$UPDATE_YOUR_CHUTNEY"
       # continue processing arguments during a dry run
       if [ "$NETWORK_DRY_RUN" != true ]; then
           exit 2
