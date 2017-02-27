@@ -10,10 +10,11 @@ It is supposed to be a good tool for:
 Right now it only sorta does these things.
 
 You will need, at the moment:
-  - Tor installed somewhere in your path or the location of the 'tor' and
-    'tor-gencert' binaries specified through the environment variables
-    CHUTNEY_TOR and CHUTNEY_TOR_GENCERT, respectively.
-  - Python 2.7 or later
+  - Tor installed somewhere in your path, or
+  - The location of the 'tor' and 'tor-gencert' binaries specified through the
+    environment variables CHUTNEY_TOR and CHUTNEY_TOR_GENCERT, respectively, or
+  - To run chutney's tools/test-network.sh from a tor build directory, and
+  - Python 2.7 or later (Python 3 support is an ongoing work)
 
 Stuff to try:
 
@@ -23,13 +24,14 @@ Automated Setup, Verification, and Shutdown:
   ./tools/test-network.sh --tor-path <tor-build-directory>
   ./tools/test-network.sh --tor <name-or-path> --tor-gencert <name-or-path>
   (--tor-path and $TOR_DIR override --tor and --tor-gencert.)
+  (The script tries hard to find tor.)
   ./tools/test-network.sh --chutney-path <chutney-directory>
-  (The script is pretty good at guessing this.)
+  (The script is pretty good at finding chutney.)
 
 test-network.sh looks for some tor binaries (either in a nearby build
 directory or in your $PATH), configures a comprehensive tor test network,
 launches it, then verifies data transmission through it, and cleans up after
-itself.
+itself. Relative paths are supported.
 
 You can modify its configuration using command-line arguments, or use the
 chutney environmental variables documented below:
