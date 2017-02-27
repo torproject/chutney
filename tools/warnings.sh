@@ -22,27 +22,43 @@ if [ -d "$PWD/$CHUTNEY_PATH" -a -x "$PWD/$CHUTNEY_PATH/chutney" ]; then
 fi
 
 function show_warnings() {
+    # Work out the file and filter settings
     if [ "$CHUTNEY_WARNINGS_SUMMARY" = true ]; then
-        echo "${GREEN}All `basename $1`:${NC}"
         FILE="$1/*/$LOG_FILE"
     else
-        echo "${GREEN}Node `basename $1`:${NC}"
         FILE="$1/$LOG_FILE"
     fi
     if [ "$CHUTNEY_WARNINGS_IGNORE_EXPECTED" = true -a \
         -e "$IGNORE_FILE" ]; then
         CAT="grep -v -f"
-        echo " ${GREEN}(Ignoring expected warnings, run chutney/tools/warnings.sh to see all warnings)${NC}"
     else
         CAT=cat
         IGNORE_FILE=
     fi
-    # Label errs as "Warning:", they're infrequent enough it doesn't matter
-    $CAT $IGNORE_FILE $FILE | \
-    sed -n -E 's/^.*\[(warn|err)\]//p' | sort | uniq -c | \
-    sed -e 's/^\s*//' -e "s/ *\([0-9][0-9]*\) *\(.*\)/ ${YELLOW}Warning:${NC} \2${YELLOW} Number: \1${NC}/"
+    # Silence any messages if we are in summary mode, and there are no warnings
+    # must be kept in sync with the filter commands below
+    if [ `$CAT $IGNORE_FILE $FILE | $SED_E "$FILTER" | wc -c` -eq 0 -a \
+        "$CHUTNEY_WARNINGS_SUMMARY" = true ]; then
+        ECHO=true
+    else
+        ECHO=echo
+    fi
+    # Give context to the warnings we're about to display
+    if [ "$CHUTNEY_WARNINGS_SUMMARY" = true ]; then
+        $ECHO "${GREEN}All `basename $1`:${NC}"
+    else
+        $ECHO "${GREEN}Node `basename $1`:${NC}"
+    fi
+    if [ "$CHUTNEY_WARNINGS_IGNORE_EXPECTED" = true -a \
+        -e "$IGNORE_FILE" ]; then
+        $ECHO " ${GREEN}(Ignoring expected warnings, run chutney/tools/warnings.sh to see all warnings)${NC}"
+    fi
+    # Display the warnings, after filtering and counting occurrences
+    # must be kept in sync with the filter commands above
+    $CAT $IGNORE_FILE $FILE | $SED_E "$FILTER" | sort | uniq -c | \
+    sed -e 's/^\s*//' -e "s/ *\([0-9][0-9]*\) *\(.*\)/${YELLOW}Warning:${NC} \2${YELLOW} Number: \1${NC}/"
     if [ "$CHUTNEY_WARNINGS_SUMMARY" != true ]; then
-        echo ""
+        $ECHO ""
     fi
 }
 
@@ -67,6 +83,9 @@ CHUTNEY_WARNINGS_IGNORE_EXPECTED=${CHUTNEY_WARNINGS_IGNORE_EXPECTED:-0}
 IGNORE_FILE="$CHUTNEY_PATH/tools/ignore.warnings"
 # merge all log files into one before counting entries
 CHUTNEY_WARNINGS_SUMMARY=${CHUTNEY_WARNINGS_SUMMARY:-0}
+SED_E='sed -n -E'
+# Label errs as "Warning:", they're infrequent enough it doesn't matter
+FILTER='s/^.*\[(warn|err)\]//p'
 
 [ -d "$DEST" ] || { echo "$NAME: no logs available"; exit 1; }
 if [ $# -eq 0 ];
