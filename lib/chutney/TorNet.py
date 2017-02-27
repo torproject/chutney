@@ -47,6 +47,26 @@ def mkdir_p(d, mode=448):
             return
         raise
 
+def get_absolute_chutney_path():
+    # use the current directory as the default
+    # (./chutney already sets CHUTNEY_PATH using the path to the script)
+    # use tools/test-network.sh if you want chutney to try really hard to find
+    # itself
+    relative_chutney_path = os.environ.get('CHUTNEY_PATH', os.getcwd())
+    return os.path.abspath(relative_chutney_path)
+
+def get_absolute_net_path():
+    # use the chutney path as the default
+    absolute_chutney_path = get_absolute_chutney_path()
+    relative_net_path = os.environ.get('CHUTNEY_DATA_DIR', 'net')
+    # but what is it relative to?
+    # let's check if it's in CHUTNEY_PATH first, to preserve
+    # backwards-compatible behaviour
+    chutney_net_path = os.path.join(absolute_chutney_path, relative_net_path)
+    if os.path.isdir(chutney_net_path):
+        return chutney_net_path
+    # ok, it's relative to the current directory, whatever that is
+    return os.path.abspath(relative_net_path)
 
 class Node(object):
 
@@ -672,7 +692,7 @@ DEFAULTS = {
     'hs_directory': 'hidden_service',
     'hs-hostname': None,
     'connlimit': 60,
-    'net_base_dir': os.environ.get('CHUTNEY_DATA_DIR', 'net'),
+    'net_base_dir': get_absolute_net_path(),
     'tor': os.environ.get('CHUTNEY_TOR', 'tor'),
     'tor-gencert': os.environ.get('CHUTNEY_TOR_GENCERT', None),
     'auth_cert_lifetime': 12,
@@ -681,7 +701,7 @@ DEFAULTS = {
     # so we default to ipv6_addr None
     'ipv6_addr': os.environ.get('CHUTNEY_LISTEN_ADDRESS_V6', None),
     'dirserver_flags': 'no-v2',
-    'chutney_dir': '.',
+    'chutney_dir': get_absolute_chutney_path(),
     'torrc_fname': '${dir}/torrc',
     'orport_base': 5000,
     'dirport_base': 7000,
@@ -819,7 +839,7 @@ class Network(object):
         self._nodes.append(n)
 
     def move_aside_nodes(self):
-        net_base_dir = os.environ.get('CHUTNEY_DATA_DIR', 'net')
+        net_base_dir = get_absolute_net_path()
         nodesdir = os.path.join(net_base_dir, 'nodes')
 
         if not os.path.exists(nodesdir):
@@ -927,7 +947,7 @@ def ConfigureNodes(nodelist):
 
 def getTests():
     tests = []
-    chutney_path = os.environ.get('CHUTNEY_PATH', '')
+    chutney_path = get_absolute_chutney_path()
     if len(chutney_path) > 0 and chutney_path[-1] != '/':
         chutney_path += "/"
     for x in os.listdir(chutney_path + "scripts/chutney_tests/"):

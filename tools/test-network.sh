@@ -193,26 +193,24 @@ if [ -d "$PWD/$CHUTNEY_PATH" -a -x "$PWD/$CHUTNEY_PATH/chutney" ]; then
     export CHUTNEY_PATH="$PWD/$CHUTNEY_PATH"
 fi
 
-# For picking up the right tor binaries.
+# For picking up the right tor binaries
+# Choose coverage binaries, if selected
+tor_name=tor
+tor_gencert_name=tor-gencert
+if [ "$USE_COVERAGE_BINARY" = true ]; then
+    tor_name=tor-cov
+fi
 # If $TOR_DIR isn't set, chutney looks for tor binaries by name or path
 # using $CHUTNEY_TOR and $CHUTNEY_TOR_GENCERT, and then falls back to
 # looking for tor and tor-gencert in $PATH
 if [ -d "$TOR_DIR" ]; then
-    tor_name=tor
-    tor_gencert_name=tor-gencert
-    if [ "$USE_COVERAGE_BINARY" = true ]; then
-        tor_name=tor-cov
-    fi
+    # TOR_DIR is absolute, so these are absolute paths
     export CHUTNEY_TOR="${TOR_DIR}/src/or/${tor_name}"
     export CHUTNEY_TOR_GENCERT="${TOR_DIR}/src/tools/${tor_gencert_name}"
 else
-    # make binary paths absolute
-    if [ -x "$PWD/$CHUTNEY_TOR" ]; then
-        export CHUTNEY_TOR="$PWD/$CHUTNEY_TOR"
-    fi
-    if [ -x "$PWD/$CHUTNEY_TOR_GENCERT" ]; then
-        export CHUTNEY_TOR_GENCERT="$PWD/$CHUTNEY_TOR_GENCERT"
-    fi
+    # these are binary names, they will be searched for in $PATH
+    export CHUTNEY_TOR="${tor_name}"
+    export CHUTNEY_TOR_GENCERT="${tor_gencert_name}"
 fi
 
 # Set the variables for the chutney network flavour
@@ -225,9 +223,6 @@ if [ "$NETWORK_DRY_RUN" = true ]; then
     # this only works in bash: return semantics are shell-specific
     return 2>/dev/null || exit
 fi
-
-# Chutney must be launched at $CHUTNEY_PATH, at least until #21521 is fixed
-cd "$CHUTNEY_PATH"
 
 "$CHUTNEY_PATH/tools/bootstrap-network.sh" "$NETWORK_FLAVOUR" || exit 2
 

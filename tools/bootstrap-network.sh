@@ -38,9 +38,6 @@ export CHUTNEY_NETWORK="$CHUTNEY_PATH/networks/$NETWORK_FLAVOUR"
 [ -e "$CHUTNEY_NETWORK" ] || \
   { echo "$myname: missing network file: $CHUTNEY_NETWORK"; exit 1; }
 
-# Chutney must be launched at $CHUTNEY_PATH, at least until #21521 is fixed
-cd "$CHUTNEY_PATH"
-
 "$CHUTNEY" stop "$CHUTNEY_NETWORK"
 
 echo "$myname: bootstrapping network: $flavour"
