@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/usr/bin/env bash
 
 ECHO_N="/bin/echo -n"
 
@@ -218,7 +218,8 @@ export CHUTNEY_NETWORK="$CHUTNEY_PATH/networks/$NETWORK_FLAVOUR"
 # And finish up if we're doing a dry run
 if [ "$NETWORK_DRY_RUN" = true ]; then
     # we can't exit here, it breaks argument processing
-    return
+    # this only works in bash: return semantics are shell-specific
+    return 2>/dev/null || exit
 fi
 
 # Chutney must be launched at $CHUTNEY_PATH, at least until #21521 is fixed

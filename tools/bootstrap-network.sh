@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/usr/bin/env bash
 #
 # 1. potentially stop running network
 # 2. bootstrap a network from scratch as quickly as possible
