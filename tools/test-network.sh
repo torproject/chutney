@@ -98,6 +98,10 @@ do
       export CHUTNEY_WARNINGS_IGNORE_EXPECTED=false
       export CHUTNEY_WARNINGS_SUMMARY=false
       ;;
+    # this doesn't run chutney, and only logs warnings
+    --only-warnings)
+      export CHUTNEY_WARNINGS_ONLY=true
+      ;;
     # this skips warnings entirely
     --no-warnings)
       export CHUTNEY_WARNINGS_SKIP=true
@@ -231,8 +235,17 @@ fi
 export NETWORK_FLAVOUR=${NETWORK_FLAVOUR:-"bridges+hs"}
 export CHUTNEY_NETWORK="$CHUTNEY_PATH/networks/$NETWORK_FLAVOUR"
 
+if [ "$CHUTNEY_WARNINGS_SKIP" = true ]; then
+  WARNINGS=true
+else
+  WARNINGS="$CHUTNEY_PATH/tools/warnings.sh"
+fi
+
 # And finish up if we're doing a dry run
-if [ "$NETWORK_DRY_RUN" = true ]; then
+if [ "$NETWORK_DRY_RUN" = true -o "$CHUTNEY_WARNINGS_ONLY" = true ]; then
+    if [ "$CHUTNEY_WARNINGS_ONLY" = true ]; then
+        "$WARNINGS"
+    fi
     # we can't exit here, it breaks argument processing
     # this only works in bash: return semantics are shell-specific
     return 2>/dev/null || exit
@@ -249,11 +262,6 @@ export CHUTNEY_BOOTSTRAP_TIME=${CHUTNEY_BOOTSTRAP_TIME:-60}
 export CHUTNEY_STOP_TIME=${CHUTNEY_STOP_TIME:-0}
 
 CHUTNEY="$CHUTNEY_PATH/chutney"
-if [ "$CHUTNEY_WARNINGS_SKIP" = true ]; then
-  WARNINGS=true
-else
-  WARNINGS="$CHUTNEY_PATH/tools/warnings.sh"
-fi
 
 if [ "$CHUTNEY_START_TIME" -ge 0 ]; then
   $ECHO "Waiting ${CHUTNEY_START_TIME} seconds for a consensus containing relays to be generated..."

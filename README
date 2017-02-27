@@ -54,6 +54,7 @@ Warning Options:
   --all-warnings     CHUTNEY_WARNINGS_IGNORE_EXPECTED=false
                      CHUTNEY_WARNINGS_SUMMARY=false
   --no-warnings      CHUTNEY_WARNINGS_SKIP=true
+  --only-warnings    CHUTNEY_WARNINGS_ONLY=true
 
 Expert Options:
   --coverage         USE_COVERAGE_BINARY=true
