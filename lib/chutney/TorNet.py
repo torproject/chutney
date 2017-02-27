@@ -68,6 +68,26 @@ def get_absolute_net_path():
     # ok, it's relative to the current directory, whatever that is
     return os.path.abspath(relative_net_path)
 
+def get_absolute_nodes_path():
+    # there's no way to customise this: we really don't need more options
+    return os.path.join(get_absolute_net_path(), 'nodes')
+
+def get_new_absolute_nodes_path(now=time.time()):
+    # automatically chosen to prevent path collisions, and result in an ordered
+    # series of directory path names
+    # should only be called by 'chutney configure', all other chutney commands
+    # should use get_absolute_nodes_path()
+    nodesdir = get_absolute_nodes_path()
+    newdir = newdirbase = "%s.%d" % (nodesdir, now)
+    # if the time is the same, fall back to a simple integer count
+    # (this is very unlikely to happen unless the clock changes: it's not
+    # possible to run multiple chutney networks at the same time)
+    i = 0
+    while os.path.exists(newdir):
+        i += 1
+        newdir = "%s.%d" % (newdirbase, i)
+    return newdir
+
 class Node(object):
 
     """A Node represents a Tor node or a set of Tor nodes.  It's created
@@ -838,29 +858,68 @@ class Network(object):
         self._nextnodenum += 1
         self._nodes.append(n)
 
-    def move_aside_nodes(self):
-        net_base_dir = get_absolute_net_path()
-        nodesdir = os.path.join(net_base_dir, 'nodes')
+    def move_aside_nodes_dir(self):
+        """Move aside the nodes directory, if it exists and is not a link.
+        Used for backwards-compatibility only: nodes is created as a link to
+        a new directory with a unique name in the current implementation.
+        """
+        nodesdir = get_absolute_nodes_path()
 
+        # only move the directory if it exists
         if not os.path.exists(nodesdir):
             return
+        # and if it's not a link
+        if os.path.islink(nodesdir):
+            return
 
-        newdir = newdirbase = "%s.%d" % (nodesdir, time.time())
-        i = 0
-        while os.path.exists(newdir):
-            i += 1
-            newdir = "%s.%d" % (newdirbase, i)
+        # subtract 1 second to avoid collisions and get the correct ordering
+        newdir = get_new_absolute_nodes_path(time.time() - 1)
 
         print("NOTE: renaming %r to %r" % (nodesdir, newdir))
         os.rename(nodesdir, newdir)
+
+    def create_new_nodes_dir(self):
+        """Create a new directory with a unique name, and symlink it to nodes
+        """
+        # for backwards compatibility, move aside the old nodes directory
+        # (if it's not a link)
+        self.move_aside_nodes_dir()
+
+        # the unique directory we'll create
+        newnodesdir = get_new_absolute_nodes_path()
+        # the canonical name we'll link it to
+        nodeslink = get_absolute_nodes_path()
+
+        # this path should be unique and should not exist
+        if os.path.exists(newnodesdir):
+            raise RuntimeError(
+                'get_new_absolute_nodes_path returned a path that exists')
+
+        # if this path exists, it must be a link
+        if os.path.exists(nodeslink) and not os.path.islink(nodeslink):
+            raise RuntimeError(
+                'get_absolute_nodes_path returned a path that exists and is not a link')
+
+        # create the new, uniquely named directory, and link it to nodes
+        print("NOTE: creating %r, linking to %r" % (newnodesdir, nodeslink))
+        # this gets created with mode 0700, that's probably ok
+        mkdir_p(newnodesdir)
+        try:
+            os.unlink(nodeslink)
+        except OSError as e:
+            # it's ok if the link doesn't exist, we're just about to make it
+            if e.errno == errno.ENOENT:
+                pass
+            else:
+                raise
+        os.symlink(newnodesdir, nodeslink)
 
     def _checkConfig(self):
         for n in self._nodes:
             n.getBuilder().checkConfig(self)
 
     def configure(self):
-        # shutil.rmtree(os.path.join(os.getcwd(),'net','nodes'),ignore_errors=True)
-        self.move_aside_nodes()
+        self.create_new_nodes_dir()
         network = self
         altauthlines = []
         bridgelines = []
