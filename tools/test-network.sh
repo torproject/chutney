@@ -146,7 +146,8 @@ if [ ! -d "$TOR_DIR" ]; then
 fi
 
 # make TOR_DIR absolute
-if [ -d "$PWD/$TOR_DIR" ]; then
+if [ -d "$PWD/$TOR_DIR" -a -d "$PWD/$TOR_DIR/src/or" -a \
+    -d "$PWD/$TOR_DIR/src/tools" ]; then
     export TOR_DIR="$PWD/$TOR_DIR"
 fi
 
@@ -184,7 +185,7 @@ CHUTNEY_PATH=\`pwd\`/chutney"
 fi
 
 # make chutney path absolute
-if [ -d "$PWD/$CHUTNEY_PATH" ]; then
+if [ -d "$PWD/$CHUTNEY_PATH" -a -x "$PWD/$CHUTNEY_PATH/chutney" ]; then
     export CHUTNEY_PATH="$PWD/$CHUTNEY_PATH"
 fi
 

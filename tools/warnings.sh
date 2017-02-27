@@ -11,11 +11,14 @@
 # CHUTNEY_WARNINGS_IGNORE_EXPECTED: set to "true" to filter expected warnings
 # CHUTNEY_WARNINGS_SUMMARY: set to "true" to merge warnings from all instances
 
-# make chutney path absolute
-if [ -d "$PWD/$CHUTNEY_PATH" ]; then
+if [ ! -d "$CHUTNEY_PATH" -o ! -x "$CHUTNEY_PATH/chutney" ]; then
+    # looks like a broken path: use the path to this tool instead
+    TOOLS_PATH=`dirname "$0"`
+    export CHUTNEY_PATH=`dirname "$TOOLS_PATH"`
+fi
+if [ -d "$PWD/$CHUTNEY_PATH" -a -x "$PWD/$CHUTNEY_PATH/chutney" ]; then
+    # looks like a relative path: make chutney path absolute
     export CHUTNEY_PATH="$PWD/$CHUTNEY_PATH"
-elif [ ! -d "$CHUTNEY_PATH" ]; then
-    export CHUTNEY_PATH="$PWD"
 fi
 
 function show_warnings() {
