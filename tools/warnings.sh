@@ -21,6 +21,16 @@ if [ -d "$PWD/$CHUTNEY_PATH" -a -x "$PWD/$CHUTNEY_PATH/chutney" ]; then
     export CHUTNEY_PATH="$PWD/$CHUTNEY_PATH"
 fi
 
+# Get a working net path
+if [ ! -d "$CHUTNEY_DATA_DIR" ]; then
+    # looks like a broken path: use the chutney path as a base
+    export CHUTNEY_DATA_DIR="$CHUTNEY_PATH/net"
+fi
+if [ -d "$PWD/$CHUTNEY_DATA_DIR" ]; then
+    # looks like a relative path: make chutney path absolute
+    export CHUTNEY_DATA_DIR="$PWD/$CHUTNEY_DATA_DIR"
+fi
+
 function show_warnings() {
     # Work out the file and filter settings
     if [ "$CHUTNEY_WARNINGS_SUMMARY" = true ]; then
@@ -75,7 +85,7 @@ if [ -t 1 ]; then
 fi
 CHUTNEY="$CHUTNEY_PATH/chutney"
 NAME=$(basename "$0")
-DEST="$CHUTNEY_PATH/net/nodes"
+DEST="$CHUTNEY_DATA_DIR/nodes"
 LOG_FILE=info.log
 # ignore warnings we expect to get every time chutney runs
 CHUTNEY_WARNINGS_IGNORE_EXPECTED=${CHUTNEY_WARNINGS_IGNORE_EXPECTED:-0}

@@ -55,9 +55,11 @@ Warning Options:
                      CHUTNEY_WARNINGS_SUMMARY=false
   --no-warnings      CHUTNEY_WARNINGS_SKIP=true
 
-Other Options:
+Expert Options:
   --coverage         USE_COVERAGE_BINARY=true
+  --net-dir          CHUTNEY_DATA_DIR
   --dry-run          NETWORK_DRY_RUN=true
+  (These are advanced options: in the past, they have had long-standing bugs.)
 
 Standard Actions:
   ./chutney configure networks/basic

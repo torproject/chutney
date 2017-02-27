@@ -13,6 +13,7 @@
 #                     (default: 'basic')
 #
 
+# Get a working chutney path
 if [ ! -d "$CHUTNEY_PATH" -o ! -x "$CHUTNEY_PATH/chutney" ]; then
     # looks like a broken path: use the path to this tool instead
     TOOLS_PATH=`dirname "$0"`
@@ -21,6 +22,16 @@ fi
 if [ -d "$PWD/$CHUTNEY_PATH" -a -x "$PWD/$CHUTNEY_PATH/chutney" ]; then
     # looks like a relative path: make chutney path absolute
     export CHUTNEY_PATH="$PWD/$CHUTNEY_PATH"
+fi
+
+# Get a working net path
+if [ ! -d "$CHUTNEY_DATA_DIR" ]; then
+    # looks like a broken path: use the chutney path as a base
+    export CHUTNEY_DATA_DIR="$CHUTNEY_PATH/net"
+fi
+if [ -d "$PWD/$CHUTNEY_DATA_DIR" ]; then
+    # looks like a relative path: make chutney path absolute
+    export CHUTNEY_DATA_DIR="$PWD/$CHUTNEY_DATA_DIR"
 fi
 
 VOTING_OFFSET=6
@@ -48,7 +59,7 @@ echo "$myname: bootstrapping network: $flavour"
 # files like this.
 offset=$(expr \( $(date +%s) + $VOTING_OFFSET \) % 300)
 CONFOPT="TestingV3AuthVotingStartOffset"
-for file in "$CHUTNEY_PATH"/net/nodes/*a/torrc ; do
+for file in "$CHUTNEY_DATA_DIR"/nodes/*a/torrc ; do
     sed -i.bak -e "s/^${CONFOPT}.*$/${CONFOPT} $offset/1" $file
 done
 

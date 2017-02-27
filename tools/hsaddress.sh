@@ -17,8 +17,18 @@ if [ -d "$PWD/$CHUTNEY_PATH" -a -x "$PWD/$CHUTNEY_PATH/chutney" ]; then
     export CHUTNEY_PATH="$PWD/$CHUTNEY_PATH"
 fi
 
+# Get a working net path
+if [ ! -d "$CHUTNEY_DATA_DIR" ]; then
+    # looks like a broken path: use the chutney path as a base
+    export CHUTNEY_DATA_DIR="$CHUTNEY_PATH/net"
+fi
+if [ -d "$PWD/$CHUTNEY_DATA_DIR" ]; then
+    # looks like a relative path: make chutney path absolute
+    export CHUTNEY_DATA_DIR="$PWD/$CHUTNEY_DATA_DIR"
+fi
+
 NAME=$(basename "$0")
-DEST="$CHUTNEY_PATH/net/nodes"
+DEST="$CHUTNEY_DATA_DIR/nodes"
 TARGET=hidden_service/hostname
 
 function usage() {

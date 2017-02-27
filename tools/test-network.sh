@@ -91,13 +91,7 @@ do
       export CHUTNEY_LISTEN_ADDRESS_V6="$2"
       shift
       ;;
-    --coverage)
-      export USE_COVERAGE_BINARY=true
-      ;;
-    --dry-run)
-      # process arguments, but don't call any other scripts
-      export NETWORK_DRY_RUN=true
-      ;;
+    # Warning Options
     # we summarise unexpected warnings by default
     # this shows all warnings per-node
     --all-warnings)
@@ -108,6 +102,22 @@ do
     --no-warnings)
       export CHUTNEY_WARNINGS_SKIP=true
       ;;
+    # Expert options
+    # Code Coverage Binary
+    --coverage)
+      export USE_COVERAGE_BINARY=true
+      ;;
+    # Do Nothing (but process arguments and set environmental variables)
+    --dry-run)
+      # process arguments, but don't call any other scripts
+      export NETWORK_DRY_RUN=true
+      ;;
+    # The net directory, usually chutney/net
+    --net-dir)
+      export CHUTNEY_DATA_DIR="$2"
+      shift
+      ;;
+    # Oops
     *)
       echo "$myname: Sorry, I don't know what to do with '$1'."
       echo "$UPDATE_YOUR_CHUTNEY"
