@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 #
 # Usage:
 #    tools/hsaddress.sh [hs_node]
@@ -31,12 +31,12 @@ NAME=$(basename "$0")
 DEST="$CHUTNEY_DATA_DIR/nodes"
 TARGET=hidden_service/hostname
 
-function usage() {
+usage() {
     echo "Usage: $NAME [hs_node]"
     exit 1
 }
 
-function show_address() {
+show_address() {
     cat "$1"
 }
 
@@ -54,8 +54,7 @@ then
 elif [ $# -eq 1 ];
 then
     [ -d "$DEST/$1" ] || { echo "$NAME: $1 not found"; exit 1; }
-    # support hOLD
-    [[ "$1" =~ .*h.* ]] || { echo "$NAME: $1 is not a HS"; exit 1; }
+    # we don't check the name of the HS directory, because tags vary
     FILE="$DEST/$1/$TARGET"
     [ -e "$FILE" ] || { echo "$NAME: $FILE not found"; exit 1; }
     show_address "$FILE"

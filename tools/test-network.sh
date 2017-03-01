@@ -1,6 +1,6 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
-export ECHO=${ECHO:-"echo"}
+export ECHO="${ECHO:-echo}"
 
 # Output is prefixed with the name of the script
 myname=$(basename "$0")
@@ -246,9 +246,9 @@ if [ "$NETWORK_DRY_RUN" = true -o "$CHUTNEY_WARNINGS_ONLY" = true ]; then
     if [ "$CHUTNEY_WARNINGS_ONLY" = true ]; then
         "$WARNINGS"
     fi
-    # we can't exit here, it breaks argument processing
-    # this only works in bash: return semantics are shell-specific
-    return 2>/dev/null || exit
+    # This breaks sourcing this script: that is intentional, as the previous
+    # behaviour only worked with bash as /bin/sh
+    exit
 fi
 
 "$CHUTNEY_PATH/tools/bootstrap-network.sh" "$NETWORK_FLAVOUR" || exit 3

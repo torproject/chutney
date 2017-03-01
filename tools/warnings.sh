@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 #
 # Usage:
 #    tools/warnings.sh [node]
@@ -31,7 +31,7 @@ if [ -d "$PWD/$CHUTNEY_DATA_DIR" ]; then
     export CHUTNEY_DATA_DIR="$PWD/$CHUTNEY_DATA_DIR"
 fi
 
-function show_warnings() {
+show_warnings() {
     # Work out the file and filter settings
     if [ "$CHUTNEY_WARNINGS_SUMMARY" = true ]; then
         FILE="$1/*/$LOG_FILE"
@@ -75,7 +75,7 @@ function show_warnings() {
     fi
 }
 
-function usage() {
+usage() {
     echo "Usage: $NAME [node]"
     exit 1
 }
