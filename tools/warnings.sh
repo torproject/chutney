@@ -63,7 +63,7 @@ show_warnings() {
     fi
     if [ "$CHUTNEY_WARNINGS_IGNORE_EXPECTED" = true -a \
         -e "$IGNORE_FILE" ]; then
-        PERMANENT_DIR=`readlink -n "$1"`
+        PERMANENT_DIR=`readlink -n "$1" || echo "$1"`
         $ECHO_A "${GREEN}Detail: chutney/tools/warnings.sh $PERMANENT_DIR${NC}"
     fi
     # Display the warnings, after filtering and counting occurrences
