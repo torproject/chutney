@@ -141,7 +141,7 @@ done
 # optional: $TOR_DIR is the tor build directory
 # it's used to find the location of tor binaries
 # if it's not set:
-#  - set it ro $BUILDDIR, or
+#  - set it to $BUILDDIR, or
 #  - if $PWD looks like a tor build directory, set it to $PWD, or
 #  - unset $TOR_DIR, and let chutney fall back to finding tor binaries in $PATH
 if [ ! -d "$TOR_DIR" ]; then
