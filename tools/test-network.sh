@@ -279,7 +279,7 @@ if [ "$CHUTNEY_BOOTSTRAP_TIME" -ge 0 ]; then
   VERIFY_EXIT_STATUS="$?"
 else
   $ECHO "Chutney network ready and running. To stop the network, use:"
-  $ECHO "$CHUTNEY" stop "$CHUTNEY_NETWORK"
+  $ECHO "$CHUTNEY stop $CHUTNEY_NETWORK"
   "$WARNINGS"
   exit 0
 fi
