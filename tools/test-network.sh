@@ -9,6 +9,9 @@ myname=$(basename "$0")
 export CHUTNEY_WARNINGS_IGNORE_EXPECTED=${CHUTNEY_WARNINGS_IGNORE_EXPECTED:-true}
 export CHUTNEY_WARNINGS_SUMMARY=${CHUTNEY_WARNINGS_SUMMARY:-true}
 
+# default to exiting when this script exits
+export CHUTNEY_CONTROLLING_PID=${CHUTNEY_CONTROLLING_PID:-$$}
+
 # what we say when we fail
 UPDATE_YOUR_CHUTNEY="Please update your chutney using 'git pull'."
 
@@ -58,6 +61,12 @@ do
     # If negative, chutney exits without stopping
     --stop-time)
       export CHUTNEY_STOP_TIME="$2"
+      shift
+    ;;
+    # If all of the CHUTNEY_*_TIME options are positive, chutney will ask tor
+    # to exit when this PID exits. Set to 1 or lower to disable.
+    --controlling-pid)
+      export CHUTNEY_CONTROLLING_PID="$2"
       shift
     ;;
     # Environmental variables used by chutney verify performance tests

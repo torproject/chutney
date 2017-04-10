@@ -57,6 +57,7 @@ Warning Options:
   --only-warnings    CHUTNEY_WARNINGS_ONLY=true
 
 Expert Options:
+  --controlling-pid  CHUTNEY_CONTROLLING_PID
   --coverage         USE_COVERAGE_BINARY=true
   --net-dir          CHUTNEY_DATA_DIR
   --dry-run          NETWORK_DRY_RUN=true
@@ -124,6 +125,10 @@ Waiting for the network:
   The tools/test-network.sh script waits CHUTNEY_STOP_TIME seconds
   after verifying, then exits (default: immediately). If CHUTNEY_STOP_TIME is
   negative, the script leaves the network running, and exits after verifying.
+
+  If none of these options are negative, test-network.sh tells the tor
+  processes to exit after it exits, using CHUTNEY_CONTROLLING_PID. To disable
+  this functionality, set CHUTNEY_CONTROLLING_PID to 1 or less.
 
 Changing the network address:
 
