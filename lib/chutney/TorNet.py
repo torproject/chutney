@@ -982,17 +982,27 @@ class Network(object):
                 if c.isRunning():
                     c.stop(sig=sig)
             print("Waiting for nodes to finish.")
+            wrote_dot = False
             for n in range(15):
                 time.sleep(1)
                 if all(not c.isRunning() for c in controllers):
+                    # make the output clearer by adding a newline
+                    if wrote_dot:
+                        sys.stdout.write("\n")
+                        sys.stdout.flush()
                     # check for stale lock file when Tor crashes
                     for c in controllers:
                         c.cleanup_lockfile()
                     return
                 sys.stdout.write(".")
+                wrote_dot = True
                 sys.stdout.flush()
             for c in controllers:
                 c.check(listNonRunning=False)
+            # make the output clearer by adding a newline
+            if wrote_dot:
+                sys.stdout.write("\n")
+                sys.stdout.flush()
 
 
 def ConfigureNodes(nodelist):

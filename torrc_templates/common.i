@@ -36,7 +36,8 @@ DataDirectory $dir
 RunAsDaemon 1
 ConnLimit $connlimit
 Nickname $nick
-ShutdownWaitLength 0
+# Let tor close connections gracefully before exiting
+ShutdownWaitLength 2
 DisableDebuggerAttachment 0
 
 ControlPort $controlport
