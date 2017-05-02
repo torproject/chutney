@@ -42,9 +42,9 @@ Timing Options:
   --stop-time        CHUTNEY_STOP_TIME
 
 Traffic Options:
-  --data             CHUTNEY_DATA_BYTES
-  --connections      CHUTNEY_CONNECTIONS
-  --hs-multi-client  CHUTNEY_HS_MULTI_CLIENT
+  --data             CHUTNEY_DATA_BYTES=N
+  --connections      CHUTNEY_CONNECTIONS=N
+  --hs-multi-client  CHUTNEY_HS_MULTI_CLIENT=N
 
 Address Options:
   --ipv4             CHUTNEY_LISTEN_ADDRESS
@@ -134,8 +134,8 @@ Changing the network address:
    Tor network available on the network.
 
    IPv6 support for both Tor and Chutney is a work in progress. Currently,
-   chutney verifies IPv6 client, bridge client, and hidden service
-   connections. It does not use IPv6 SOCKSPort or Exit traffic.
+   chutney verifies IPv6 client, bridge client (?), hidden service, and exit
+   connections. It does not use IPv6 SOCKSPorts or HiddenServicePorts.
 
 The configuration files:
   networks/basic holds the configuration for the network you're configuring
