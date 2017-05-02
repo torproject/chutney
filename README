@@ -48,9 +48,14 @@ Traffic Options:
   --rounds           CHUTNEY_ROUNDS=N
   --hs-multi-client  CHUTNEY_HS_MULTI_CLIENT=N
 
-Address Options:
+Address/DNS Options:
   --ipv4             CHUTNEY_LISTEN_ADDRESS
   --ipv6             CHUTNEY_LISTEN_ADDRESS_V6
+  # Chutney uses /etc/resolv.conf if none of these options are set
+  --dns-conf         CHUTNEY_DNS_CONF=PATH
+  --offline          CHUTNEY_DNS_CONF=/dev/null
+  # Use tor's compile-time default for ServerDNSResolvConfFile
+  --dns-conf-default CHUTNEY_DNS_CONF=""
 
 Warning Options:
   --all-warnings     CHUTNEY_WARNINGS_IGNORE_EXPECTED=false
@@ -148,6 +153,33 @@ Changing the network address:
    IPv6 support for both Tor and Chutney is a work in progress. Currently,
    chutney verifies IPv6 client, bridge client (?), hidden service, and exit
    connections. It does not use IPv6 SOCKSPorts or HiddenServicePorts.
+
+Using DNS:
+
+   Chutney verify uses IP addresses by default. It does not need to look up
+   any hostnames. We recommend that chutney users disable DNS using --offline
+   or CHUTNEY_DNS_CONF=/dev/null , because any DNS failures causes tests to
+   fail. Chutney's DNS queries also produce external traffic in a predictable
+   pattern.
+
+   If you want to use a hostname with CHUTNEY_LISTEN_ADDRESS[_V6], or you want
+   to run tests that use DNS, set CHUTNEY_DNS_CONF to the path to a file in
+   resolv.conf format. Chutney's default of /etc/resolv.conf should be fine for
+   most UNIX-based operating systems. If your tor is compiled with a different
+   default, use --dns-resolv-conf-default or CHUTNEY_DNS_CONF="".
+
+   When the CHUTNEY_DNS_CONF file does not exist, or is a broken symlink,
+   chutney uses /dev/null instead. This is a workaround for bugs in tor's
+   use of eventdns. For example, macOS deletes the resolv.conf file when it
+   thinks the network is down: this can make tor exits reject all traffic,
+   even if a working DNS server is running on 127.0.0.1:53.
+
+   When tor has no working name servers (including --offline mode), it can
+   crash on SETCONF. (Chutney does not use SETCONF, but some external tor
+   controllers do.) To avoid this crash, set CHUTNEY_DNS_CONF to a file
+   containing a working name server address. For your convenience, chutney
+   provides a local resolv.conf file containing IPv4, IPv6, and "localhost".
+   Use --dns-conf resolv.conf (relative paths work).
 
 The configuration files:
   networks/basic holds the configuration for the network you're configuring

@@ -19,6 +19,8 @@ Consensus with empty bandwidth
 Could not add queued signature to new consensus: Mismatched digest
 Could not add queued signature to new consensus: Valid-After times do not match
 Could not open.*sr-state.*No such file or directory
+# Chutney does not use DNS by default
+Couldn't set up any working nameservers. Network not up yet
 Currently, sandboxing is only implemented on Linux
 # We ignore consensus failure warnings
 Error publishing .* consensus
@@ -50,6 +52,8 @@ TestingTorNetwork is set
 # Older versions might need them, we should remove them at some point in 0.3.*
 The DirAuthority options 'hs' and 'no-hs' are obsolete
 This copy of Tor was compiled.*to run in a non-anonymous mode
+# Chutney does not use DNS by default
+Unable to parse '.*', or no nameservers in '.*'
 # Tor Bug 21525?
 Unable to store signatures posted by .* Mismatched digest
 Unable to store signatures posted by .* Valid-After times do not match
