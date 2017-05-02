@@ -28,11 +28,11 @@ import select
 import struct
 import errno
 import time
+import os
 
 # Set debug_flag=True in order to debug this program or to get hints
 # about what's going wrong in your system.
-debug_flag = False
-
+debug_flag = os.environ.get("CHUTNEY_DEBUG", "") != ""
 
 def debug(s):
     "Print a debug message on stdout if debug_flag is True."

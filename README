@@ -57,6 +57,7 @@ Warning Options:
   --only-warnings    CHUTNEY_WARNINGS_ONLY=true
 
 Expert Options:
+  --debug            CHUTNEY_DEBUG=true
   --coverage         USE_COVERAGE_BINARY=true
   --net-dir          CHUTNEY_DATA_DIR
   --dry-run          NETWORK_DRY_RUN=true

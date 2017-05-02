@@ -35,7 +35,10 @@ do
       # the name or path of a tor-gencert binary
       export CHUTNEY_TOR_GENCERT="$2"
       shift
-    ;;
+      ;;
+    --debug)
+      export CHUTEY_DEBUG="yes"
+      ;;
     --flavor|--flavour|--network-flavor|--network-flavour)
       export NETWORK_FLAVOUR="$2"
       shift
