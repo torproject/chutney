@@ -157,7 +157,12 @@ class Sink(Peer):
         if self.repetitions == 0 or len(self.tt.data) == 0:
             debug("no verification required - no data")
             return 0
-        self.inbuf += self.s.recv(len(data) - len(self.inbuf))
+        inp = self.s.recv(len(data) - len(self.inbuf))
+        debug("Verify: received %d bytes"% len(inp))
+        if len(inp) == 0:
+            debug("EOF on fd %s" % self.fd())
+            return -1
+        self.inbuf += inp
         debug("successfully received (bytes=%d)" % len(self.inbuf))
         while len(self.inbuf) >= len(data):
             assert(len(self.inbuf) <= len(data) or self.repetitions > 1)
@@ -224,7 +229,12 @@ class Source(Peer):
                >0 if more data needs to be read or written
         """
         if self.state == self.CONNECTING_THROUGH_PROXY:
-            self.inbuf += self.s.recv(8 - len(self.inbuf))
+            inp = self.s.recv(8 - len(self.inbuf))
+            debug("-- connecting through proxy, got %d bytes"%len(inp))
+            if len(inp) == 0:
+                debug("EOF on fd %d"%self.fd())
+                return -1
+            self.inbuf += inp
             if len(self.inbuf) == 8:
                 if ord(self.inbuf[0]) == 0 and ord(self.inbuf[1]) == 0x5a:
                     debug("proxy handshake successful (fd=%d)" % self.fd())
