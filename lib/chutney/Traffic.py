@@ -218,6 +218,7 @@ class Source(Peer):
         self.state = self.CONNECTING
         dest = self.proxy or self.dest
         try:
+            debug("socket %d connecting to %r..."%(self.fd(),dest))
             self.s.connect(dest)
         except socket.error as e:
             if e[0] != errno.EINPROGRESS:
@@ -306,7 +307,7 @@ class Source(Peer):
             debug("successfully sent (bytes=%d)" % n)
             self._sent_no_bytes = 0
         else:
-            debug("BUG: sent no bytes")
+            debug("BUG: sent no bytes (out of %d; state is %s)"% (len(self.outbuf), self.state))
             self._sent_no_bytes += 1
             # We can't retry too fast, otherwise clients burn all their HSDirs
             if self._sent_no_bytes >= 2:
@@ -382,6 +383,7 @@ class TrafficTester():
             # debug("rset %s wset %s" % (rset, wset))
             sets = select.select(rset, wset, [], 1)
             if all(len(s) == 0 for s in sets):
+                debug("Decrementing timeout.")
                 self.timeout -= 1
                 continue
 
@@ -391,6 +393,7 @@ class TrafficTester():
                     continue
                 p = self.peers[fd]
                 n = p.on_readable()
+                debug("On read, fd %d for %s said %d"%(fd, p, n))
                 if n > 0:
                     # debug("need %d more octets from fd %d" % (n, fd))
                     pass
@@ -398,6 +401,7 @@ class TrafficTester():
                     self.tests.success()
                     self.remove(p)
                 else:       # Failure.
+                    debug("Got a failure reading fd %d for %s" % (fd,p))
                     self.tests.failure()
                     if p.is_sink():
                         print("verification failed!")
@@ -407,9 +411,11 @@ class TrafficTester():
                 p = self.peers.get(fd)
                 if p is not None:  # Might have been removed above.
                     n = p.on_writable()
+                    debug("On write, fd %d said %d"%(fd, n))
                     if n == 0:
                         self.remove(p)
                     elif n < 0:
+                        debug("Got a failure writing fd %d for %s" % (fd,p))
                         self.tests.failure()
                         self.remove(p)
 
@@ -423,6 +429,8 @@ class TrafficTester():
         if not debug_flag:
             sys.stdout.write('\n')
             sys.stdout.flush()
+        debug("Done with run(); all_done == %s and failure_count == %s"
+              %(self.tests.all_done(), self.tests.failure_count()))
         return self.tests.all_done() and self.tests.failure_count() == 0
 
 
