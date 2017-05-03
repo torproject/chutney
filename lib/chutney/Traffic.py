@@ -258,8 +258,15 @@ class Source(Peer):
         return self.want_to_write()  # Keep us around for writing if needed
 
     def want_to_write(self):
-        return (self.state == self.CONNECTING or len(self.outbuf) > 0 or
-                (self.repetitions > 0 and len(self.data) > 0))
+        if self.state == self.CONNECTING:
+            return True
+        if len(self.outbuf) > 0:
+            return True
+        if (self.state == self.CONNECTED and
+            self.repetitions > 0 and
+            len(self.data) > 0):
+            return True
+        return False
 
     def on_writable(self):
         """Invoked when the socket becomes writable.
