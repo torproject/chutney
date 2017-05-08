@@ -36,7 +36,8 @@ DataDirectory $dir
 RunAsDaemon 1
 ConnLimit $connlimit
 Nickname $nick
-ShutdownWaitLength 0
+# Let tor close connections gracefully before exiting
+ShutdownWaitLength 2
 DisableDebuggerAttachment 0
 
 ControlPort $controlport
@@ -44,6 +45,10 @@ ControlPort $controlport
 ControlSocket ${dir}/control
 CookieAuthentication 1
 PidFile ${dir}/pid
+# Ask all child tor processes to exit when chutney's test-network.sh exits
+# (if the CHUTNEY_*_TIME options leave the network running, this option is
+# disabled)
+${owning_controller_process}
 
 Log notice file ${dir}/notice.log
 Log info file ${dir}/info.log

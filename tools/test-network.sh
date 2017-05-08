@@ -9,6 +9,9 @@ myname=$(basename "$0")
 export CHUTNEY_WARNINGS_IGNORE_EXPECTED=${CHUTNEY_WARNINGS_IGNORE_EXPECTED:-true}
 export CHUTNEY_WARNINGS_SUMMARY=${CHUTNEY_WARNINGS_SUMMARY:-true}
 
+# default to exiting when this script exits
+export CHUTNEY_CONTROLLING_PID=${CHUTNEY_CONTROLLING_PID:-$$}
+
 # what we say when we fail
 UPDATE_YOUR_CHUTNEY="Please update your chutney using 'git pull'."
 
@@ -61,6 +64,12 @@ do
     # If negative, chutney exits without stopping
     --stop-time)
       export CHUTNEY_STOP_TIME="$2"
+      shift
+    ;;
+    # If all of the CHUTNEY_*_TIME options are positive, chutney will ask tor
+    # to exit when this PID exits. Set to 1 or lower to disable.
+    --controlling-pid)
+      export CHUTNEY_CONTROLLING_PID="$2"
       shift
     ;;
     # Environmental variables used by chutney verify performance tests
@@ -282,7 +291,7 @@ if [ "$CHUTNEY_BOOTSTRAP_TIME" -ge 0 ]; then
   VERIFY_EXIT_STATUS="$?"
 else
   $ECHO "Chutney network ready and running. To stop the network, use:"
-  $ECHO "$CHUTNEY" stop "$CHUTNEY_NETWORK"
+  $ECHO "$CHUTNEY stop $CHUTNEY_NETWORK"
   "$WARNINGS"
   exit 0
 fi
@@ -295,6 +304,8 @@ if [ "$CHUTNEY_STOP_TIME" -ge 0 ]; then
   # work around a bug/feature in make -j2 (or more)
   # where make hangs if any child processes are still alive
   "$CHUTNEY" stop "$CHUTNEY_NETWORK"
+  # Give tor time to exit gracefully
+  sleep 3
   "$WARNINGS"
   exit "$VERIFY_EXIT_STATUS"
 else
