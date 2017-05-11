@@ -43,7 +43,9 @@ Timing Options:
 
 Traffic Options:
   --data             CHUTNEY_DATA_BYTES=N
+  # connections are simultaneous, rounds are sequential
   --connections      CHUTNEY_CONNECTIONS=N
+  --rounds           CHUTNEY_ROUNDS=N
   --hs-multi-client  CHUTNEY_HS_MULTI_CLIENT=N
 
 Address Options:
@@ -91,9 +93,12 @@ Connection Tests:
   ./chutney configure networks/basic-025
   ./chutney start networks/basic-025
   ./chutney status networks/basic-025
+  # Make 5 simultaneous connections from each client through a random exit
   CHUTNEY_CONNECTIONS=5 ./chutney verify networks/basic-025
-  # Make 5 connections from each client through a random exit
   ./chutney stop networks/basic-025
+
+  # Run 5 sequential verification rounds
+  CHUTNEY_ROUNDS=5 ./tools/test-network.sh --flavour basic
 
 Note: If you create 7 or more connections to a hidden service from a single
 Tor 0.2.7 client, you'll likely get a verification failure due to #15937.

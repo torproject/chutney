@@ -5,6 +5,9 @@ export ECHO="${ECHO:-echo}"
 # Output is prefixed with the name of the script
 myname=$(basename "$0")
 
+# default to one round
+export CHUTNEY_ROUNDS=${CHUTNEY_ROUNDS:-1}
+
 # default to summarising unexpected warnings
 export CHUTNEY_WARNINGS_IGNORE_EXPECTED=${CHUTNEY_WARNINGS_IGNORE_EXPECTED:-true}
 export CHUTNEY_WARNINGS_SUMMARY=${CHUTNEY_WARNINGS_SUMMARY:-true}
@@ -78,12 +81,17 @@ do
       export CHUTNEY_DATA_BYTES="$2"
       shift
     ;;
-    # Make this many connections per client (1)
+    # Make this many simultaneous connections per client (1)
     # Note: If you create 7 or more connections to a hidden service from
     # a single Tor 0.2.7 client, you'll likely get a verification failure due
     # to #15937. This is fixed in 0.2.8.
     --connections|--connection|--connection-count|--count)
       export CHUTNEY_CONNECTIONS="$2"
+      shift
+    ;;
+    # Run this many verification rounds (1)
+    --rounds)
+      export CHUTNEY_ROUNDS="$2"
       shift
     ;;
     # Make each client connect to each HS (0)
@@ -286,9 +294,18 @@ else
 fi
 
 if [ "$CHUTNEY_BOOTSTRAP_TIME" -ge 0 ]; then
-  # Chutney will try to verify for $CHUTNEY_BOOTSTRAP_TIME seconds
-  "$CHUTNEY" verify "$CHUTNEY_NETWORK"
-  VERIFY_EXIT_STATUS="$?"
+  # Chutney will try to verify for $CHUTNEY_BOOTSTRAP_TIME seconds each round
+  n_rounds=0
+  VERIFY_EXIT_STATUS=0
+  # Run CHUTNEY_ROUNDS verification rounds
+  $ECHO "Running $CHUTNEY_ROUNDS verify rounds..."
+  while [ "$CHUTNEY_ROUNDS" -gt "$n_rounds" \
+          -a "$VERIFY_EXIT_STATUS" -eq 0 ]; do
+      "$CHUTNEY" verify "$CHUTNEY_NETWORK"
+      VERIFY_EXIT_STATUS="$?"
+      $[n_rounds++]
+  done
+  $ECHO "Completed $n_rounds of $CHUTNEY_ROUNDS verify rounds."
 else
   $ECHO "Chutney network ready and running. To stop the network, use:"
   $ECHO "$CHUTNEY stop $CHUTNEY_NETWORK"
