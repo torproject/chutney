@@ -303,7 +303,7 @@ if [ "$CHUTNEY_BOOTSTRAP_TIME" -ge 0 ]; then
           -a "$VERIFY_EXIT_STATUS" -eq 0 ]; do
       "$CHUTNEY" verify "$CHUTNEY_NETWORK"
       VERIFY_EXIT_STATUS="$?"
-      $[n_rounds++]
+      n_rounds=$[n_rounds+1]
   done
   $ECHO "Completed $n_rounds of $CHUTNEY_ROUNDS verify rounds."
 else
