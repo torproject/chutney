@@ -56,5 +56,6 @@ Log info file ${dir}/info.log
 #Log debug file ${dir}/debug.log
 ProtocolWarnings 1
 SafeLogging 0
+LogTimeGranularity 1
 
 ${authorities}
