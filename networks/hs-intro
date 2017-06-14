@@ -1,0 +1,39 @@
+# By default, Authorities are not configured as exits
+Authority = Node(tag="a", authority=1, relay=1, torrc="authority.tmpl")
+NonExitRelay = Node(tag="r", relay=1, torrc="relay-non-exit.tmpl")
+Client = Node(tag="c", torrc="client.tmpl")
+HS0 = Node(tag="h", hs=1, torrc="hs0.tmpl")
+HS1 = Node(tag="h", hs=1, torrc="hs1.tmpl")
+HS2 = Node(tag="h", hs=1, torrc="hs2.tmpl")
+HS3 = Node(tag="h", hs=1, torrc="hs3.tmpl")
+HS4 = Node(tag="h", hs=1, torrc="hs4.tmpl")
+HS5 = Node(tag="h", hs=1, torrc="hs5.tmpl")
+HS6 = Node(tag="h", hs=1, torrc="hs6.tmpl")
+HS7 = Node(tag="h", hs=1, torrc="hs7.tmpl")
+HS8 = Node(tag="h", hs=1, torrc="hs8.tmpl")
+HS9 = Node(tag="h", hs=1, torrc="hs9.tmpl")
+HS10 = Node(tag="h", hs=1, torrc="hs10.tmpl")
+
+# Since only 25% of relays get the guard flag,
+# TestingDirAuthVoteGuard * may need to be used in small networks
+
+# A hidden service needs 5 authorities/relays to ensure it can build HS
+# connections:
+# a minimum path length of 3, plus the client-nominated rendezvous point,
+# plus a seperate introduction point
+# A hidden service with 10 intro points actually tries 12, then repurposes 2
+NODES = Authority.getN(2) + NonExitRelay.getN(10) + \
+        Client.getN(1) + \
+        HS0.getN(2) + \
+        HS1.getN(2) + \
+        HS2.getN(2) + \
+        HS3.getN(2) + \
+        HS4.getN(2) + \
+        HS5.getN(2) + \
+        HS6.getN(2) + \
+        HS7.getN(2) + \
+        HS8.getN(2) + \
+        HS9.getN(2) + \
+        HS10.getN(2)
+
+ConfigureNodes(NODES)
