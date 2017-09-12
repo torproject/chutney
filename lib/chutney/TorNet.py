@@ -890,8 +890,8 @@ class TorEnviron(chutney.Templating.Environ):
         elif my['dns_conf'] is None:
             # if there is no DNS conf file set
             print("CHUTNEY_DNS_CONF not specified, using '%s'."
-                  % (DEFAULT_DNS_RESOLV_CONF))
-            dns_conf = DEFAULT_DNS_RESOLV_CONF
+                  % (TorEnviron.DEFAULT_DNS_RESOLV_CONF))
+            dns_conf = TorEnviron.DEFAULT_DNS_RESOLV_CONF
         else:
             dns_conf = my['dns_conf']
         dns_conf = os.path.abspath(my['dns_conf'])
@@ -901,8 +901,8 @@ class TorEnviron(chutney.Templating.Environ):
         if not os.path.exists(dns_conf):
             # Issue a warning so the user notices
             print("CHUTNEY_DNS_CONF '%s' does not exist, using '%s'."
-                  % (dns_conf, OFFLINE_DNS_RESOLV_CONF))
-            dns_conf = OFFLINE_DNS_RESOLV_CONF
+                  % (dns_conf, TorEnviron.OFFLINE_DNS_RESOLV_CONF))
+            dns_conf = TorEnviron.OFFLINE_DNS_RESOLV_CONF
         return "ServerDNSResolvConfFile %s" % (dns_conf)
 
 
