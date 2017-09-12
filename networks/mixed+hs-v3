@@ -1,0 +1,21 @@
+OLD_TOR="tor-stable"
+# By default, Authorities are not configured as exits
+Authority = Node(tag="a", authority=1, relay=1, torrc="authority.tmpl")
+OldAuthority = Node(tag="aOLD", authority=1, relay=1, torrc="authority.tmpl",
+       tor=OLD_TOR)
+Relay = Node(tag="r", relay=1, exit=1, torrc="relay.tmpl")
+OldRelay = Node(tag="rOLD", relay=1, exit=1, torrc="relay.tmpl",
+                    tor=OLD_TOR)
+Client = Node(tag="c", torrc="client.tmpl")
+OldClient = Node(tag="cOLD", torrc="client.tmpl", tor=OLD_TOR)
+# Old tor versions don't have HSv3 support yet
+HSv3 = Node(tag="h", hs=1, torrc="hs-v3.tmpl")
+
+# We need 8 authorities/relays/exits to ensure at least 2 get the guard flag
+# in 0.2.6
+NODES = Authority.getN(2) + OldAuthority.getN(2) + \
+        Relay.getN(2) + OldRelay.getN(2) + \
+        Client.getN(1) + OldClient.getN(1) + \
+        HSv3.getN(1)
+
+ConfigureNodes(NODES)
