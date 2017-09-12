@@ -25,7 +25,10 @@ Error publishing .* consensus
 Every hidden service on this tor instance is NON-ANONYMOUS
 # We ignore consensus failure warnings
 Failed to choose an exit server
+# These are 0-based
 Failed to find node for hop [0-1] of our path
+# These are 1-based
+Failed to find node for hop #[1-2] of our path
 # Tor Bug 21524
 IPv4 address.*private.*with accept6/reject6 field type in exit policy
 In a future version of Tor, ExitRelay 0 may become the default when no ExitPolicy is given
