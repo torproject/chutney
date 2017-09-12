@@ -37,9 +37,9 @@ You can modify its configuration using command-line arguments, or use the
 chutney environmental variables documented below:
 
 Timing Options:
-  --start-time       CHUTNEY_START_TIME
-  --bootstrap-time   CHUTNEY_BOOTSTRAP_TIME
-  --stop-time        CHUTNEY_STOP_TIME
+  --start-time       CHUTNEY_START_TIME=N
+  --bootstrap-time   CHUTNEY_BOOTSTRAP_TIME=N
+  --stop-time        CHUTNEY_STOP_TIME=N
 
 Traffic Options:
   --data             CHUTNEY_DATA_BYTES=N
@@ -49,8 +49,8 @@ Traffic Options:
   --hs-multi-client  CHUTNEY_HS_MULTI_CLIENT=N
 
 Address/DNS Options:
-  --ipv4             CHUTNEY_LISTEN_ADDRESS
-  --ipv6             CHUTNEY_LISTEN_ADDRESS_V6
+  --ipv4             CHUTNEY_LISTEN_ADDRESS=IPV4
+  --ipv6             CHUTNEY_LISTEN_ADDRESS_V6=IPV6
   # Chutney uses /etc/resolv.conf if none of these options are set
   --dns-conf         CHUTNEY_DNS_CONF=PATH
   --offline          CHUTNEY_DNS_CONF=/dev/null
@@ -69,8 +69,8 @@ Expert Options:
   --dry-run          NETWORK_DRY_RUN=true
   --quiet            ECHO=true
 
-  --controlling-pid  CHUTNEY_CONTROLLING_PID
-  --net-dir          CHUTNEY_DATA_DIR
+  --controlling-pid  CHUTNEY_CONTROLLING_PID=N
+  --net-dir          CHUTNEY_DATA_DIR=PATH
   (These are advanced options: in the past, they have had long-standing bugs.)
 
 Standard Actions:
