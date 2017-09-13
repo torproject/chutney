@@ -24,6 +24,8 @@ Couldn't set up any working nameservers. Network not up yet
 Currently, sandboxing is only implemented on Linux
 # We ignore consensus failure warnings
 Error publishing .* consensus
+# Tor 23078, fixed in 0.3.0.11 and 0.3.1.6-rc
+Established prop224 intro point on circuit
 Every hidden service on this tor instance is NON-ANONYMOUS
 # We ignore consensus failure warnings
 Failed to choose an exit server
