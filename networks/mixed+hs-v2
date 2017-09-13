@@ -6,8 +6,8 @@ OldAuthority = Node(tag="aOLD", authority=1, relay=1, torrc="authority.tmpl",
 Relay = Node(tag="r", relay=1, exit=1, torrc="relay.tmpl")
 OldRelay = Node(tag="rOLD", relay=1, exit=1, torrc="relay.tmpl",
                     tor=OLD_TOR)
-Client = Node(tag="c", torrc="client.tmpl")
-OldClient = Node(tag="cOLD", torrc="client.tmpl", tor=OLD_TOR)
+Client = Node(tag="c", client=1, torrc="client.tmpl")
+OldClient = Node(tag="cOLD", client=1, torrc="client.tmpl", tor=OLD_TOR)
 HSv2 = Node(tag="h", hs=1, torrc="hs.tmpl")
 OldHSv2 = Node(tag="hOLD", hs=1, torrc="hs.tmpl", tor=OLD_TOR)
 

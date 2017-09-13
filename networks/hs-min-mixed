@@ -17,8 +17,8 @@ NonExitRelay = Node(tag="r", relay=1, torrc="relay-non-exit.tmpl")
 OldNonExitRelay = Node(tag="r", relay=1, torrc="relay-non-exit.tmpl",
                        tor=OLD_TOR)
 
-Client = Node(tag="c", torrc="client.tmpl")
-OldClient = Node(tag="c", torrc="client.tmpl", tor=OLD_TOR)
+Client = Node(tag="c", client=1, torrc="client.tmpl")
+OldClient = Node(tag="c", client=1, torrc="client.tmpl", tor=OLD_TOR)
 
 HS = Node(tag="h", hs=1, torrc="hs.tmpl")
 OldHS = Node(tag="h", hs=1, torrc="hs.tmpl", tor=OLD_TOR)

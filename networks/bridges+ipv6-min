@@ -6,7 +6,7 @@ BridgeAuthority = Node(tag="ba", authority=1, bridgeauthority=1,
                        relay=1, torrc="bridgeauthority.tmpl")
 BridgeIPv6 = Node(tag="br", bridge=1, relay=1, ipv6_addr="[::1]",
                   torrc="bridge-v6.tmpl")
-BridgeClient = Node(tag="bc", torrc="bridgeclient.tmpl")
+BridgeClient = Node(tag="bc", client=1, bridgeclient=1, torrc="bridgeclient.tmpl")
 
 # Since only 25% of relays get the guard flag,
 # TestingDirAuthVoteGuard * may need to be used in small networks

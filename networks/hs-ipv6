@@ -8,8 +8,8 @@ NonExitRelay6 = Node(tag="r", relay=1,
                      ipv6_addr=os.environ.get('CHUTNEY_LISTEN_ADDRESS_V6',
                                               '[::1]'),
                      torrc="relay-orport-v6-non-exit.tmpl")
-Client = Node(tag="c", torrc="client.tmpl")
-Client6 = Node(tag="c", torrc="client-only-v6.tmpl")
+Client = Node(tag="c", client=1, torrc="client.tmpl")
+Client6 = Node(tag="c", client=1, torrc="client-only-v6.tmpl")
 HS6 = Node(tag="h", hs=1, torrc="hs-only-v6.tmpl")
 
 # Since only 25% of relays get the guard flag,

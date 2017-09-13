@@ -1,7 +1,7 @@
 # By default, Authorities are not configured as exits
 Authority = Node(tag="a", authority=1, relay=1, torrc="authority.tmpl")
 NonExitRelay = Node(tag="r", relay=1, torrc="relay-non-exit.tmpl")
-Client = Node(tag="c", torrc="client.tmpl")
+Client = Node(tag="c", client=1, torrc="client.tmpl")
 HS0 = Node(tag="h", hs=1, torrc="hs0.tmpl")
 HS1 = Node(tag="h", hs=1, torrc="hs1.tmpl")
 HS2 = Node(tag="h", hs=1, torrc="hs2.tmpl")

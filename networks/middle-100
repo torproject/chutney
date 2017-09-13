@@ -4,7 +4,7 @@
 Authority = Node(tag="a", authority=1, relay=1, torrc="authority.tmpl")
 NonExitRelay = Node(tag="m", relay=1, torrc="relay-non-exit.tmpl")
 ExitRelay = Node(tag="r", relay=1, exit=1, torrc="relay.tmpl")
-Client = Node(tag="c", torrc="client.tmpl")
+Client = Node(tag="c", client=1, torrc="client.tmpl")
 
 NODES = Authority.getN(5) + \
       NonExitRelay.getN(25) + ExitRelay.getN(10) + \

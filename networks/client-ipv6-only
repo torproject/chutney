@@ -9,7 +9,7 @@ ExitRelay6 = Node(tag="r", relay=1, exit=1,
                                            '[::1]'),
                   torrc="relay-orport-v6-exit.tmpl")
 HS = Node(tag="h", hs=1, torrc="hs.tmpl")
-Client6 = Node(tag="c", torrc="client-only-v6.tmpl")
+Client6 = Node(tag="c", client=1, torrc="client-only-v6.tmpl")
 
 # Since only 25% of relays get the guard flag,
 # TestingDirAuthVoteGuard * may need to be used in small networks
