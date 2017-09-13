@@ -894,7 +894,7 @@ class TorEnviron(chutney.Templating.Environ):
             dns_conf = TorEnviron.DEFAULT_DNS_RESOLV_CONF
         else:
             dns_conf = my['dns_conf']
-        dns_conf = os.path.abspath(my['dns_conf'])
+        dns_conf = os.path.abspath(dns_conf)
         # work around Tor bug #21900, where exits fail when the DNS conf
         # file does not exist, or is a broken symlink
         # (os.path.exists returns False for broken symbolic links)
