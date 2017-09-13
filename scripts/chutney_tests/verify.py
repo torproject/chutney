@@ -63,14 +63,18 @@ def _verify_traffic(network):
     bind_to = (LISTEN_ADDR, LISTEN_PORT)
     tt = chutney.Traffic.TrafficTester(bind_to, tmpdata, TIMEOUT, reps,
                                        dot_reps)
+    # _env does not implement get() due to its fallback to parent behaviour
     client_list = filter(lambda n:
-                         n._env['tag'] == 'c' or n._env['tag'] == 'bc',
+                         n._env['tag'].startswith('c') or
+                         n._env['tag'].startswith('bc') or
+                         ('client' in n._env.keys() and n._env['client'] == 1),
                          network._nodes)
     exit_list = filter(lambda n:
-                       ('exit' in n._env.keys()) and n._env['exit'] == 1,
+                       ('exit' in n._env.keys() and n._env['exit'] == 1),
                        network._nodes)
     hs_list = filter(lambda n:
-                     n._env['tag'] == 'h',
+                     n._env['tag'].startswith('h') or
+                     ('hs' in n._env.keys() and n._env['hs'] == 1),
                      network._nodes)
     if len(client_list) == 0:
         print("  Unable to verify network: no client nodes available")
