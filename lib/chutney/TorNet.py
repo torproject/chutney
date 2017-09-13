@@ -1118,8 +1118,8 @@ def runConfigFile(verb, data):
         test_module = importlib.import_module("chutney_tests.{}".format(verb))
         try:
             return test_module.run_test(network)
-        except AttributeError:
-            print("Test {!r} has no 'run_test(network)' function".format(verb))
+        except AttributeError as e:
+            print("Error running test {!r}: {}".format(verb, e))
             return False
 
     # tell the user we don't know what their verb meant
