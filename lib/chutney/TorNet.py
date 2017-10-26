@@ -436,12 +436,13 @@ class LocalNodeBuilder(NodeBuilder):
         torrc = self._getTorrcFname()
         cmdline = [
             tor,
-            "--quiet",
             "--ignore-missing-torrc",
             "-f", torrc,
             "--list-fingerprint",
             "--orport", "1",
-            "--datadirectory", datadir]
+            "--datadirectory", datadir,
+            "--quiet",
+            ]
         try:
             p = subprocess.Popen(cmdline, stdout=subprocess.PIPE)
         except OSError as e:
@@ -612,9 +613,9 @@ class LocalNodeController(NodeController):
         torrc = self._getTorrcFname()
         cmdline = [
             tor_path,
-            "--quiet",
             "-f", torrc,
-        ]
+            "--quiet",
+            ]
         try:
             p = subprocess.Popen(cmdline)
         except OSError as e:
