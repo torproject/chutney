@@ -1,0 +1,19 @@
+# By default, Authorities are not configured as exits
+Authority = Node(tag="a", authority=1, relay=1, torrc="authority.tmpl")
+ExitRelay = Node(tag="r", relay=1, exit=1, torrc="relay.tmpl")
+Client = Node(tag="c", client=1, torrc="client.tmpl")
+HSv2 = Node(tag="h", hs=1, torrc="hs.tmpl")
+HSv3 = Node(tag="h", hs=1, torrc="hs-v3.tmpl")
+SingleOnionv2 = Node(tag="h", hs=1, torrc="single-onion.tmpl")
+SingleOnionv3 = Node(tag="h", hs=1, torrc="single-onion-v3.tmpl")
+
+# A hidden service needs 5 authorities/relays to ensure it can build HS
+# connections:
+# a minimum path length of 3, plus the client-nominated rendezvous point,
+# plus a seperate introduction point
+NODES = Authority.getN(2) + ExitRelay.getN(3) + \
+        Client.getN(1) + \
+        HSv2.getN(1) + HSv3.getN(1) + \
+        SingleOnionv2.getN(1) + SingleOnionv3.getN(1)
+
+ConfigureNodes(NODES)
