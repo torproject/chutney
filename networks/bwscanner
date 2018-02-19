@@ -1,0 +1,10 @@
+# By default, Authorities are not configured as exits
+Authority = Node(tag="a", authority=1, relay=1, torrc="authority.tmpl")
+NonExitRelay = Node(tag="m", relay=1, torrc="relay-non-exit.tmpl")
+ExitRelay = Node(tag="r", relay=1, exit=1, torrc="relay.tmpl")
+Client = Node(tag="c", client=1, torrc="client_bwscanner.tmpl")
+
+NODES = Authority.getN(3) + \
+      NonExitRelay.getN(21) + ExitRelay.getN(3) + Client.getN(1)
+
+ConfigureNodes(NODES)
