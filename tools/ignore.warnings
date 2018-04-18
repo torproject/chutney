@@ -57,6 +57,7 @@ This copy of Tor was compiled.*to run in a non-anonymous mode
 # Chutney does not use DNS by default
 Unable to parse '.*', or no nameservers in '.*'
 # Tor Bug 21525?
+Unable to add signatures to consensus: Valid-After times do not match
 Unable to store signatures posted by .* Mismatched digest
 Unable to store signatures posted by .* Valid-After times do not match
 # We ignore consensus failure warnings
