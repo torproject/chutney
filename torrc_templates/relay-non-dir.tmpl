@@ -6,16 +6,6 @@ Address $ip
 # Must be included before exit-v{4,6}.i
 ExitRelay 0
 
-#NOTE: Setting TestingServerConsensusDownloadSchedule doesn't
-#      help -- dl_stats.schedule is not DL_SCHED_CONSENSUS
-#      at boostrap time.
-# Try to download after:
-# the minimum initial consensus time to start with,
-# a few eager fetches,
-# then half the minimum testing consensus interval
-TestingServerDownloadSchedule 0, 5
-TestingServerConsensusDownloadSchedule 0, 5
-
 # These options are set here so they apply to IPv4 and IPv6 Exits
 #
 # Tell Exits to avoid using DNS: otherwise, chutney will fail if DNS fails
