@@ -261,6 +261,19 @@ class LocalNodeBuilder(NodeBuilder):
         NodeBuilder.__init__(self, env)
         self._env = env
 
+    def _warnMissingTor(self, tor, cmdline,
+                        tor_name="tor", tor_env="CHUTNEY_TOR"):
+        """Log a warning that the binary tor can't be found while running
+           cmdline. Advise the user to put the path to tor_name in the tor_env
+           environmental variable.
+        """
+        print(("Cannot find the {} binary {} for the command line '{}'. " +
+               "Use the {} environment variable to set the path, " +
+               "or put the binary into $PATH: '{}'. " +
+               "If your $PATH contains ~, use $HOME instead.")
+              .format(tor_name, tor, " ".join(cmdline),
+                      tor_env, os.getenv("PATH")))
+
     def _createTorrcFile(self, checkOnly=False):
         """Write the torrc file for this node, disabling any options
            that are not supported by env's tor binary using comments.
@@ -290,9 +303,7 @@ class LocalNodeBuilder(NodeBuilder):
             except OSError as e:
                 # only catch file not found error
                 if e.errno == errno.ENOENT:
-                    print("Cannot find tor binary %r. Use "
-                          "CHUTNEY_TOR environment variable to set the "
-                          "path, or put the binary into $PATH." % tor)
+                    self._warnMissingTor(tor, cmdline)
                     sys.exit(0)
                 else:
                     raise
@@ -418,9 +429,9 @@ class LocalNodeBuilder(NodeBuilder):
         except OSError as e:
             # only catch file not found error
             if e.errno == errno.ENOENT:
-                print("Cannot find tor-gencert binary %r. Use "
-                      "CHUTNEY_TOR_GENCERT environment variable to set the "
-                      "path, or put the binary into $PATH." % tor_gencert)
+                self._warnMissingTor(tor_gencert, cmdline,
+                                     tor_name="tor-gencert",
+                                     tor_env="CHUTNEY_TOR_GENCERT")
                 sys.exit(0)
             else:
                 raise
@@ -448,9 +459,7 @@ class LocalNodeBuilder(NodeBuilder):
         except OSError as e:
             # only catch file not found error
             if e.errno == errno.ENOENT:
-                print("Cannot find tor binary %r. Use "
-                      "CHUTNEY_TOR environment variable to set the "
-                      "path, or put the binary into $PATH." % tor)
+                self._warnMissingTor(tor, cmdline)
                 sys.exit(0)
             else:
                 raise
