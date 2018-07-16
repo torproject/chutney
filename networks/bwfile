@@ -1,0 +1,9 @@
+# By default, Authorities are not configured as exits
+Authority = Node(tag="a", authority=1, relay=1, torrc="authority-bwfile.tmpl")
+ExitRelay = Node(tag="r", relay=1, exit=1, torrc="relay.tmpl")
+Client = Node(tag="c", client=1, torrc="client.tmpl")
+
+# The minimum number of authorities/relays/exits is 3, the minimum path length
+NODES = Authority.getN(2) + ExitRelay.getN(1) + Client.getN(1)
+
+ConfigureNodes(NODES)

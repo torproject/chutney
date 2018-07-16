@@ -118,6 +118,13 @@ HS Connection Tests:
   # Default behavior is one client connects to each HS
   ./chutney stop networks/hs-025
 
+Bandwidth File Tests:
+  ./tools/test-network.sh --flavour bwfile
+  # Warning: Can't open bandwidth file at configured location: /tmp/bwfile
+  # Create a bwfile with no bandwidths, that is valid for a few days
+  date +%s > /tmp/bwfile
+  ./tools/test-network.sh --flavour bwfile
+
 Waiting for the network:
 
   The tools/test-network.sh script waits CHUTNEY_START_TIME seconds
