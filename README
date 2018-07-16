@@ -105,10 +105,6 @@ Connection Tests:
   # Run 5 sequential verification rounds
   CHUTNEY_ROUNDS=5 ./tools/test-network.sh --flavour basic
 
-Note: If you create 7 or more connections to a hidden service from a single
-Tor 0.2.7 client, you'll likely get a verification failure due to #15937.
-This is fixed in 0.2.8.
-
 HS Connection Tests:
   ./chutney configure networks/hs-025
   ./chutney start networks/hs-025

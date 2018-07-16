@@ -86,9 +86,6 @@ do
       shift
     ;;
     # Make this many simultaneous connections per client (1)
-    # Note: If you create 7 or more connections to a hidden service from
-    # a single Tor 0.2.7 client, you'll likely get a verification failure due
-    # to #15937. This is fixed in 0.2.8.
     --connections|--connection|--connection-count|--count)
       export CHUTNEY_CONNECTIONS="$2"
       shift

@@ -10,8 +10,6 @@ BridgeIPv6 = Node(tag="br", bridge=1, relay=1, ipv6_addr="[::1]", torrc="bridge-
 BridgeClient = Node(tag="bc", client=1, bridgeclient=1, torrc="bridgeclient.tmpl")
 HS = Node(tag="h", hs=1, torrc="hs.tmpl")
 
-# We need 8 authorities/relays/exits to ensure at least 2 get the guard flag
-# in 0.2.6
 # We need 5 authorities/relays/exits to ensure we can build HS connections
 # We put the IPv6 bridge first to ensure that clients try IPv6 before IPv4
 # Unfortunately, this does not prevent clients falling back to IPv4

@@ -291,8 +291,6 @@ class LocalNodeBuilder(NodeBuilder):
         tor = self._env['tor']
         # find the options the current tor binary supports, and cache them
         if tor not in _TORRC_OPTIONS:
-            # Note: some versions of tor (e.g. 0.2.4.23) require
-            # --list-torrc-options to be the first argument
             cmdline = [
                 tor,
                 "--list-torrc-options",
@@ -315,9 +313,7 @@ class LocalNodeBuilder(NodeBuilder):
         else:
             torrc_opts = _TORRC_OPTIONS[tor]
         # check if each option is supported before writing it
-        # TODO: what about unsupported values?
-        # e.g. tor 0.2.4.23 doesn't support TestingV3AuthInitialVoteDelay 2
-        # but later version do. I say throw this one to the user.
+        # Unsupported option values may need special handling.
         with open(fn_out, 'w') as f:
             # we need to do case-insensitive option comparison
             # even if this is a static whitelist,
@@ -728,8 +724,7 @@ DEFAULTS = {
     'tor-gencert': os.environ.get('CHUTNEY_TOR_GENCERT', None),
     'auth_cert_lifetime': 12,
     'ip': os.environ.get('CHUTNEY_LISTEN_ADDRESS', '127.0.0.1'),
-    # Pre-0.2.8 clients will fail to parse ipv6 auth lines,
-    # so we default to ipv6_addr None
+    # we default to ipv6_addr None to support IPv4-only systems
     'ipv6_addr': os.environ.get('CHUTNEY_LISTEN_ADDRESS_V6', None),
     'dirserver_flags': 'no-v2',
     'chutney_dir': get_absolute_chutney_path(),

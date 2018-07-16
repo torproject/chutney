@@ -11,8 +11,6 @@ OldClient = Node(tag="cOLD", client=1, torrc="client.tmpl", tor=OLD_TOR)
 # Old tor versions don't have HSv3 support yet
 HSv3 = Node(tag="h", hs=1, torrc="hs-v3.tmpl")
 
-# We need 8 authorities/relays/exits to ensure at least 2 get the guard flag
-# in 0.2.6
 NODES = Authority.getN(2) + OldAuthority.getN(2) + \
         Relay.getN(2) + OldRelay.getN(2) + \
         Client.getN(1) + OldClient.getN(1) + \
