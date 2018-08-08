@@ -185,7 +185,8 @@ fi
 # if it's not set:
 #  - set it to $BUILDDIR, or
 #  - if $PWD looks like a tor build directory, set it to $PWD, or
-#  - unset $TOR_DIR, and let chutney fall back to finding tor binaries in $PATH
+#  - unset $TOR_DIR, and let chutney fall back to finding tor binaries in
+#    $CHUTNEY_TOR and $CHUTNEY_TOR_GENCERT, or $PATH
 if [ ! -d "$TOR_DIR" ]; then
     if [ -d "$BUILDDIR/src/or" -a -d "$BUILDDIR/src/tools" ]; then
         # Choose the build directory
@@ -204,7 +205,7 @@ if [ ! -d "$TOR_DIR" ]; then
         $ECHO "$myname: \$TOR_DIR not set, trying \$PWD/../tor"
         export TOR_DIR="$PWD/../tor"
     else
-        $ECHO "$myname: no \$TOR_DIR, chutney will use \$PATH for tor binaries"
+        $ECHO "$myname: no \$TOR_DIR, chutney will use \$CHUTNEY_TOR and \$CHUTNEY_TOR_GENCERT as tor binary paths, or search \$PATH for tor binary names"
         unset TOR_DIR
     fi
 fi
@@ -264,14 +265,29 @@ fi
 # using $CHUTNEY_TOR and $CHUTNEY_TOR_GENCERT, and then falls back to
 # looking for tor and tor-gencert in $PATH
 if [ -d "$TOR_DIR" ]; then
+    $ECHO "$myname: Setting \$CHUTNEY_TOR and \$CHUTNEY_TOR_GENCERT based on TOR_DIR: '$TOR_DIR'"
     # TOR_DIR is absolute, so these are absolute paths
     export CHUTNEY_TOR="${TOR_DIR}/src/or/${tor_name}"
     export CHUTNEY_TOR_GENCERT="${TOR_DIR}/src/tools/${tor_gencert_name}"
 else
-    # these are binary names, they will be searched for in $PATH
-    export CHUTNEY_TOR="${tor_name}"
-    export CHUTNEY_TOR_GENCERT="${tor_gencert_name}"
+    if [ -x "$CHUTNEY_TOR" ]; then
+        $ECHO "$myname: Assuming \$CHUTNEY_TOR is a path to a binary"
+    elif [ ! -z "$CHUTNEY_TOR" ]; then
+        $ECHO "$myname: Assuming \$CHUTNEY_TOR is a binary name in PATH"
+    else
+        $ECHO "$myname: Setting \$CHUTNEY_TOR to the standard binary name in PATH"
+        export CHUTNEY_TOR="${tor_name}"
+    fi
+    if [ -x "$CHUTNEY_TOR_GENCERT" ]; then
+        $ECHO "$myname: Assuming \$CHUTNEY_TOR_GENCERT is a path to a binary"
+    elif [ ! -z "$CHUTNEY_TOR_GENCERT" ]; then
+        $ECHO "$myname: Assuming \$CHUTNEY_TOR_GENCERT is a binary name in PATH"
+    else
+        $ECHO "$myname: Setting \$CHUTNEY_TOR_GENCERT to the standard binary name in PATH"
+        export CHUTNEY_TOR_GENCERT="${tor_gencert_name}"
+    fi
 fi
+$ECHO "$myname: Using \$CHUTNEY_TOR: '$CHUTNEY_TOR' and \$CHUTNEY_TOR_GENCERT: '$CHUTNEY_TOR_GENCERT'"
 
 # Set the variables for the chutney network flavour
 export NETWORK_FLAVOUR=${NETWORK_FLAVOUR:-"bridges+hs"}

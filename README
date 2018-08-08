@@ -9,12 +9,18 @@ It is supposed to be a good tool for:
 
 Right now it only sorta does these things.
 
-You will need, at the moment:
-  - Tor installed somewhere in your path, or
-  - The location of the 'tor' and 'tor-gencert' binaries specified through the
-    environment variables CHUTNEY_TOR and CHUTNEY_TOR_GENCERT, respectively, or
-  - To run chutney's tools/test-network.sh from a tor build directory, and
-  - Python 2.7 or later (Python 3 support is an ongoing work)
+You will need:
+  - Python 2.7 or later (Python 3 support is an ongoing work), and
+  - Tor binaries.
+
+Chutney checks for Tor binaries in this order:
+  - If you run chutney's tools/test-network.sh from a tor build directory,
+    (or set the environment variable $TOR_DIR to a tor build directory,)
+    chutney will automatically detect the tor binaries, or
+  - If you put the location of the 'tor' and 'tor-gencert' binaries in the
+    environment variables $CHUTNEY_TOR and $CHUTNEY_TOR_GENCERT, respectively,
+    chutney will use those binaries, or
+  - You will need tor and tor-gencert installed somewhere in your path.
 
 Stuff to try:
 
