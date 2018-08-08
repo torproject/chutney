@@ -187,19 +187,20 @@ fi
 #  - if $PWD looks like a tor build directory, set it to $PWD, or
 #  - unset $TOR_DIR, and let chutney fall back to finding tor binaries in
 #    $CHUTNEY_TOR and $CHUTNEY_TOR_GENCERT, or $PATH
+#
+# Find the Tor build dir using the src/tools dir
 if [ ! -d "$TOR_DIR" ]; then
-    if [ -d "$BUILDDIR/src/or" -a -d "$BUILDDIR/src/tools" ]; then
+    if [ -d "$BUILDDIR/src/tools" ]; then
         # Choose the build directory
         # But only if it looks like one
         $ECHO "$myname: \$TOR_DIR not set, trying \$BUILDDIR"
         export TOR_DIR="$BUILDDIR"
-    elif [ -d "$PWD/src/or" -a -d "$PWD/src/tools" ]; then
+    elif [ -d "$PWD/src/tools" ]; then
         # Guess the tor directory is the current directory
         # But only if it looks like one
         $ECHO "$myname: \$TOR_DIR not set, trying \$PWD"
         export TOR_DIR="$PWD"
-    elif [ -d "$PWD/../tor" -a -d "$PWD/../tor/src/or" -a \
-	   -d "$PWD/../tor/src/tools" ]; then
+    elif [ -d "$PWD/../tor" -a -d "$PWD/../tor/src/tools" ]; then
         # Guess the tor directory is next to the current directory
         # But only if it looks like one
         $ECHO "$myname: \$TOR_DIR not set, trying \$PWD/../tor"
@@ -210,10 +211,25 @@ if [ ! -d "$TOR_DIR" ]; then
     fi
 fi
 
-# make TOR_DIR absolute
-if [ -d "$PWD/$TOR_DIR" -a -d "$PWD/$TOR_DIR/src/or" -a \
+# Now find the name of the Tor app dir, which changed in Tor 0.3.5
+if [ -d "$TOR_DIR" ]; then
+    if [ -d "$TOR_DIR/src/app" ]; then
+        $ECHO "$myname: \$TOR_DIR is a Tor 0.3.5 or later build directory"
+        TOR_APP_DIR="$TOR_DIR/src/app"
+    elif [ -d "$TOR_DIR/src/or" ]; then
+        $ECHO "$myname: \$TOR_DIR is a Tor 0.3.4 or earlier build directory"
+        TOR_APP_DIR="$TOR_DIR/src/or"
+    else
+        $ECHO "$myname: \$TOR_DIR has no src/app or src/or, chutney will use \$CHUTNEY_TOR and \$CHUTNEY_TOR_GENCERT as tor binary paths, or search \$PATH for tor binary names"
+        unset TOR_DIR
+    fi
+fi
+
+# make TOR_DIR and TOR_APP_DIR absolute
+if [ -d "$PWD/$TOR_DIR" -a -d "$PWD/$TOR_APP_DIR" -a \
     -d "$PWD/$TOR_DIR/src/tools" ]; then
     export TOR_DIR="$PWD/$TOR_DIR"
+    export TOR_APP_DIR="$PWD/$TOR_APP_DIR"
 fi
 
 # mandatory: $CHUTNEY_PATH is the path to the chutney launch script
@@ -267,7 +283,7 @@ fi
 if [ -d "$TOR_DIR" ]; then
     $ECHO "$myname: Setting \$CHUTNEY_TOR and \$CHUTNEY_TOR_GENCERT based on TOR_DIR: '$TOR_DIR'"
     # TOR_DIR is absolute, so these are absolute paths
-    export CHUTNEY_TOR="$TOR_DIR/src/or/$tor_name"
+    export CHUTNEY_TOR="$TOR_APP_DIR/$tor_name"
     export CHUTNEY_TOR_GENCERT="$TOR_DIR/src/tools/$tor_gencert_name"
 else
     if [ -x "$CHUTNEY_TOR" ]; then
