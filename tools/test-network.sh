@@ -267,8 +267,8 @@ fi
 if [ -d "$TOR_DIR" ]; then
     $ECHO "$myname: Setting \$CHUTNEY_TOR and \$CHUTNEY_TOR_GENCERT based on TOR_DIR: '$TOR_DIR'"
     # TOR_DIR is absolute, so these are absolute paths
-    export CHUTNEY_TOR="${TOR_DIR}/src/or/${tor_name}"
-    export CHUTNEY_TOR_GENCERT="${TOR_DIR}/src/tools/${tor_gencert_name}"
+    export CHUTNEY_TOR="$TOR_DIR/src/or/$tor_name"
+    export CHUTNEY_TOR_GENCERT="$TOR_DIR/src/tools/$tor_gencert_name"
 else
     if [ -x "$CHUTNEY_TOR" ]; then
         $ECHO "$myname: Assuming \$CHUTNEY_TOR is a path to a binary"
@@ -276,7 +276,7 @@ else
         $ECHO "$myname: Assuming \$CHUTNEY_TOR is a binary name in PATH"
     else
         $ECHO "$myname: Setting \$CHUTNEY_TOR to the standard binary name in PATH"
-        export CHUTNEY_TOR="${tor_name}"
+        export CHUTNEY_TOR="$tor_name"
     fi
     if [ -x "$CHUTNEY_TOR_GENCERT" ]; then
         $ECHO "$myname: Assuming \$CHUTNEY_TOR_GENCERT is a path to a binary"
@@ -284,7 +284,7 @@ else
         $ECHO "$myname: Assuming \$CHUTNEY_TOR_GENCERT is a binary name in PATH"
     else
         $ECHO "$myname: Setting \$CHUTNEY_TOR_GENCERT to the standard binary name in PATH"
-        export CHUTNEY_TOR_GENCERT="${tor_gencert_name}"
+        export CHUTNEY_TOR_GENCERT="$tor_gencert_name"
     fi
 fi
 $ECHO "$myname: Using \$CHUTNEY_TOR: '$CHUTNEY_TOR' and \$CHUTNEY_TOR_GENCERT: '$CHUTNEY_TOR_GENCERT'"
@@ -322,7 +322,7 @@ export CHUTNEY_STOP_TIME=${CHUTNEY_STOP_TIME:-0}
 CHUTNEY="$CHUTNEY_PATH/chutney"
 
 if [ "$CHUTNEY_START_TIME" -ge 0 ]; then
-  $ECHO "Waiting ${CHUTNEY_START_TIME} seconds for a consensus containing relays to be generated..."
+  $ECHO "Waiting $CHUTNEY_START_TIME seconds for a consensus containing relays to be generated..."
   sleep "$CHUTNEY_START_TIME"
 else
   $ECHO "Chutney network launched and running. To stop the network, use:"
@@ -353,7 +353,7 @@ fi
 
 if [ "$CHUTNEY_STOP_TIME" -ge 0 ]; then
   if [ "$CHUTNEY_STOP_TIME" -gt 0 ]; then
-    $ECHO "Waiting ${CHUTNEY_STOP_TIME} seconds before stopping the network..."
+    $ECHO "Waiting $CHUTNEY_STOP_TIME seconds before stopping the network..."
   fi
   sleep "$CHUTNEY_STOP_TIME"
   # work around a bug/feature in make -j2 (or more)
