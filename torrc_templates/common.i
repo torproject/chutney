@@ -1,17 +1,7 @@
 TestingTorNetwork 1
 
-## Comprehensive Bootstrap Testing Options ##
-# These typically launch a working minimal Tor network in 25s-30s,
-# and a working HS Tor network in 40-45s.
-# See authority.tmpl for a partial explanation
-#AssumeReachable 0
-#Default PathsNeededToBuildCircuits 0.6
-#Disable TestingDirAuthVoteExit
-#Disable TestingDirAuthVoteHSDir
-#Default V3AuthNIntervalsValid 3
-
 ## Rapid Bootstrap Testing Options ##
-# These typically launch a working minimal Tor network in 6s-10s
+# These typically launch a working minimal Tor network in ~20s
 # These parameters make tor networks bootstrap fast,
 # but can cause consensus instability and network unreliability
 # (Some are also bad for security.)
