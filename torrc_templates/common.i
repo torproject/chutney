@@ -16,7 +16,10 @@ TestingTorNetwork 1
 # but can cause consensus instability and network unreliability
 # (Some are also bad for security.)
 AssumeReachable 1
-PathsNeededToBuildCircuits 0.25
+# We need at least 3 descriptors to build circuits.
+# In a 3 relay network, 0.67 > 2/3, so we try hard to get 3 descriptors.
+# In larger networks, 0.67 > 2/N, so we try hard to get >=3 descriptors.
+PathsNeededToBuildCircuits 0.67
 TestingDirAuthVoteExit *
 TestingDirAuthVoteHSDir *
 V3AuthNIntervalsValid 2
