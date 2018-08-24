@@ -17,5 +17,3 @@ TestingV3AuthInitialVoteDelay 2
 V3AuthVoteDelay 2
 TestingV3AuthInitialDistDelay 2
 V3AuthDistDelay 2
-# This is autoconfigured by chutney, so you probably don't want to use it
-#TestingV3AuthVotingStartOffset 0

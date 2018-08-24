@@ -54,15 +54,6 @@ export CHUTNEY_NETWORK="$CHUTNEY_PATH/networks/$NETWORK_FLAVOUR"
 echo "$myname: bootstrapping network: $flavour"
 "$CHUTNEY" configure "$CHUTNEY_NETWORK"
 
-# TODO: Make 'chutney configure' take an optional offset argument and
-# use the templating system in Chutney to set this instead of editing
-# files like this.
-offset=$(expr \( $(date +%s) + $VOTING_OFFSET \) % 300)
-CONFOPT="TestingV3AuthVotingStartOffset"
-for file in "$CHUTNEY_DATA_DIR"/nodes/*a/torrc ; do
-    sed -i.bak -e "s/^${CONFOPT}.*$/${CONFOPT} $offset/1" $file
-done
-
 "$CHUTNEY" start "$CHUTNEY_NETWORK"
 sleep 1
 "$CHUTNEY" status "$CHUTNEY_NETWORK"
