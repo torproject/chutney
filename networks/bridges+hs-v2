@@ -1,0 +1,19 @@
+# By default, Authorities are not configured as exits
+Authority = Node(tag="a", authority=1, relay=1, torrc="authority.tmpl")
+ExitRelay = Node(tag="r", relay=1, exit=1, torrc="relay.tmpl")
+Client = Node(tag="c", client=1, torrc="client.tmpl")
+
+BridgeAuthority = Node(tag="ba", authority=1, bridgeauthority=1,
+                       relay=1, torrc="bridgeauthority.tmpl")
+Bridge = Node(tag="br", bridge=1, relay=1, torrc="bridge.tmpl")
+BridgeClient = Node(tag="bc", client=1, bridgeclient=1, torrc="bridgeclient.tmpl")
+HS = Node(tag="h", hs=1, torrc="hs.tmpl")
+
+# We need 5 authorities/relays/exits to ensure we can build HS connections
+NODES = Authority.getN(3) + BridgeAuthority.getN(1) + \
+    ExitRelay.getN(4) + \
+    Bridge.getN(1) + \
+    Client.getN(1) + BridgeClient.getN(1) + \
+    HS.getN(1)
+
+ConfigureNodes(NODES)
