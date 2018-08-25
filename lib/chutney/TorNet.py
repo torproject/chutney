@@ -469,7 +469,7 @@ class LocalNodeBuilder(NodeBuilder):
 
     def _getAltAuthLines(self, hasbridgeauth=False):
         """Return a combination of AlternateDirAuthority,
-        AlternateHSAuthority and AlternateBridgeAuthority lines for
+        and AlternateBridgeAuthority lines for
         this Node, appropriately.  Non-authorities return ""."""
         if not self._env['authority']:
             return ""
@@ -492,14 +492,14 @@ class LocalNodeBuilder(NodeBuilder):
             self._env['dirserver_flags'] += " bridge"
         else:
             # Directory authorities return AlternateDirAuthority with
-            # the 'hs' and 'v3ident' flags set.
+            # the 'v3ident' flag set.
             # XXXX This next line is needed for 'bridges' but breaks
             # 'basic'
             if hasbridgeauth:
                 options = ("AlternateDirAuthority",)
             else:
                 options = ("DirAuthority",)
-            self._env['dirserver_flags'] += " hs v3ident=%s" % v3id
+            self._env['dirserver_flags'] += " v3ident=%s" % v3id
 
         authlines = ""
         for authopt in options:
