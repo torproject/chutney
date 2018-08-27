@@ -306,7 +306,7 @@ fi
 $ECHO "$myname: Using \$CHUTNEY_TOR: '$CHUTNEY_TOR' and \$CHUTNEY_TOR_GENCERT: '$CHUTNEY_TOR_GENCERT'"
 
 # Set the variables for the chutney network flavour
-export NETWORK_FLAVOUR=${NETWORK_FLAVOUR:-"bridges+hs"}
+export NETWORK_FLAVOUR=${NETWORK_FLAVOUR:-"bridges+hs-v2"}
 export CHUTNEY_NETWORK="$CHUTNEY_PATH/networks/$NETWORK_FLAVOUR"
 
 if [ "$CHUTNEY_WARNINGS_SKIP" = true ]; then
