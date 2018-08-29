@@ -213,7 +213,11 @@ fi
 
 # Now find the name of the Tor app dir, which changed in Tor 0.3.5
 if [ -d "$TOR_DIR" ]; then
-    if [ -d "$TOR_DIR/src/app" ]; then
+    if [ -d "$TOR_DIR/src/app" -a -d "$TOR_DIR/src/or" ]; then
+        $ECHO "$myname: \$TOR_DIR has a Tor 0.3.5 or later build directory, and a Tor 0.3.4 or earlier build directory"
+        $ECHO "$myname: Please remove $TOR_DIR/src/app or $TOR_DIR/src/or, or set \$CHUTNEY_TOR"
+        exit 1
+    elif [ -d "$TOR_DIR/src/app" ]; then
         $ECHO "$myname: \$TOR_DIR is a Tor 0.3.5 or later build directory"
         TOR_APP_DIR="$TOR_DIR/src/app"
     elif [ -d "$TOR_DIR/src/or" ]; then
