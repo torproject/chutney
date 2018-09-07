@@ -22,6 +22,8 @@ Could not open.*sr-state.*No such file or directory
 # Chutney does not use DNS by default
 Couldn't set up any working nameservers. Network not up yet
 Currently, sandboxing is only implemented on Linux
+# Chutney sometimes misses votes, and then gets them from multiple authorities
+Rejecting vote from .*Duplicate discarded
 # We ignore consensus failure warnings
 Error publishing .* consensus
 # Tor 23078, fixed in 0.3.2 and later
