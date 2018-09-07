@@ -11,11 +11,16 @@ ContactInfo auth${nodenum}@test.test
 #    5, 6, 8, 9
 # They both need to evenly divide 24 hours.
 
-# Testing Vote + Testing Dist must be less than Testing Interval
-TestingV3AuthInitialVotingInterval 5
+# Initial Vote + Initial Dist must be less than Initial Interval
+#
+# Mixed 0.3.3 and 0.3.4 networks are unstable, due to timing changes.
+# When all 0.3.3 and earlier versions are obsolete, we may be able to revert to
+# TestingV3AuthInitialVotingInterval 5
+TestingV3AuthInitialVotingInterval 10
 TestingV3AuthInitialVoteDelay 2
 TestingV3AuthInitialDistDelay 2
-# Vote + Dist must be less than Interval/2
+# Vote + Dist must be less than Interval/2, because when there's no consensus,
+# tor uses Interval/2 as the voting interval
 V3AuthVotingInterval 10
 V3AuthVoteDelay 2
 V3AuthDistDelay 2
