@@ -47,7 +47,7 @@ do
       shift
       ;;
     --debug)
-      export CHUTEY_DEBUG="yes"
+      export CHUTNEY_DEBUG="yes"
       ;;
     --flavor|--flavour|--network-flavor|--network-flavour)
       export NETWORK_FLAVOUR="$2"
