@@ -293,17 +293,17 @@ else
     if [ -x "$CHUTNEY_TOR" ]; then
         $ECHO "$myname: Assuming \$CHUTNEY_TOR is a path to a binary"
     elif [ ! -z "$CHUTNEY_TOR" ]; then
-        $ECHO "$myname: Assuming \$CHUTNEY_TOR is a binary name in PATH"
+        $ECHO "$myname: Assuming \$CHUTNEY_TOR is a binary name in \$PATH"
     else
-        $ECHO "$myname: Setting \$CHUTNEY_TOR to the standard binary name in PATH"
+        $ECHO "$myname: Setting \$CHUTNEY_TOR to the standard binary name in \$PATH"
         export CHUTNEY_TOR="$tor_name"
     fi
     if [ -x "$CHUTNEY_TOR_GENCERT" ]; then
         $ECHO "$myname: Assuming \$CHUTNEY_TOR_GENCERT is a path to a binary"
     elif [ ! -z "$CHUTNEY_TOR_GENCERT" ]; then
-        $ECHO "$myname: Assuming \$CHUTNEY_TOR_GENCERT is a binary name in PATH"
+        $ECHO "$myname: Assuming \$CHUTNEY_TOR_GENCERT is a binary name in \$PATH"
     else
-        $ECHO "$myname: Setting \$CHUTNEY_TOR_GENCERT to the standard binary name in PATH"
+        $ECHO "$myname: Setting \$CHUTNEY_TOR_GENCERT to the standard binary name in \$PATH"
         export CHUTNEY_TOR_GENCERT="$tor_gencert_name"
     fi
 fi
