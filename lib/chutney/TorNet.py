@@ -90,6 +90,16 @@ def get_new_absolute_nodes_path(now=time.time()):
         newdir = "%s.%d" % (newdirbase, i)
     return newdir
 
+def _warnMissingTor(tor_path, cmdline, tor_name="tor"):
+    """Log a warning that the binary tor_name can't be found at tor_path
+       while running cmdline.
+    """
+    print(("Cannot find the {} binary at '{}' for the command line '{}'. " +
+           "Set the TOR_DIR environment variable to the directory " +
+           "containing {}.")
+          .format(tor_name, tor_path, " ".join(cmdline), tor_name))
+
+
 class Node(object):
 
     """A Node represents a Tor node or a set of Tor nodes.  It's created
@@ -263,19 +273,6 @@ class LocalNodeBuilder(NodeBuilder):
         NodeBuilder.__init__(self, env)
         self._env = env
 
-    def _warnMissingTor(self, tor, cmdline,
-                        tor_name="tor", tor_env="CHUTNEY_TOR"):
-        """Log a warning that the binary tor can't be found while running
-           cmdline. Advise the user to put the path to tor_name in the tor_env
-           environmental variable.
-        """
-        print(("Cannot find the {} binary {} for the command line '{}'. " +
-               "Use the {} environment variable to set the path, " +
-               "or put the binary into $PATH: '{}'. " +
-               "If your $PATH contains ~, use $HOME instead.")
-              .format(tor_name, tor, " ".join(cmdline),
-                      tor_env, os.getenv("PATH")))
-
     def _createTorrcFile(self, checkOnly=False):
         """Write the torrc file for this node, disabling any options
            that are not supported by env's tor binary using comments.
@@ -303,8 +300,8 @@ class LocalNodeBuilder(NodeBuilder):
             except OSError as e:
                 # only catch file not found error
                 if e.errno == errno.ENOENT:
-                    self._warnMissingTor(tor, cmdline)
-                    sys.exit(0)
+                    _warnMissingTor(tor, cmdline)
+                    sys.exit(1)
                 else:
                     raise
             # check we received a list of options, and nothing else
@@ -427,10 +424,10 @@ class LocalNodeBuilder(NodeBuilder):
         except OSError as e:
             # only catch file not found error
             if e.errno == errno.ENOENT:
-                self._warnMissingTor(tor_gencert, cmdline,
-                                     tor_name="tor-gencert",
-                                     tor_env="CHUTNEY_TOR_GENCERT")
-                sys.exit(0)
+                _warnMissingTor(tor_gencert, cmdline,
+                                tor_name="tor-gencert",
+                                tor_env="CHUTNEY_TOR_GENCERT")
+                sys.exit(1)
             else:
                 raise
         p.communicate(passphrase + "\n")
@@ -457,8 +454,8 @@ class LocalNodeBuilder(NodeBuilder):
         except OSError as e:
             # only catch file not found error
             if e.errno == errno.ENOENT:
-                self._warnMissingTor(tor, cmdline)
-                sys.exit(0)
+                _warnMissingTor(tor, cmdline)
+                sys.exit(1)
             else:
                 raise
         stdout, stderr = p.communicate()
@@ -628,10 +625,8 @@ class LocalNodeController(NodeController):
         except OSError as e:
             # only catch file not found error
             if e.errno == errno.ENOENT:
-                print("Cannot find tor binary %r. Use CHUTNEY_TOR "
-                      "environment variable to set the path, or put the "
-                      "binary into $PATH." % tor_path)
-                sys.exit(0)
+                _warnMissingTor(tor_path, cmdline):
+                sys.exit(1)
             else:
                 raise
         if self.waitOnLaunch():
