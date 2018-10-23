@@ -105,6 +105,8 @@ def run_tor(cmdline):
 
        Returns the combined stdout and stderr of the process.
     """
+    if not debug_flag:
+        cmdline.append("--quiet")
     try:
         stdouterr = subprocess.check_output(cmdline,
                                             stderr=subprocess.STDOUT,
@@ -133,6 +135,10 @@ def launch_process(cmdline, tor_name="tor", stdin=None):
 
        Returns the Popen object for the launched process.
     """
+    if tor_name == "tor" and not debug_flag:
+        cmdline.append("--quiet")
+    elif tor_name == "tor-gencert" and debug_flag:
+        cmdline.append("-v")
     try:
         p = subprocess.Popen(cmdline,
                              stdin=stdin,
@@ -358,7 +364,7 @@ class LocalNodeBuilder(NodeBuilder):
             cmdline = [
                 tor,
                 "--list-torrc-options",
-                "--hush"]
+                ]
             opts = run_tor(cmdline)
             # check we received a list of options, and nothing else
             assert re.match(r'(^\w+$)+', opts, flags=re.MULTILINE)
@@ -472,7 +478,8 @@ class LocalNodeBuilder(NodeBuilder):
             '-s', skfile,
             '-c', certfile,
             '-m', str(lifetime),
-            '-a', addr]
+            '-a', addr,
+            ]
         print("Creating identity key %s for %s with %s" % (
             idfile, self._env['nick'], " ".join(cmdline)))
         outerr = run_tor_gencert(cmdline, passphrase)
@@ -491,7 +498,6 @@ class LocalNodeBuilder(NodeBuilder):
             "--list-fingerprint",
             "--orport", "1",
             "--datadirectory", datadir,
-            "--quiet",
             ]
         stdouterr = run_tor(cmdline)
         fingerprint = "".join((stdouterr.rstrip().split('\n')[-1]).split()[1:])
@@ -653,7 +659,6 @@ class LocalNodeController(NodeController):
         cmdline = [
             tor_path,
             "-f", torrc,
-            "--quiet",
             ]
         p = launch_process(cmdline)
         if self.waitOnLaunch():
