@@ -518,9 +518,10 @@ class LocalNodeBuilder(NodeBuilder):
             '-m', str(lifetime),
             '-a', addr,
             ]
-        print("Creating identity key for {} with {}"
+        # nicknames are testNNNaa[OLD], but we want them to look tidy
+        print("Creating identity key for {:12} with {}"
               .format(self._env['nick'], cmdline[0]))
-        debug("Identity key path '{}', command {}"
+        debug("Identity key path '{}', command '{}'"
               .format(idfile, " ".join(cmdline)))
         run_tor_gencert(cmdline, passphrase)
 
@@ -664,17 +665,18 @@ class LocalNodeController(NodeController):
         tor_version = get_tor_version(self._env['tor'])
         if self.isRunning(pid):
             if listRunning:
-                print("{} is running with PID {}: {}"
+                # PIDs are typically 65535 or less
+                print("{:12} is running with PID {:5}: {}"
                       .format(nick, pid, tor_version))
             return True
         elif os.path.exists(os.path.join(datadir, corefile)):
             if listNonRunning:
-                print("{} seems to have crashed, and left core file {}: {}"
+                print("{:12} seems to have crashed, and left core file {}: {}"
                       .format(nick, corefile, tor_version))
             return False
         else:
             if listNonRunning:
-                print("{} is stopped: {}"
+                print("{:12} is stopped: {}"
                       .format(nick, tor_version))
             return False
 
@@ -683,11 +685,11 @@ class LocalNodeController(NodeController):
         pid = self.getPid()
         nick = self._env['nick']
         if self.isRunning(pid):
-            print("Sending sighup to %s" % nick)
+            print("Sending sighup to {}".format(nick))
             os.kill(pid, signal.SIGHUP)
             return True
         else:
-            print("%s is not running" % nick)
+            print("{:12} is not running".format(nick))
             return False
 
     def start(self):
@@ -695,7 +697,7 @@ class LocalNodeController(NodeController):
            already running, False if we failed."""
 
         if self.isRunning():
-            print("%s is already running" % self._env['nick'])
+            print("{:12} is already running".format(self._env['nick']))
             return True
         tor_path = self._env['tor']
         torrc = self._getTorrcFname()
@@ -725,13 +727,14 @@ class LocalNodeController(NodeController):
             p.poll()
         if p.returncode is not None and p.returncode != 0:
             if self._env['poll_launch_time'] is None:
-                print("Couldn't launch {} command '{}': exit {}, output '{}'"
+                print(("Couldn't launch {:12} command '{}': " +
+                       "exit {}, output '{}'")
                       .format(self._env['nick'],
                               " ".join(cmdline),
                               p.returncode,
                               stdouterr))
             else:
-                print(("Couldn't poll {} command '{}' " +
+                print(("Couldn't poll {:12} command '{}' " +
                        "after waiting {} seconds for launch: " +
                        "exit {}").format(self._env['nick'],
                                          " ".join(cmdline),
@@ -744,14 +747,14 @@ class LocalNodeController(NodeController):
         """Try to stop this node by sending it the signal 'sig'."""
         pid = self.getPid()
         if not self.isRunning(pid):
-            print("%s is not running" % self._env['nick'])
+            print("{:12} is not running".format(self._env['nick']))
             return
         os.kill(pid, sig)
 
     def cleanup_lockfile(self):
         lf = self._env['lockfile']
         if not self.isRunning() and os.path.exists(lf):
-            debug('Removing stale lock file for {0} ...'
+            debug("Removing stale lock file for {} ..."
                   .format(self._env['nick']))
             os.remove(lf)
 
