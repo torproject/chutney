@@ -99,6 +99,71 @@ def _warnMissingTor(tor_path, cmdline, tor_name="tor"):
            "containing {}.")
           .format(tor_name, tor_path, " ".join(cmdline), tor_name))
 
+def run_tor(cmdline):
+    """Run the tor command line cmdline, which must start with the path or
+       name of a tor binary.
+
+       Returns the combined stdout and stderr of the process.
+    """
+    try:
+        stdouterr = subprocess.check_output(cmdline,
+                                            stderr=subprocess.STDOUT,
+                                            universal_newlines=True,
+                                            bufsize=-1)
+    except OSError as e:
+        # only catch file not found error
+        if e.errno == errno.ENOENT:
+            _warnMissingTor(cmdline[0], cmdline)
+            sys.exit(1)
+        else:
+            raise
+    except subprocess.CalledProcessError as e:
+        # only catch file not found error
+        if e.returncode == 127:
+            _warnMissingTor(cmdline[0], cmdline)
+            sys.exit(1)
+        else:
+            raise
+    return stdouterr
+
+def launch_process(cmdline, tor_name="tor", stdin=None):
+    """Launch the command line cmdline, which must start with the path or
+       name of a binary. Use tor_name as the canonical name of the binary.
+       Pass stdin to the Popen constructor.
+
+       Returns the Popen object for the launched process.
+    """
+    try:
+        p = subprocess.Popen(cmdline,
+                             stdin=stdin,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT,
+                             universal_newlines=True,
+                             bufsize=-1)
+    except OSError as e:
+        # only catch file not found error
+        if e.errno == errno.ENOENT:
+            _warnMissingTor(cmdline[0], cmdline, tor_name=tor_name)
+            sys.exit(1)
+        else:
+            raise
+    return p
+
+def run_tor_gencert(cmdline, passphrase):
+    """Run the tor-gencert command line cmdline, which must start with the
+       path or name of a tor-gencert binary.
+       Then send passphrase to the stdin of the process.
+
+       Returns the combined stdout and stderr of the process.
+    """
+    p = launch_process(cmdline,
+                        tor_name="tor-gencert",
+                        stdin=subprocess.PIPE)
+    (stdouterr, empty_stderr) = p.communicate(passphrase + "\n")
+    assert p.returncode == 0  # XXXX BAD!
+    assert empty_stderr is None
+    return stdouterr
+
 
 class Node(object):
 
@@ -294,16 +359,7 @@ class LocalNodeBuilder(NodeBuilder):
                 tor,
                 "--list-torrc-options",
                 "--hush"]
-            try:
-                opts = subprocess.check_output(cmdline, bufsize=-1,
-                                               universal_newlines=True)
-            except OSError as e:
-                # only catch file not found error
-                if e.errno == errno.ENOENT:
-                    _warnMissingTor(tor, cmdline)
-                    sys.exit(1)
-                else:
-                    raise
+            opts = run_tor(cmdline)
             # check we received a list of options, and nothing else
             assert re.match(r'(^\w+$)+', opts, flags=re.MULTILINE)
             torrc_opts = opts.split()
@@ -419,19 +475,7 @@ class LocalNodeBuilder(NodeBuilder):
             '-a', addr]
         print("Creating identity key %s for %s with %s" % (
             idfile, self._env['nick'], " ".join(cmdline)))
-        try:
-            p = subprocess.Popen(cmdline, stdin=subprocess.PIPE)
-        except OSError as e:
-            # only catch file not found error
-            if e.errno == errno.ENOENT:
-                _warnMissingTor(tor_gencert, cmdline,
-                                tor_name="tor-gencert",
-                                tor_env="CHUTNEY_TOR_GENCERT")
-                sys.exit(1)
-            else:
-                raise
-        p.communicate(passphrase + "\n")
-        assert p.returncode == 0  # XXXX BAD!
+        outerr = run_tor_gencert(cmdline, passphrase)
 
     def _genRouterKey(self):
         """Generate an identity key for this router, unless we already have,
@@ -449,20 +493,11 @@ class LocalNodeBuilder(NodeBuilder):
             "--datadirectory", datadir,
             "--quiet",
             ]
-        try:
-            p = subprocess.Popen(cmdline, stdout=subprocess.PIPE)
-        except OSError as e:
-            # only catch file not found error
-            if e.errno == errno.ENOENT:
-                _warnMissingTor(tor, cmdline)
-                sys.exit(1)
-            else:
-                raise
-        stdout, stderr = p.communicate()
-        fingerprint = "".join((stdout.rstrip().split('\n')[-1]).split()[1:])
+        stdouterr = run_tor(cmdline)
+        fingerprint = "".join((stdouterr.rstrip().split('\n')[-1]).split()[1:])
         if not re.match(r'^[A-F0-9]{40}$', fingerprint):
-            print(("Error when calling %r. It gave %r as a fingerprint "
-                   " and %r on stderr.") % (" ".join(cmdline), stdout, stderr))
+            print("Error when getting fingerprint using '%r'. It output '%r'."
+                  .format(" ".join(cmdline), stdouterr))
             sys.exit(1)
         self._env['fingerprint'] = fingerprint
 
@@ -620,18 +655,11 @@ class LocalNodeController(NodeController):
             "-f", torrc,
             "--quiet",
             ]
-        try:
-            p = subprocess.Popen(cmdline)
-        except OSError as e:
-            # only catch file not found error
-            if e.errno == errno.ENOENT:
-                _warnMissingTor(tor_path, cmdline):
-                sys.exit(1)
-            else:
-                raise
+        p = launch_process(cmdline)
         if self.waitOnLaunch():
             # this requires that RunAsDaemon is set
-            p.wait()
+            (stdouterr, empty_stderr) = p.communicate()
+            assert empty_stderr is None
         else:
             # this does not require RunAsDaemon to be set, but is slower.
             #
@@ -648,16 +676,18 @@ class LocalNodeController(NodeController):
             p.poll()
         if p.returncode is not None and p.returncode != 0:
             if self._env['poll_launch_time'] is None:
-                print("Couldn't launch %s (%s): %s" % (self._env['nick'],
-                                                       " ".join(cmdline),
-                                                       p.returncode))
+                print("Couldn't launch {} command '{}': exit {}, output '{}'"
+                      .format(self._env['nick'],
+                              " ".join(cmdline),
+                              p.returncode,
+                              stdouterr))
             else:
-                print("Couldn't poll %s (%s) "
-                      "after waiting %s seconds for launch"
-                      ": %s" % (self._env['nick'],
-                                " ".join(cmdline),
-                                self._env['poll_launch_time'],
-                                p.returncode))
+                print(("Couldn't poll {} command '{}' " +
+                       "after waiting {} seconds for launch: " +
+                       "exit {}").format(self._env['nick'],
+                                         " ".join(cmdline),
+                                         self._env['poll_launch_time'],
+                                         p.returncode))
             return False
         return True
 
