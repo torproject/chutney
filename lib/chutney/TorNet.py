@@ -21,6 +21,8 @@ import time
 import shutil
 import importlib
 
+from chutney.Debug import debug_flag, debug
+
 import chutney.Templating
 import chutney.Traffic
 
