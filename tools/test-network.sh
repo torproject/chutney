@@ -224,7 +224,7 @@ if [ -d "$TOR_DIR" ]; then
         $ECHO "$myname: \$TOR_DIR is a Tor 0.3.4 or earlier build directory"
         TOR_APP_DIR="$TOR_DIR/src/or"
     else
-        $ECHO "$myname: \$TOR_DIR has no src/app or src/or, chutney will use \$CHUTNEY_TOR and \$CHUTNEY_TOR_GENCERT as tor binary paths, or search \$PATH for tor binary names"
+        $ECHO "$myname: \$TOR_DIR has no src/app or src/or, looking elsewhere"
         unset TOR_DIR
     fi
 fi

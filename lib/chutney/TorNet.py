@@ -112,6 +112,7 @@ def run_tor(cmdline):
                                             stderr=subprocess.STDOUT,
                                             universal_newlines=True,
                                             bufsize=-1)
+        debug(stdouterr)
     except OSError as e:
         # only catch file not found error
         if e.errno == errno.ENOENT:
@@ -166,6 +167,7 @@ def run_tor_gencert(cmdline, passphrase):
                         tor_name="tor-gencert",
                         stdin=subprocess.PIPE)
     (stdouterr, empty_stderr) = p.communicate(passphrase + "\n")
+    debug(stdouterr)
     assert p.returncode == 0  # XXXX BAD!
     assert empty_stderr is None
     return stdouterr
@@ -480,9 +482,11 @@ class LocalNodeBuilder(NodeBuilder):
             '-m', str(lifetime),
             '-a', addr,
             ]
-        print("Creating identity key %s for %s with %s" % (
-            idfile, self._env['nick'], " ".join(cmdline)))
-        outerr = run_tor_gencert(cmdline, passphrase)
+        print("Creating identity key for {} with {}"
+              .format(self._env['nick'], cmdline[0]))
+        debug("Identity key path '{}', command {}"
+              .format(idfile, " ".join(cmdline)))
+        run_tor_gencert(cmdline, passphrase)
 
     def _genRouterKey(self):
         """Generate an identity key for this router, unless we already have,
@@ -664,6 +668,7 @@ class LocalNodeController(NodeController):
         if self.waitOnLaunch():
             # this requires that RunAsDaemon is set
             (stdouterr, empty_stderr) = p.communicate()
+            debug(stdouterr)
             assert empty_stderr is None
         else:
             # this does not require RunAsDaemon to be set, but is slower.
@@ -707,8 +712,8 @@ class LocalNodeController(NodeController):
     def cleanup_lockfile(self):
         lf = self._env['lockfile']
         if not self.isRunning() and os.path.exists(lf):
-            print('Removing stale lock file for {0} ...'.format(
-                self._env['nick']))
+            debug('Removing stale lock file for {0} ...'
+                  .format(self._env['nick']))
             os.remove(lf)
 
     def waitOnLaunch(self):
@@ -926,8 +931,8 @@ class TorEnviron(chutney.Templating.Environ):
             return "#ServerDNSResolvConfFile using tor's compile-time default"
         elif my['dns_conf'] is None:
             # if there is no DNS conf file set
-            print("CHUTNEY_DNS_CONF not specified, using '%s'."
-                  % (TorEnviron.DEFAULT_DNS_RESOLV_CONF))
+            debug("CHUTNEY_DNS_CONF not specified, using '{}'."
+                  .format(TorEnviron.DEFAULT_DNS_RESOLV_CONF))
             dns_conf = TorEnviron.DEFAULT_DNS_RESOLV_CONF
         else:
             dns_conf = my['dns_conf']
@@ -937,8 +942,8 @@ class TorEnviron(chutney.Templating.Environ):
         # (os.path.exists returns False for broken symbolic links)
         if not os.path.exists(dns_conf):
             # Issue a warning so the user notices
-            print("CHUTNEY_DNS_CONF '%s' does not exist, using '%s'."
-                  % (dns_conf, TorEnviron.OFFLINE_DNS_RESOLV_CONF))
+            print("CHUTNEY_DNS_CONF '{}' does not exist, using '{}'."
+                  .format(dns_conf, TorEnviron.OFFLINE_DNS_RESOLV_CONF))
             dns_conf = TorEnviron.OFFLINE_DNS_RESOLV_CONF
         return "ServerDNSResolvConfFile %s" % (dns_conf)
 
@@ -1055,12 +1060,9 @@ class Network(object):
         self.start()
 
     def start(self):
-        if self._dfltEnv['poll_launch_time'] is not None:
-            # format polling correctly - avoid printing a newline
-            sys.stdout.write("Starting nodes")
-            sys.stdout.flush()
-        else:
-            print("Starting nodes")
+        # format polling correctly - avoid printing a newline
+        sys.stdout.write("Starting nodes")
+        sys.stdout.flush()
         rv = all([n.getController().start() for n in self._nodes])
         # now print a newline unconditionally - this stops poll()ing
         # output from being squashed together, at the cost of a blank
