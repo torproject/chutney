@@ -27,8 +27,12 @@ import chutney.Templating
 import chutney.Traffic
 
 _BASE_ENVIRON = None
+_TOR_VERSIONS = None
 _TORRC_OPTIONS = None
 _THE_NETWORK = None
+
+TORRC_OPTION_WARN_LIMIT = 10
+torrc_option_warn_count =  0
 
 # Get verbose tracebacks, so we can diagnose better.
 cgitb.enable(format="plain")
@@ -171,6 +175,49 @@ def run_tor_gencert(cmdline, passphrase):
     assert p.returncode == 0  # XXXX BAD!
     assert empty_stderr is None
     return stdouterr
+
+def get_tor_version(tor):
+    """Return the version of the tor binary.
+       Versions are cached for each unique tor path.
+    """
+    # find the version of the current tor binary, and cache it
+    if tor not in _TOR_VERSIONS:
+        cmdline = [
+            tor,
+            "--version",
+        ]
+        tor_version = run_tor(cmdline)
+        # clean it up a bit
+        tor_version = tor_version.strip()
+        tor_version = tor_version.replace("version ", "")
+        tor_version = tor_version.replace(").", ")")
+        # check we received a tor version, and nothing else
+        assert re.match(r'^[-+.() A-Za-z0-9]+$', tor_version)
+        # cache the version for this tor binary's path
+        _TOR_VERSIONS[tor] = tor_version
+    else:
+        tor_version = _TOR_VERSIONS[tor]
+    return tor_version
+
+def get_torrc_options(tor):
+    """Return the torrc options supported by the tor binary.
+       Options are cached for each unique tor path.
+    """
+    # find the options the current tor binary supports, and cache them
+    if tor not in _TORRC_OPTIONS:
+        cmdline = [
+            tor,
+            "--list-torrc-options",
+        ]
+        opts = run_tor(cmdline)
+        # check we received a list of options, and nothing else
+        assert re.match(r'(^\w+$)+', opts, flags=re.MULTILINE)
+        torrc_opts = opts.split()
+        # cache the options for this tor binary's path
+        _TORRC_OPTIONS[tor] = torrc_opts
+    else:
+        torrc_opts = _TORRC_OPTIONS[tor]
+    return torrc_opts
 
 
 class Node(object):
@@ -361,26 +408,12 @@ class LocalNodeBuilder(NodeBuilder):
         # now filter the options we're about to write, commenting out
         # the options that the current tor binary doesn't support
         tor = self._env['tor']
-        # find the options the current tor binary supports, and cache them
-        if tor not in _TORRC_OPTIONS:
-            cmdline = [
-                tor,
-                "--list-torrc-options",
-                ]
-            opts = run_tor(cmdline)
-            # check we received a list of options, and nothing else
-            assert re.match(r'(^\w+$)+', opts, flags=re.MULTILINE)
-            torrc_opts = opts.split()
-            # cache the options for this tor binary's path
-            _TORRC_OPTIONS[tor] = torrc_opts
-        else:
-            torrc_opts = _TORRC_OPTIONS[tor]
+        tor_version = get_tor_version(tor)
+        torrc_opts = get_torrc_options(tor)
         # check if each option is supported before writing it
         # Unsupported option values may need special handling.
         with open(fn_out, 'w') as f:
             # we need to do case-insensitive option comparison
-            # even if this is a static whitelist,
-            # so we convert to lowercase as close to the loop as possible
             lower_opts = [opt.lower() for opt in torrc_opts]
             # keep ends when splitting lines, so we can write them out
             # using writelines() without messing around with "\n"s
@@ -391,17 +424,20 @@ class LocalNodeBuilder(NodeBuilder):
                 if (len(sline) == 0 or
                         sline[0] == '#' or
                         sline.split()[0].lower() in lower_opts):
-                    f.writelines([line])
+                    pass
                 else:
-                    # well, this could get spammy
-                    # TODO: warn once per option per tor binary
-                    # TODO: print tor version?
-                    print(("The tor binary at %r does not support the "
-                           "option in the torrc line:\n"
-                           "%r") % (tor, line.strip()))
-                    # we could decide to skip these lines entirely
-                    # TODO: write tor version?
-                    f.writelines(["# " + tor + " unsupported: " + line])
+                    warn_msg = (("The tor binary at {} does not support " +
+                                "the option in the torrc line:\n{}")
+                                .format(tor, line.strip()))
+                    if torrc_option_warn_count < TORRC_OPTION_WARN_LIMIT:
+                        print(warn_msg)
+                        torrc_option_warn_count += 1
+                    else:
+                        debug(warn_msg)
+                    # always dump the full output to the torrc file
+                    line = ("# {} version {} does not support: {}"
+                            .format(tor, tor_version, line))
+                f.writelines([line])
 
     def _getTorrcTemplate(self):
         """Return the template used to write the torrc for this node."""
@@ -625,18 +661,21 @@ class LocalNodeController(NodeController):
         nick = self._env['nick']
         datadir = self._env['dir']
         corefile = "core.%s" % pid
+        tor_version = get_tor_version(self._env['tor'])
         if self.isRunning(pid):
             if listRunning:
-                print("%s is running with PID %s" % (nick, pid))
+                print("{} is running with PID {}: {}"
+                      .format(nick, pid, tor_version))
             return True
         elif os.path.exists(os.path.join(datadir, corefile)):
             if listNonRunning:
-                print("%s seems to have crashed, and left core file %s" % (
-                    nick, corefile))
+                print("{} seems to have crashed, and left core file {}: {}"
+                      .format(nick, corefile, tor_version))
             return False
         else:
             if listNonRunning:
-                print("%s is stopped" % nick)
+                print("{} is stopped: {}"
+                      .format(nick, tor_version))
             return False
 
     def hup(self):
@@ -1180,9 +1219,13 @@ def parseArgs():
 
 def main():
     global _BASE_ENVIRON
+    global _TOR_VERSIONS
     global _TORRC_OPTIONS
     global _THE_NETWORK
     _BASE_ENVIRON = TorEnviron(chutney.Templating.Environ(**DEFAULTS))
+    # _TOR_VERSIONS gets initialised on demand as a map of
+    # "/path/to/tor" => "Tor version ..."
+    _TOR_VERSIONS = dict()
     # _TORRC_OPTIONS gets initialised on demand as a map of
     # "/path/to/tor" => ["SupportedOption1", "SupportedOption2", ...]
     # Or it can be pre-populated as a static whitelist of options
