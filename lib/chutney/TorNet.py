@@ -1092,7 +1092,8 @@ class Network(object):
             b.postConfig(network)
 
     def status(self):
-        statuses = [n.getController().check() for n in self._nodes]
+        statuses = [n.getController().check(listNonRunning=True)
+                    for n in self._nodes]
         n_ok = len([x for x in statuses if x])
         print("%d/%d nodes are running" % (n_ok, len(self._nodes)))
         return n_ok == len(self._nodes)
