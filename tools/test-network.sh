@@ -167,7 +167,7 @@ do
       $ECHO "$UPDATE_YOUR_CHUTNEY"
       # continue processing arguments during a dry run
       if [ "$NETWORK_DRY_RUN" != true ]; then
-          exit 2
+          exit 1
       fi
     ;;
   esac
@@ -324,12 +324,17 @@ if [ "$NETWORK_DRY_RUN" = true -o "$CHUTNEY_WARNINGS_ONLY" = true ]; then
     if [ "$CHUTNEY_WARNINGS_ONLY" = true ]; then
         "$WARNINGS"
     fi
+    $ECHO "Finished dry run"
     # This breaks sourcing this script: that is intentional, as the previous
     # behaviour only worked with bash as /bin/sh
-    exit
+    exit 0
 fi
 
-"$CHUTNEY_PATH/tools/bootstrap-network.sh" "$NETWORK_FLAVOUR" || exit 3
+if ! "$CHUTNEY_PATH/tools/bootstrap-network.sh" "$NETWORK_FLAVOUR"; then
+    "$WARNINGS"
+    $ECHO "bootstrap-network.sh failed"
+    exit 1
+fi
 
 # chutney starts verifying after 20 seconds, keeps on trying for 60 seconds,
 # and then stops immediately (by default)
@@ -354,16 +359,17 @@ fi
 if [ "$CHUTNEY_BOOTSTRAP_TIME" -ge 0 ]; then
   # Chutney will try to verify for $CHUTNEY_BOOTSTRAP_TIME seconds each round
   n_rounds=0
-  VERIFY_EXIT_STATUS=0
   # Run CHUTNEY_ROUNDS verification rounds
   $ECHO "Running $CHUTNEY_ROUNDS verify rounds..."
-  while [ "$CHUTNEY_ROUNDS" -gt "$n_rounds" \
-          -a "$VERIFY_EXIT_STATUS" -eq 0 ]; do
-      "$CHUTNEY" verify "$CHUTNEY_NETWORK"
-      VERIFY_EXIT_STATUS="$?"
+  while [ "$n_rounds" -lt "$CHUTNEY_ROUNDS" ]; do
       n_rounds=$((n_rounds+1))
+      if ! "$CHUTNEY" verify "$CHUTNEY_NETWORK"; then
+          "$WARNINGS"
+          $ECHO "chutney verify $n_rounds/$CHUTNEY_ROUNDS failed"
+          exit 1
+      fi
+      $ECHO "Completed $n_rounds/$CHUTNEY_ROUNDS verify rounds."
   done
-  $ECHO "Completed $n_rounds of $CHUTNEY_ROUNDS verify rounds."
 else
   $ECHO "Chutney network ready and running. To stop the network, use:"
   $ECHO "$CHUTNEY stop $CHUTNEY_NETWORK"
@@ -378,14 +384,19 @@ if [ "$CHUTNEY_STOP_TIME" -ge 0 ]; then
   sleep "$CHUTNEY_STOP_TIME"
   # work around a bug/feature in make -j2 (or more)
   # where make hangs if any child processes are still alive
-  "$CHUTNEY" stop "$CHUTNEY_NETWORK"
+  if ! "$CHUTNEY" stop "$CHUTNEY_NETWORK"; then
+      "$WARNINGS"
+      $ECHO "chutney stop failed"
+      exit 1
+  fi
   # Give tor time to exit gracefully
   sleep 3
-  "$WARNINGS"
-  exit "$VERIFY_EXIT_STATUS"
 else
   $ECHO "Chutney network verified and running. To stop the network, use:"
   $ECHO "$CHUTNEY stop $CHUTNEY_NETWORK"
   "$WARNINGS"
   exit 0
 fi
+
+"$WARNINGS"
+exit 0
