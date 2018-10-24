@@ -1,24 +1,12 @@
 language: python
 
-python:
-  ## Test against all supported python releases
-  - "2.7"
-  - "3.4"
-  - "3.5"
-  - "3.6"
-  ## Travis Trusty doesn't support these versions
-  #- "3.7"
-  #- "3.8-dev"
-  - "nightly"
-  # PyPy versions
-  ## Travis Trusty doesn't support these versions
-  #- "pypy2.7"
-  - "pypy3.5"
+## Use the default python version on macOS
+#python:
 
 os:
   - linux
-  ## Python versions aren't availabe on macOS Travis
-  #- osx
+  ## We can't add macOS here, because language: python isn't supported by
+  ## macOS Travis. So we add macOS in matrix: include:
 
 ## The build matrix in the following stanza expands into builds for each
 ## OS and python version.
@@ -29,11 +17,25 @@ os:
 #  matrix:
 #    -
 
-## Add extra builds
-## Placeholder
-#matrix:
-#  include:
-#    - env:
+matrix:
+  include:
+    ## Test macOS with its default python version, and work around an issue
+    ## with language: python on Travis macOS
+    - os: osx
+      language: c
+    ## Test Linux against all supported python releases
+    - python: "2.7"
+    - python: "3.4"
+    - python: "3.5"
+    - python: "3.6"
+    ## Travis Trusty doesn't support these versions
+    #- python: "3.7"
+    #- python: "3.8-dev"
+    - python: "nightly"
+    # PyPy versions
+    ## Travis Trusty doesn't support these versions
+    #- python: "pypy2.7"
+    - python: "pypy3.5"
 
   ## Uncomment to allow the build to report success (with non-required
   ## sub-builds continuing to run) if all required sub-builds have
@@ -58,8 +60,14 @@ sudo: false
 ## (Linux only) Use the latest Linux image (Ubuntu Trusty)
 dist: trusty
 
-## (Linux only) Download our dependencies
+## (OSX only) Use the default OSX image
+## See https://docs.travis-ci.com/user/reference/osx#os-x-version
+## Default is Xcode 9.4 on macOS 10.13 as of August 2018
+#osx_image: xcode9.4
+
+## Download our dependencies
 addons:
+  ## (Linux only)
   apt:
     sources:
       ## Trusty has Tor 0.2.4, so we need a newer version of Tor from the
@@ -71,11 +79,11 @@ addons:
       - tor
       ## Is this necessary for a once-off build?
       #- deb.torproject.org-keyring
-
-## (OSX only) Use the default OSX image
-## See https://docs.travis-ci.com/user/reference/osx#os-x-version
-## Default is Xcode 9.4 on macOS 10.13 as of August 2018
-#osx_image: xcode9.4
+  ## (macOS only)
+  homebrew:
+    packages:
+      ## Required dependencies
+      - tor
 
 before_install:
   ## Placeholder
