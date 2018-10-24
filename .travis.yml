@@ -1,7 +1,19 @@
 language: python
 
 python:
+  ## Test against all supported python releases
   - "2.7"
+  - "3.4"
+  - "3.5"
+  - "3.6"
+  ## Travis Trusty doesn't support these versions
+  #- "3.7"
+  #- "3.8-dev"
+  - "nightly"
+  # PyPy versions
+  ## Travis Trusty doesn't support these versions
+  #- "pypy2.7"
+  - "pypy3.5"
 
 os:
   - linux
