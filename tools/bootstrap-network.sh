@@ -34,7 +34,6 @@ if [ -d "$PWD/$CHUTNEY_DATA_DIR" ]; then
     export CHUTNEY_DATA_DIR="$PWD/$CHUTNEY_DATA_DIR"
 fi
 
-VOTING_OFFSET=6
 CHUTNEY="$CHUTNEY_PATH/chutney"
 myname=$(basename "$0")
 
