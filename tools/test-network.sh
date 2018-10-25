@@ -313,10 +313,11 @@ $ECHO "$myname: Using \$CHUTNEY_TOR: '$CHUTNEY_TOR' and \$CHUTNEY_TOR_GENCERT: '
 export NETWORK_FLAVOUR=${NETWORK_FLAVOUR:-"bridges+hs-v2"}
 export CHUTNEY_NETWORK="$CHUTNEY_PATH/networks/$NETWORK_FLAVOUR"
 
+WARNING_COMMAND="$CHUTNEY_PATH/tools/warnings.sh"
 if [ "$CHUTNEY_WARNINGS_SKIP" = true ]; then
   WARNINGS=true
 else
-  WARNINGS="$CHUTNEY_PATH/tools/warnings.sh"
+  WARNINGS="$WARNING_COMMAND"
 fi
 
 # And finish up if we're doing a dry run
@@ -331,7 +332,8 @@ if [ "$NETWORK_DRY_RUN" = true -o "$CHUTNEY_WARNINGS_ONLY" = true ]; then
 fi
 
 if ! "$CHUTNEY_PATH/tools/bootstrap-network.sh" "$NETWORK_FLAVOUR"; then
-    "$WARNINGS"
+    CHUTNEY_WARNINGS_IGNORE_EXPECTED=false CHUTNEY_WARNINGS_SUMMARY=false \
+        "$WARNING_COMMAND"
     $ECHO "bootstrap-network.sh failed"
     exit 1
 fi
@@ -364,7 +366,9 @@ if [ "$CHUTNEY_BOOTSTRAP_TIME" -ge 0 ]; then
   while [ "$n_rounds" -lt "$CHUTNEY_ROUNDS" ]; do
       n_rounds=$((n_rounds+1))
       if ! "$CHUTNEY" verify "$CHUTNEY_NETWORK"; then
-          "$WARNINGS"
+          CHUTNEY_WARNINGS_IGNORE_EXPECTED=false \
+              CHUTNEY_WARNINGS_SUMMARY=false \
+              "$WARNING_COMMAND"
           $ECHO "chutney verify $n_rounds/$CHUTNEY_ROUNDS failed"
           exit 1
       fi
@@ -385,7 +389,8 @@ if [ "$CHUTNEY_STOP_TIME" -ge 0 ]; then
   # work around a bug/feature in make -j2 (or more)
   # where make hangs if any child processes are still alive
   if ! "$CHUTNEY" stop "$CHUTNEY_NETWORK"; then
-      "$WARNINGS"
+      CHUTNEY_WARNINGS_IGNORE_EXPECTED=false CHUTNEY_WARNINGS_SUMMARY=false \
+          "$WARNING_COMMAND"
       $ECHO "chutney stop failed"
       exit 1
   fi
