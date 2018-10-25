@@ -1,30 +1,30 @@
 language: python
 
-## Use the default python version on macOS
-#python:
-
 os:
   - linux
-  ## We can't add macOS here, because language: python isn't supported by
-  ## macOS Travis. So we add macOS in matrix: include:
-
-## The build matrix in the following stanza expands into builds for each
-## OS and python version.
-## Placeholder
-#env:
-#  global:
-#    -
-#  matrix:
-#    -
+  ## We add a single macOS build below
 
 matrix:
   # include creates Linux, python 2.7, tor stable builds by default
+  # the key(s) in each item override these defaults
   include:
     ## Test macOS with its default python version, and work around an issue
     ## with language: python on Travis macOS
+    ## We get the tor version in the homebrew cache on the macOS image
     - os: osx
       language: c
-    ## Test tor 0.3.5 and tor nightly
+      env: TOR_VERSION="cached-stable"
+    ## Test tor lts, stable, alpha, and nightly
+    ## lts and alpha versions need to be manually updated after tor releases
+    ## (alpha will revert to stable if the version in its URL is not updated)
+    - addons:
+        apt:
+          sources:
+            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-0.2.9.x-trusty main'
+              key_url: 'http://ha.pool.sks-keyservers.net/pks/lookup?search=0xA3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89&options=mr&op=get'
+          packages:
+            - tor
+      env: TOR_VERSION="0.2.9"
     - addons:
         apt:
           sources:
@@ -33,6 +33,7 @@ matrix:
             - sourceline: 'deb https://deb.torproject.org/torproject.org tor-experimental-0.3.5.x-trusty main'
           packages:
             - tor
+      env: TOR_VERSION="0.3.5"
     - addons:
         apt:
           sources:
@@ -41,6 +42,7 @@ matrix:
             - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-master-trusty main'
           packages:
             - tor
+      env: TOR_VERSION="nightly"
     ## Test all supported python releases
     - python: "2.7"
     - python: "3.4"
@@ -63,13 +65,10 @@ matrix:
   ## https://github.com/travis-ci/travis-ci/issues/1696
   #fast_finish: true
 
-  ## Careful! We use global envs, which makes it hard to exclude or
-  ## allow failures by env:
-  ## https://docs.travis-ci.com/user/customizing-the-build#matching-jobs-with-allow_failures
-  #exclude:
-    ## Placeholder
-    #- python: "3.6"
-    #  os: linux
+  ## These builds fail in Travis at the moment
+  allow_failures:
+    - env: TOR_VERSION="0.3.5"
+    - env: TOR_VERSION="nightly"
 
 ## We don't need sudo. (The "apt:" stanza after this allows us to not need
 ## sudo; otherwise, we would need it for getting dependencies.)
@@ -83,6 +82,11 @@ dist: trusty
 ## Default is Xcode 9.4 on macOS 10.13 as of August 2018
 #osx_image: xcode9.4
 
+## This env var isn't used by the build, but it's useful for debugging
+## It should be kept in sync with the Linux tor version below
+env:
+  - TOR_VERSION="stable"
+
 ## Download our dependencies
 addons:
   ## (Linux only)
@@ -93,25 +97,15 @@ addons:
       - sourceline: 'deb https://deb.torproject.org/torproject.org trusty main'
         key_url: 'http://ha.pool.sks-keyservers.net/pks/lookup?search=0xA3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89&options=mr&op=get'
     packages:
-      ## Required dependencies
       - tor
-      ## Is this necessary for a once-off build?
-      #- deb.torproject.org-keyring
   ## (macOS only)
   homebrew:
     packages:
-      ## Required dependencies
       - tor
 
-before_install:
-  ## Placeholder
-  -
-
 install:
-  ## Placeholder
-  -
-  ##
-  ## Finally, list installed package versions
+  ## Chutney has no dependencies, apart from tor
+  ## List installed package versions
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then dpkg-query --show; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew list --versions; fi
   - python --version
@@ -139,10 +133,6 @@ after_failure:
   ## Re-run chutney in debug mode
   ## TODO: improve debug mode
   - tools/test-network.sh --debug && echo "chutney debug run succeeded"
-
-after_success:
-  ## Placeholder
-  -
 
 notifications:
   irc:
