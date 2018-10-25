@@ -62,8 +62,8 @@ do
         # The amount of time chutney will try to verify, before failing
         # If negative, chutney exits without verifying
         --delay|--sleep|--bootstrap-time|--time|--verify-time)
-            # This isn't the best name for this variable, but we kept it the same
-            # for backwards compatibility
+            # This isn't the best name for this variable, but we kept it the
+            # same for backwards compatibility
             export CHUTNEY_BOOTSTRAP_TIME="$2"
             shift
         ;;
@@ -73,8 +73,8 @@ do
             export CHUTNEY_STOP_TIME="$2"
             shift
         ;;
-        # If all of the CHUTNEY_*_TIME options are positive, chutney will ask tor
-        # to exit when this PID exits. Set to 1 or lower to disable.
+        # If all of the CHUTNEY_*_TIME options are positive, chutney will ask
+        # tor to exit when this PID exits. Set to 1 or lower to disable.
         --controlling-pid)
             export CHUTNEY_CONTROLLING_PID="$2"
             shift
@@ -107,7 +107,8 @@ do
             export CHUTNEY_LISTEN_ADDRESS="$2"
             shift
             ;;
-        # The IPv6 address to bind to, default is not to bind to an IPv6 address
+        # The IPv6 address to bind to, default is not to bind to an
+        # IPv6 address
         --ipv6|--v6|-6)
             export CHUTNEY_LISTEN_ADDRESS_V6="$2"
             shift
@@ -260,10 +261,8 @@ if [ ! -d "$CHUTNEY_PATH" -o ! -x "$CHUTNEY_PATH/chutney" -o \
         # TODO: work out how to package and install chutney,
         # so users can find it in $PATH
         $ECHO "$myname: missing 'chutney' in \$CHUTNEY_PATH ($CHUTNEY_PATH)"
-        $ECHO "$myname: Get chutney: git clone https://git.torproject.org/\
-chutney.git"
-        $ECHO "$myname: Set \$CHUTNEY_PATH to a non-standard location: export \
-CHUTNEY_PATH=\`pwd\`/chutney"
+        $ECHO "$myname: Get chutney: git clone https://git.torproject.org/chutney.git"
+        $ECHO "$myname: Set \$CHUTNEY_PATH to a non-standard location: export CHUTNEY_PATH=\`pwd\`/chutney"
         unset CHUTNEY_PATH
         exit 1
     fi
