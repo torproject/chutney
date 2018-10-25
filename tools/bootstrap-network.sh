@@ -46,7 +46,7 @@ flavour=basic; [ -n "$1" ] && { flavour=$1; shift; }
 export CHUTNEY_NETWORK="$CHUTNEY_PATH/networks/$NETWORK_FLAVOUR"
 
 [ -e "$CHUTNEY_NETWORK" ] || \
-  { echo "$myname: missing network file: $CHUTNEY_NETWORK"; exit 1; }
+    { echo "$myname: missing network file: $CHUTNEY_NETWORK"; exit 1; }
 
 "$CHUTNEY" stop "$CHUTNEY_NETWORK"
 

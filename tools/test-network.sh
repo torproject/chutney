@@ -24,160 +24,160 @@ UPDATE_YOUR_CHUTNEY="Please update your chutney using 'git pull'."
 
 until [ -z "$1" ]
 do
-  case "$1" in
-    # the path to the chutney directory
-    --chutney-path)
-      export CHUTNEY_PATH="$2"
-      shift
-    ;;
-    --tor-path)
-      # the path of a tor build directory
-      # --tor-path overrides --tor and --tor-gencert
-      export TOR_DIR="$2"
-      shift
-    ;;
-    --tor)
-      # the name or path of a tor binary
-      export CHUTNEY_TOR="$2"
-      shift
-    ;;
-    --tor-gencert)
-      # the name or path of a tor-gencert binary
-      export CHUTNEY_TOR_GENCERT="$2"
-      shift
-      ;;
-    --debug)
-      export CHUTNEY_DEBUG="yes"
-      ;;
-    --flavor|--flavour|--network-flavor|--network-flavour)
-      export NETWORK_FLAVOUR="$2"
-      shift
-    ;;
-    # The amount of time chutney will wait before starting to verify
-    # If negative, chutney exits straight after launching the network
-    --start-time)
-      export CHUTNEY_START_TIME="$2"
-      shift
-    ;;
-    # The amount of time chutney will try to verify, before failing
-    # If negative, chutney exits without verifying
-    --delay|--sleep|--bootstrap-time|--time|--verify-time)
-      # This isn't the best name for this variable, but we kept it the same
-      # for backwards compatibility
-      export CHUTNEY_BOOTSTRAP_TIME="$2"
-      shift
-    ;;
-    # The amount of time chutney will wait after successfully verifying
-    # If negative, chutney exits without stopping
-    --stop-time)
-      export CHUTNEY_STOP_TIME="$2"
-      shift
-    ;;
-    # If all of the CHUTNEY_*_TIME options are positive, chutney will ask tor
-    # to exit when this PID exits. Set to 1 or lower to disable.
-    --controlling-pid)
-      export CHUTNEY_CONTROLLING_PID="$2"
-      shift
-    ;;
-    # Environmental variables used by chutney verify performance tests
-    # Send this many bytes per client connection (10 KBytes)
-    --data|--data-bytes|--data-byte|--bytes|--byte)
-      export CHUTNEY_DATA_BYTES="$2"
-      shift
-    ;;
-    # Make this many simultaneous connections per client (1)
-    --connections|--connection|--connection-count|--count)
-      export CHUTNEY_CONNECTIONS="$2"
-      shift
-    ;;
-    # Run this many verification rounds (1)
-    --rounds)
-      export CHUTNEY_ROUNDS="$2"
-      shift
-    ;;
-    # Make each client connect to each HS (0)
-    # 0 means a single client connects to each HS
-    # 1 means every client connects to every HS
-    --hs-multi-client|--hs-multi-clients|--hs-client|--hs-clients)
-      export CHUTNEY_HS_MULTI_CLIENT="$2"
-      shift
-      ;;
-    # The IPv4 address to bind to, defaults to 127.0.0.1
-    --ipv4|--v4|-4|--ip)
-      export CHUTNEY_LISTEN_ADDRESS="$2"
-      shift
-      ;;
-    # The IPv6 address to bind to, default is not to bind to an IPv6 address
-    --ipv6|--v6|-6)
-      export CHUTNEY_LISTEN_ADDRESS_V6="$2"
-      shift
-      ;;
-    # The DNS server config for Tor Exits. Chutney's default is
-    # /etc/resolv.conf, even if tor's compile time default is different.
-    --dns-conf)
-      export CHUTNEY_DNS_CONF="$2"
-      shift
-      ;;
-    # Do not make any DNS queries. This is incompatible with external
-    # controllers that use SETCONF.
-    --offline)
-      export CHUTNEY_DNS_CONF="/dev/null"
-      ;;
-    # Use tor's compile-time default for ServerDNSResolvConfFile.
-    --dns-conf-default)
-      export CHUTNEY_DNS_CONF=""
-      ;;
-    # Warning Options
-    # we summarise unexpected warnings by default
-    # this shows all warnings per-node
-    --all-warnings)
-      export CHUTNEY_WARNINGS_IGNORE_EXPECTED=false
-      export CHUTNEY_WARNINGS_SUMMARY=false
-      ;;
-    # this doesn't run chutney, and only logs warnings
-    --only-warnings)
-      export CHUTNEY_WARNINGS_ONLY=true
-      ;;
-    # this skips warnings entirely
-    --no-warnings)
-      export CHUTNEY_WARNINGS_SKIP=true
-      ;;
-    # Expert options
-    # Code Coverage Binary
-    --coverage)
-      export USE_COVERAGE_BINARY=true
-      ;;
-    # Do Nothing (but process arguments and set environmental variables)
-    --dry-run)
-      # process arguments, but don't call any other scripts
-      export NETWORK_DRY_RUN=true
-      ;;
-    # The net directory, usually chutney/net
-    --net-dir)
-      export CHUTNEY_DATA_DIR="$2"
-      shift
-      ;;
-    # Try not to say anything (applies only to this script)
-    --quiet)
-      export ECHO=true
-      ;;
-    # Oops
-    *)
-      $ECHO "$myname: Sorry, I don't know what to do with '$1'."
-      $ECHO "$UPDATE_YOUR_CHUTNEY"
-      # continue processing arguments during a dry run
-      if [ "$NETWORK_DRY_RUN" != true ]; then
-          exit 1
-      fi
-    ;;
-  esac
-  shift
+    case "$1" in
+        # the path to the chutney directory
+        --chutney-path)
+            export CHUTNEY_PATH="$2"
+            shift
+        ;;
+        --tor-path)
+            # the path of a tor build directory
+            # --tor-path overrides --tor and --tor-gencert
+            export TOR_DIR="$2"
+            shift
+        ;;
+        --tor)
+            # the name or path of a tor binary
+            export CHUTNEY_TOR="$2"
+            shift
+        ;;
+        --tor-gencert)
+            # the name or path of a tor-gencert binary
+            export CHUTNEY_TOR_GENCERT="$2"
+            shift
+            ;;
+        --debug)
+            export CHUTNEY_DEBUG="yes"
+            ;;
+        --flavor|--flavour|--network-flavor|--network-flavour)
+            export NETWORK_FLAVOUR="$2"
+            shift
+        ;;
+        # The amount of time chutney will wait before starting to verify
+        # If negative, chutney exits straight after launching the network
+        --start-time)
+            export CHUTNEY_START_TIME="$2"
+            shift
+        ;;
+        # The amount of time chutney will try to verify, before failing
+        # If negative, chutney exits without verifying
+        --delay|--sleep|--bootstrap-time|--time|--verify-time)
+            # This isn't the best name for this variable, but we kept it the same
+            # for backwards compatibility
+            export CHUTNEY_BOOTSTRAP_TIME="$2"
+            shift
+        ;;
+        # The amount of time chutney will wait after successfully verifying
+        # If negative, chutney exits without stopping
+        --stop-time)
+            export CHUTNEY_STOP_TIME="$2"
+            shift
+        ;;
+        # If all of the CHUTNEY_*_TIME options are positive, chutney will ask tor
+        # to exit when this PID exits. Set to 1 or lower to disable.
+        --controlling-pid)
+            export CHUTNEY_CONTROLLING_PID="$2"
+            shift
+        ;;
+        # Environmental variables used by chutney verify performance tests
+        # Send this many bytes per client connection (10 KBytes)
+        --data|--data-bytes|--data-byte|--bytes|--byte)
+            export CHUTNEY_DATA_BYTES="$2"
+            shift
+        ;;
+        # Make this many simultaneous connections per client (1)
+        --connections|--connection|--connection-count|--count)
+            export CHUTNEY_CONNECTIONS="$2"
+            shift
+        ;;
+        # Run this many verification rounds (1)
+        --rounds)
+            export CHUTNEY_ROUNDS="$2"
+            shift
+        ;;
+        # Make each client connect to each HS (0)
+        # 0 means a single client connects to each HS
+        # 1 means every client connects to every HS
+        --hs-multi-client|--hs-multi-clients|--hs-client|--hs-clients)
+            export CHUTNEY_HS_MULTI_CLIENT="$2"
+            shift
+            ;;
+        # The IPv4 address to bind to, defaults to 127.0.0.1
+        --ipv4|--v4|-4|--ip)
+            export CHUTNEY_LISTEN_ADDRESS="$2"
+            shift
+            ;;
+        # The IPv6 address to bind to, default is not to bind to an IPv6 address
+        --ipv6|--v6|-6)
+            export CHUTNEY_LISTEN_ADDRESS_V6="$2"
+            shift
+            ;;
+        # The DNS server config for Tor Exits. Chutney's default is
+        # /etc/resolv.conf, even if tor's compile time default is different.
+        --dns-conf)
+            export CHUTNEY_DNS_CONF="$2"
+            shift
+            ;;
+        # Do not make any DNS queries. This is incompatible with external
+        # controllers that use SETCONF.
+        --offline)
+            export CHUTNEY_DNS_CONF="/dev/null"
+            ;;
+        # Use tor's compile-time default for ServerDNSResolvConfFile.
+        --dns-conf-default)
+            export CHUTNEY_DNS_CONF=""
+            ;;
+        # Warning Options
+        # we summarise unexpected warnings by default
+        # this shows all warnings per-node
+        --all-warnings)
+            export CHUTNEY_WARNINGS_IGNORE_EXPECTED=false
+            export CHUTNEY_WARNINGS_SUMMARY=false
+            ;;
+        # this doesn't run chutney, and only logs warnings
+        --only-warnings)
+            export CHUTNEY_WARNINGS_ONLY=true
+            ;;
+        # this skips warnings entirely
+        --no-warnings)
+            export CHUTNEY_WARNINGS_SKIP=true
+            ;;
+        # Expert options
+        # Code Coverage Binary
+        --coverage)
+            export USE_COVERAGE_BINARY=true
+            ;;
+        # Do Nothing (but process arguments and set environmental variables)
+        --dry-run)
+            # process arguments, but don't call any other scripts
+            export NETWORK_DRY_RUN=true
+            ;;
+        # The net directory, usually chutney/net
+        --net-dir)
+            export CHUTNEY_DATA_DIR="$2"
+            shift
+            ;;
+        # Try not to say anything (applies only to this script)
+        --quiet)
+            export ECHO=true
+            ;;
+        # Oops
+        *)
+            $ECHO "$myname: Sorry, I don't know what to do with '$1'."
+            $ECHO "$UPDATE_YOUR_CHUTNEY"
+            # continue processing arguments during a dry run
+            if [ "$NETWORK_DRY_RUN" != true ]; then
+                exit 1
+            fi
+        ;;
+    esac
+    shift
 done
 
 # If the DNS server doesn't work, tor exits may reject all exit traffic, and
 # chutney may fail
 if [ "$CHUTNEY_WARNINGS_ONLY" != true ]; then
-  $ECHO "$myname: using CHUTNEY_DNS_CONF '$CHUTNEY_DNS_CONF'"
+    $ECHO "$myname: using CHUTNEY_DNS_CONF '$CHUTNEY_DNS_CONF'"
 fi
 
 # optional: $TOR_DIR is the tor build directory
@@ -231,7 +231,7 @@ fi
 
 # make TOR_DIR and TOR_APP_DIR absolute
 if [ -d "$PWD/$TOR_DIR" -a -d "$PWD/$TOR_APP_DIR" -a \
-    -d "$PWD/$TOR_DIR/src/tools" ]; then
+     -d "$PWD/$TOR_DIR/src/tools" ]; then
     export TOR_DIR="$PWD/$TOR_DIR"
     export TOR_APP_DIR="$PWD/$TOR_APP_DIR"
 fi
@@ -247,13 +247,13 @@ if [ ! -d "$CHUTNEY_PATH" -o ! -x "$CHUTNEY_PATH/chutney" -o \
         $ECHO "$myname: \$CHUTNEY_PATH not valid, trying \$PWD"
         export CHUTNEY_PATH="$PWD"
     elif [ -d "`dirname \"$0\"`/.." -a \
-	   -x "`dirname \"$0\"`/../chutney" -a \
-	   -f "`dirname \"$0\"`/../chutney" ]; then
+           -x "`dirname \"$0\"`/../chutney" -a \
+           -f "`dirname \"$0\"`/../chutney" ]; then
         $ECHO "$myname: \$CHUTNEY_PATH not valid, using this script's location"
         export CHUTNEY_PATH="`dirname \"$0\"`/.."
     elif [ -d "$TOR_DIR" -a -d "$TOR_DIR/../chutney" -a \
            -x "$TOR_DIR/../chutney/chutney" -a \
-	   -f "$TOR_DIR/../chutney/chutney" ]; then
+           -f "$TOR_DIR/../chutney/chutney" ]; then
         $ECHO "$myname: \$CHUTNEY_PATH not valid, trying \$TOR_DIR/../chutney"
         export CHUTNEY_PATH="$TOR_DIR/../chutney"
     else
@@ -315,9 +315,9 @@ export CHUTNEY_NETWORK="$CHUTNEY_PATH/networks/$NETWORK_FLAVOUR"
 
 WARNING_COMMAND="$CHUTNEY_PATH/tools/warnings.sh"
 if [ "$CHUTNEY_WARNINGS_SKIP" = true ]; then
-  WARNINGS=true
+    WARNINGS=true
 else
-  WARNINGS="$WARNING_COMMAND"
+    WARNINGS="$WARNING_COMMAND"
 fi
 
 # And finish up if we're doing a dry run
@@ -349,58 +349,58 @@ export CHUTNEY_STOP_TIME=${CHUTNEY_STOP_TIME:-0}
 CHUTNEY="$CHUTNEY_PATH/chutney"
 
 if [ "$CHUTNEY_START_TIME" -ge 0 ]; then
-  $ECHO "Waiting $CHUTNEY_START_TIME seconds for a consensus containing relays to be generated..."
-  sleep "$CHUTNEY_START_TIME"
+    $ECHO "Waiting $CHUTNEY_START_TIME seconds for a consensus containing relays to be generated..."
+    sleep "$CHUTNEY_START_TIME"
 else
-  $ECHO "Chutney network launched and running. To stop the network, use:"
-  $ECHO "$CHUTNEY stop $CHUTNEY_NETWORK"
-  "$WARNINGS"
-  exit 0
+    $ECHO "Chutney network launched and running. To stop the network, use:"
+    $ECHO "$CHUTNEY stop $CHUTNEY_NETWORK"
+    "$WARNINGS"
+    exit 0
 fi
 
 if [ "$CHUTNEY_BOOTSTRAP_TIME" -ge 0 ]; then
-  # Chutney will try to verify for $CHUTNEY_BOOTSTRAP_TIME seconds each round
-  n_rounds=0
-  # Run CHUTNEY_ROUNDS verification rounds
-  $ECHO "Running $CHUTNEY_ROUNDS verify rounds..."
-  while [ "$n_rounds" -lt "$CHUTNEY_ROUNDS" ]; do
-      n_rounds=$((n_rounds+1))
-      if ! "$CHUTNEY" verify "$CHUTNEY_NETWORK"; then
-          CHUTNEY_WARNINGS_IGNORE_EXPECTED=false \
-              CHUTNEY_WARNINGS_SUMMARY=false \
-              "$WARNING_COMMAND"
-          $ECHO "chutney verify $n_rounds/$CHUTNEY_ROUNDS failed"
-          exit 1
-      fi
-      $ECHO "Completed $n_rounds/$CHUTNEY_ROUNDS verify rounds."
-  done
+    # Chutney will try to verify for $CHUTNEY_BOOTSTRAP_TIME seconds each round
+    n_rounds=0
+    # Run CHUTNEY_ROUNDS verification rounds
+    $ECHO "Running $CHUTNEY_ROUNDS verify rounds..."
+    while [ "$n_rounds" -lt "$CHUTNEY_ROUNDS" ]; do
+        n_rounds=$((n_rounds+1))
+        if ! "$CHUTNEY" verify "$CHUTNEY_NETWORK"; then
+            CHUTNEY_WARNINGS_IGNORE_EXPECTED=false \
+                CHUTNEY_WARNINGS_SUMMARY=false \
+                "$WARNING_COMMAND"
+            $ECHO "chutney verify $n_rounds/$CHUTNEY_ROUNDS failed"
+            exit 1
+        fi
+        $ECHO "Completed $n_rounds/$CHUTNEY_ROUNDS verify rounds."
+    done
 else
-  $ECHO "Chutney network ready and running. To stop the network, use:"
-  $ECHO "$CHUTNEY stop $CHUTNEY_NETWORK"
-  "$WARNINGS"
-  exit 0
+    $ECHO "Chutney network ready and running. To stop the network, use:"
+    $ECHO "$CHUTNEY stop $CHUTNEY_NETWORK"
+    "$WARNINGS"
+    exit 0
 fi
 
 if [ "$CHUTNEY_STOP_TIME" -ge 0 ]; then
-  if [ "$CHUTNEY_STOP_TIME" -gt 0 ]; then
-    $ECHO "Waiting $CHUTNEY_STOP_TIME seconds before stopping the network..."
-  fi
-  sleep "$CHUTNEY_STOP_TIME"
-  # work around a bug/feature in make -j2 (or more)
-  # where make hangs if any child processes are still alive
-  if ! "$CHUTNEY" stop "$CHUTNEY_NETWORK"; then
-      CHUTNEY_WARNINGS_IGNORE_EXPECTED=false CHUTNEY_WARNINGS_SUMMARY=false \
-          "$WARNING_COMMAND"
-      $ECHO "chutney stop failed"
-      exit 1
-  fi
-  # Give tor time to exit gracefully
-  sleep 3
+    if [ "$CHUTNEY_STOP_TIME" -gt 0 ]; then
+        $ECHO "Waiting $CHUTNEY_STOP_TIME seconds before stopping the network..."
+    fi
+    sleep "$CHUTNEY_STOP_TIME"
+    # work around a bug/feature in make -j2 (or more)
+    # where make hangs if any child processes are still alive
+    if ! "$CHUTNEY" stop "$CHUTNEY_NETWORK"; then
+        CHUTNEY_WARNINGS_IGNORE_EXPECTED=false CHUTNEY_WARNINGS_SUMMARY=false \
+            "$WARNING_COMMAND"
+        $ECHO "chutney stop failed"
+        exit 1
+    fi
+    # Give tor time to exit gracefully
+    sleep 3
 else
-  $ECHO "Chutney network verified and running. To stop the network, use:"
-  $ECHO "$CHUTNEY stop $CHUTNEY_NETWORK"
-  "$WARNINGS"
-  exit 0
+    $ECHO "Chutney network verified and running. To stop the network, use:"
+    $ECHO "$CHUTNEY stop $CHUTNEY_NETWORK"
+    "$WARNINGS"
+    exit 0
 fi
 
 "$WARNINGS"
