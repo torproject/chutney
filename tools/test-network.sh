@@ -342,7 +342,7 @@ fi
 # and then stops immediately (by default)
 # Even the fastest chutney networks take 5-10 seconds for their first consensus
 # and then 10 seconds after that for relays to bootstrap and upload descriptors
-export CHUTNEY_START_TIME=${CHUTNEY_START_TIME:-20}
+export CHUTNEY_START_TIME=${CHUTNEY_START_TIME:-40}
 export CHUTNEY_BOOTSTRAP_TIME=${CHUTNEY_BOOTSTRAP_TIME:-60}
 export CHUTNEY_STOP_TIME=${CHUTNEY_STOP_TIME:-0}
 

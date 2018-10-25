@@ -54,11 +54,11 @@ echo "$myname: bootstrapping network: $flavour"
 "$CHUTNEY" configure "$CHUTNEY_NETWORK"
 
 "$CHUTNEY" start "$CHUTNEY_NETWORK"
-sleep 1
+sleep 3
 if ! "$CHUTNEY" status "$CHUTNEY_NETWORK"; then
     # Try to work out why the start or status command is failing
     CHUTNEY_DEBUG=1 "$CHUTNEY" start "$CHUTNEY_NETWORK"
     # Wait a little longer, just in case
-    sleep 5
+    sleep 6
     CHUTNEY_DEBUG=1 "$CHUTNEY" status "$CHUTNEY_NETWORK"
 fi

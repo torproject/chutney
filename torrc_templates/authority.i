@@ -16,11 +16,11 @@ ContactInfo auth${nodenum}@test.test
 # Mixed 0.3.3 and 0.3.4 networks are unstable, due to timing changes.
 # When all 0.3.3 and earlier versions are obsolete, we may be able to revert to
 # TestingV3AuthInitialVotingInterval 5
-TestingV3AuthInitialVotingInterval 10
-TestingV3AuthInitialVoteDelay 2
-TestingV3AuthInitialDistDelay 2
+TestingV3AuthInitialVotingInterval 20
+TestingV3AuthInitialVoteDelay 4
+TestingV3AuthInitialDistDelay 4
 # Vote + Dist must be less than Interval/2, because when there's no consensus,
 # tor uses Interval/2 as the voting interval
-V3AuthVotingInterval 10
-V3AuthVoteDelay 2
-V3AuthDistDelay 2
+V3AuthVotingInterval 20
+V3AuthVoteDelay 4
+V3AuthDistDelay 4
