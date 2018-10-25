@@ -121,6 +121,21 @@ script:
   - tools/test-network.sh
 
 after_failure:
+  ## List the contents of net/nodes
+  - ls -lR net/nodes/
+  ## Dump the important directory documents
+  #- cat net/nodes/000a*/cached-certs
+  - cat net/nodes/000a*/cached-consensus
+  - cat net/nodes/000a*/cached-descriptors*
+  #- cat net/nodes/000a*/cached-extrainfo*
+  - cat net/nodes/000a*/cached-microdesc-consensus
+  - cat net/nodes/000a*/cached-microdescs*
+  #- cat net/nodes/000a*/key-pinning-journal
+  #- cat net/nodes/000a*/router-stability
+  #- cat net/nodes/00*a*/sr-state
+  #- cat net/nodes/00*a*/state
+  - for f in net/nodes/00*a*/v3-status-votes ; do echo "$f"; cat "$f"; done
+  - for f in net/nodes/00*a*/unparseable-descs/* ; do echo "$f"; cat "$f"; done
   ## Re-run chutney in debug mode
   ## TODO: improve debug mode
   - tools/test-network.sh --debug
