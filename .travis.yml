@@ -138,7 +138,7 @@ after_failure:
   - for f in net/nodes/00*a*/unparseable-descs/* ; do echo "$f"; cat "$f"; done
   ## Re-run chutney in debug mode
   ## TODO: improve debug mode
-  - tools/test-network.sh --debug
+  - tools/test-network.sh --debug && echo "chutney debug run succeeded"
 
 after_success:
   ## Placeholder
