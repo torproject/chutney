@@ -333,6 +333,7 @@ fi
 if ! "$CHUTNEY_PATH/tools/bootstrap-network.sh" "$NETWORK_FLAVOUR"; then
     CHUTNEY_WARNINGS_IGNORE_EXPECTED=false CHUTNEY_WARNINGS_SUMMARY=false \
         "$WARNING_COMMAND"
+    "$WARNINGS"
     $ECHO "bootstrap-network.sh failed"
     exit 1
 fi
@@ -368,6 +369,7 @@ if [ "$CHUTNEY_BOOTSTRAP_TIME" -ge 0 ]; then
             CHUTNEY_WARNINGS_IGNORE_EXPECTED=false \
                 CHUTNEY_WARNINGS_SUMMARY=false \
                 "$WARNING_COMMAND"
+            "$WARNINGS"
             $ECHO "chutney verify $n_rounds/$CHUTNEY_ROUNDS failed"
             exit 1
         fi
@@ -390,6 +392,7 @@ if [ "$CHUTNEY_STOP_TIME" -ge 0 ]; then
     if ! "$CHUTNEY" stop "$CHUTNEY_NETWORK"; then
         CHUTNEY_WARNINGS_IGNORE_EXPECTED=false CHUTNEY_WARNINGS_SUMMARY=false \
             "$WARNING_COMMAND"
+        "$WARNINGS"
         $ECHO "chutney stop failed"
         exit 1
     fi
