@@ -23,6 +23,7 @@ Could not open.*sr-state.*No such file or directory
 Could not read your DNS config
 Couldn't set up any working nameservers. Network not up yet
 Currently, sandboxing is only implemented on Linux
+built without support for sandboxing
 # Chutney sometimes misses votes, and then gets them from multiple authorities
 Rejecting vote from .*Duplicate discarded
 # We ignore consensus failure warnings
