@@ -399,6 +399,8 @@ class LocalNodeBuilder(NodeBuilder):
            If checkOnly, just make sure that the formatting is indeed
            possible.
         """
+        global torrc_option_warn_count
+
         fn_out = self._getTorrcFname()
         torrc_template = self._getTorrcTemplate()
         output = torrc_template.format(self._env)
@@ -1190,7 +1192,9 @@ def runConfigFile(verb, data):
     _GLOBALS = dict(_BASE_ENVIRON=_BASE_ENVIRON,
                     Node=Node,
                     ConfigureNodes=ConfigureNodes,
-                    _THE_NETWORK=_THE_NETWORK)
+                    _THE_NETWORK=_THE_NETWORK,
+                    torrc_option_warn_count=0,
+                    TORRC_OPTION_WARN_LIMIT=10)
 
     exec(data, _GLOBALS)
     network = _GLOBALS['_THE_NETWORK']
