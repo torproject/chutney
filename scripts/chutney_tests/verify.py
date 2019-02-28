@@ -54,7 +54,7 @@ def _verify_traffic(network):
         dot_reps = _calculate_reps(DOTDATALEN, randomlen)
         # make sure we get at least one dot per transmission
         dot_reps = min(reps, dot_reps)
-        with open('/dev/urandom', 'r') as randfp:
+        with open('/dev/urandom', 'rb') as randfp:
             tmpdata = randfp.read(randomlen)
     else:
         dot_reps = 0
