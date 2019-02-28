@@ -45,6 +45,10 @@ def mkdir_p(d, mode=448):
        448 is the decimal representation of the octal number 0700. Since
        python2 only supports 0700 and python3 only supports 0o700, we can use
        neither.
+
+       Note that python2 and python3 differ in how they create the
+       permissions for the intermediate directories.  In python3, 'mode'
+       only sets the mode for the last directory created.
     """
     try:
         os.makedirs(d, mode=mode)
@@ -485,6 +489,8 @@ class LocalNodeBuilder(NodeBuilder):
         """Create the data directory (with keys subdirectory) for this node.
         """
         datadir = self._env['dir']
+        # We do this separately to make sure the permissions are correct.
+        mkdir_p(datadir)
         mkdir_p(os.path.join(datadir, 'keys'))
 
     def _makeHiddenServiceDir(self):
@@ -495,6 +501,8 @@ class LocalNodeBuilder(NodeBuilder):
           path to the hidden service directory.
         """
         datadir = self._env['dir']
+        # We do this separately to make sure the permissions are correct.
+        mkdir_p(datadir)
         mkdir_p(os.path.join(datadir, self._env['hs_directory']))
 
     def _genAuthorityKey(self):
