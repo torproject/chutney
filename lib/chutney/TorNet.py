@@ -45,6 +45,10 @@ def mkdir_p(d, mode=448):
        448 is the decimal representation of the octal number 0700. Since
        python2 only supports 0700 and python3 only supports 0o700, we can use
        neither.
+
+       Note that python2 and python3 differ in how they create the
+       permissions for the intermediate directories.  In python3, 'mode'
+       only sets the mode for the last directory created.
     """
     try:
         os.makedirs(d, mode=mode)
@@ -399,6 +403,8 @@ class LocalNodeBuilder(NodeBuilder):
            If checkOnly, just make sure that the formatting is indeed
            possible.
         """
+        global torrc_option_warn_count
+
         fn_out = self._getTorrcFname()
         torrc_template = self._getTorrcTemplate()
         output = torrc_template.format(self._env)
@@ -483,6 +489,8 @@ class LocalNodeBuilder(NodeBuilder):
         """Create the data directory (with keys subdirectory) for this node.
         """
         datadir = self._env['dir']
+        # We do this separately to make sure the permissions are correct.
+        mkdir_p(datadir)
         mkdir_p(os.path.join(datadir, 'keys'))
 
     def _makeHiddenServiceDir(self):
@@ -493,6 +501,8 @@ class LocalNodeBuilder(NodeBuilder):
           path to the hidden service directory.
         """
         datadir = self._env['dir']
+        # We do this separately to make sure the permissions are correct.
+        mkdir_p(datadir)
         mkdir_p(os.path.join(datadir, self._env['hs_directory']))
 
     def _genAuthorityKey(self):
@@ -1190,7 +1200,9 @@ def runConfigFile(verb, data):
     _GLOBALS = dict(_BASE_ENVIRON=_BASE_ENVIRON,
                     Node=Node,
                     ConfigureNodes=ConfigureNodes,
-                    _THE_NETWORK=_THE_NETWORK)
+                    _THE_NETWORK=_THE_NETWORK,
+                    torrc_option_warn_count=0,
+                    TORRC_OPTION_WARN_LIMIT=10)
 
     exec(data, _GLOBALS)
     network = _GLOBALS['_THE_NETWORK']
@@ -1238,7 +1250,7 @@ def main():
 
     args = parseArgs()
     f = open(args['network_cfg'])
-    result = runConfigFile(args['action'], f)
+    result = runConfigFile(args['action'], f.read())
     if result is False:
         return -1
     return 0

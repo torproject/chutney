@@ -54,7 +54,7 @@ def _verify_traffic(network):
         dot_reps = _calculate_reps(DOTDATALEN, randomlen)
         # make sure we get at least one dot per transmission
         dot_reps = min(reps, dot_reps)
-        with open('/dev/urandom', 'r') as randfp:
+        with open('/dev/urandom', 'rb') as randfp:
             tmpdata = randfp.read(randomlen)
     else:
         dot_reps = 0
@@ -76,6 +76,11 @@ def _verify_traffic(network):
                      n._env['tag'].startswith('h') or
                      ('hs' in n._env.keys() and n._env['hs'] == 1),
                      network._nodes)
+    # Make sure these lists are actually lists.  (It would probably
+    # be better to do list comprehensions here.)
+    client_list = list(client_list)
+    exit_list = list(exit_list)
+    hs_list = list(hs_list)
     if len(client_list) == 0:
         print("  Unable to verify network: no client nodes available")
         return False

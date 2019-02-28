@@ -41,15 +41,17 @@ def socks_cmd(addr_port):
     """
     ver = 4  # Only SOCKSv4 for now.
     cmd = 1  # Stream connection.
-    user = '\x00'
+    user = b'\x00'
     dnsname = ''
     host, port = addr_port
     try:
         addr = socket.inet_aton(host)
     except socket.error:
-        addr = '\x00\x00\x00\x01'
+        addr = b'\x00\x00\x00\x01'
         dnsname = '%s\x00' % host
     debug("Socks 4a request to %s:%d" % (host, port))
+    if type(dnsname) != type(b""):
+        dnsname = dnsname.encode("ascii")
     return struct.pack('!BBH', ver, cmd, port) + addr + user + dnsname
 
 
@@ -133,7 +135,7 @@ class Sink(Peer):
 
     def __init__(self, tt, s):
         super(Sink, self).__init__(Peer.SINK, tt, s)
-        self.inbuf = ''
+        self.inbuf = b''
         self.repetitions = self.tt.repetitions
 
     def on_readable(self):
@@ -193,8 +195,8 @@ class Source(Peer):
         super(Source, self).__init__(Peer.SOURCE, tt)
         self.state = self.NOT_CONNECTED
         self.data = buf
-        self.outbuf = ''
-        self.inbuf = ''
+        self.outbuf = b''
+        self.inbuf = b''
         self.proxy = proxy
         self.repetitions = repetitions
         self._sent_no_bytes = 0
@@ -213,7 +215,7 @@ class Source(Peer):
             debug("socket %d connecting to %r..."%(self.fd(),dest))
             self.s.connect(dest)
         except socket.error as e:
-            if e[0] != errno.EINPROGRESS:
+            if e.errno != errno.EINPROGRESS:
                 raise
 
     def on_readable(self):
@@ -229,10 +231,10 @@ class Source(Peer):
                 return -1
             self.inbuf += inp
             if len(self.inbuf) == 8:
-                if ord(self.inbuf[0]) == 0 and ord(self.inbuf[1]) == 0x5a:
+                if self.inbuf[:2] == b'\x00\x5a':
                     debug("proxy handshake successful (fd=%d)" % self.fd())
                     self.state = self.CONNECTED
-                    self.inbuf = ''
+                    self.inbuf = b''
                     debug("successfully connected (fd=%d)" % self.fd())
                     # if we have no reps or no data, skip sending actual data
                     if self.want_to_write():
@@ -288,7 +290,7 @@ class Source(Peer):
         try:
             n = self.s.send(self.outbuf)
         except socket.error as e:
-            if e[0] == errno.ECONNREFUSED:
+            if e.errno == errno.ECONNREFUSED:
                 debug("connection refused (fd=%d)" % self.fd())
                 return -1
             raise
@@ -356,7 +358,7 @@ class TrafficTester():
         return self.get_by_ptype(Peer.SOURCE)
 
     def get_by_ptype(self, ptype):
-        return filter(lambda p: p.type == ptype, self.peers.itervalues())
+        return list(filter(lambda p: p.type == ptype, self.peers.values()))
 
     def add(self, peer):
         self.peers[peer.fd()] = peer
