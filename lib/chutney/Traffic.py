@@ -213,7 +213,7 @@ class Source(Peer):
             debug("socket %d connecting to %r..."%(self.fd(),dest))
             self.s.connect(dest)
         except socket.error as e:
-            if e[0] != errno.EINPROGRESS:
+            if e.errno != errno.EINPROGRESS:
                 raise
 
     def on_readable(self):
@@ -288,7 +288,7 @@ class Source(Peer):
         try:
             n = self.s.send(self.outbuf)
         except socket.error as e:
-            if e[0] == errno.ECONNREFUSED:
+            if e.errno == errno.ECONNREFUSED:
                 debug("connection refused (fd=%d)" % self.fd())
                 return -1
             raise
