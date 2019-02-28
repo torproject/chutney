@@ -1238,7 +1238,7 @@ def main():
 
     args = parseArgs()
     f = open(args['network_cfg'])
-    result = runConfigFile(args['action'], f)
+    result = runConfigFile(args['action'], f.read())
     if result is False:
         return -1
     return 0
