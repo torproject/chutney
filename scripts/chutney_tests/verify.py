@@ -76,6 +76,11 @@ def _verify_traffic(network):
                      n._env['tag'].startswith('h') or
                      ('hs' in n._env.keys() and n._env['hs'] == 1),
                      network._nodes)
+    # Make sure these lists are actually lists.  (It would probably
+    # be better to do list comprehensions here.)
+    client_list = list(client_list)
+    exit_list = list(exit_list)
+    hs_list = list(hs_list)
     if len(client_list) == 0:
         print("  Unable to verify network: no client nodes available")
         return False
