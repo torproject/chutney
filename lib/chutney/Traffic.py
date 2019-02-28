@@ -356,7 +356,7 @@ class TrafficTester():
         return self.get_by_ptype(Peer.SOURCE)
 
     def get_by_ptype(self, ptype):
-        return filter(lambda p: p.type == ptype, self.peers.itervalues())
+        return list(filter(lambda p: p.type == ptype, self.peers.values()))
 
     def add(self, peer):
         self.peers[peer.fd()] = peer
