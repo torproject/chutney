@@ -10,7 +10,7 @@ then
     export CHUTNEY_PATH="`dirname $0`"
 fi
 
-binaries="python2 python"
+binaries="python python3 python2"
 
 if ! test "${PYTHON+y}"
 then
