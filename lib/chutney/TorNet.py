@@ -57,6 +57,14 @@ def mkdir_p(d, mode=448):
             return
         raise
 
+def make_datadir_subdirectory(datadir, subdir):
+    """
+       Create a datadirectory (if necessary) and a subdirectory of
+       that datadirectory.  Ensure that both are mode 700.
+    """
+    mkdir_p(datadir)
+    mkdir_p(os.path.join(datadir, subdir))
+
 def get_absolute_chutney_path():
     # use the current directory as the default
     # (./chutney already sets CHUTNEY_PATH using the path to the script)
@@ -489,9 +497,7 @@ class LocalNodeBuilder(NodeBuilder):
         """Create the data directory (with keys subdirectory) for this node.
         """
         datadir = self._env['dir']
-        # We do this separately to make sure the permissions are correct.
-        mkdir_p(datadir)
-        mkdir_p(os.path.join(datadir, 'keys'))
+        make_datadir_subdirectory(datadir, "keys")
 
     def _makeHiddenServiceDir(self):
         """Create the hidden service subdirectory for this node.
@@ -501,9 +507,7 @@ class LocalNodeBuilder(NodeBuilder):
           path to the hidden service directory.
         """
         datadir = self._env['dir']
-        # We do this separately to make sure the permissions are correct.
-        mkdir_p(datadir)
-        mkdir_p(os.path.join(datadir, self._env['hs_directory']))
+        make_datadir_subdirectory(datadir, self._env['hs_directory'])
 
     def _genAuthorityKey(self):
         """Generate an authority identity and signing key for this authority,
