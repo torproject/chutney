@@ -93,7 +93,7 @@ addons:
   apt:
     sources:
       ## Xenial has Tor 0.2.4, so we need a newer version of Tor from the
-      ## torproject repositories, and the torproject key from the keyservers
+      ## torproject repositories, and the torproject key from deb.tpo
       - sourceline: 'deb https://deb.torproject.org/torproject.org xenial main'
         key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
     packages:
