@@ -23,7 +23,7 @@ matrix:
       language: c
       python:
       env: TOR="stable-release"
-    ## Test tor lts, stable, alpha, and nightly
+    ## Test all supported and available tor versions on Linux
     ## Standard dpkg configs fall back to stable when newer
     ## repositories are removed. But we want to fail, so we notice and
     ## update the repositories.
@@ -41,11 +41,30 @@ matrix:
     - addons:
         apt:
           sources:
+            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-0.3.4.x-xenial main'
+              key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
+          packages:
+            - tor
+      env: TOR="0.3.4-nightly"
+    ## The current stable release is listed at the end of the file, because
+    ## it is the default for other build variants
+    - addons:
+        apt:
+          sources:
             - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-0.3.5.x-xenial main'
               key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
           packages:
             - tor
       env: TOR="0.3.5-nightly"
+    ## The experimental deb line needs to be updated when 0.4.0 becomes stable
+    - addons:
+        apt:
+          sources:
+            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-experimental-0.4.0.x-xenial main'
+              key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
+          packages:
+            - tor
+      env: TOR="0.4.0-nightly"
     - addons:
         apt:
           sources:
