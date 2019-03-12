@@ -37,6 +37,22 @@ torrc_option_warn_count =  0
 # Get verbose tracebacks, so we can diagnose better.
 cgitb.enable(format="plain")
 
+def getenv_int(envvar, default):
+    """
+       Return the value of the environment variable 'envar' as an integer,
+       or 'default' if no such variable exists.
+
+       Raise ValueError if the environment variable is set, but not to
+       an integer.
+    """
+    # TODO: Use this function in more places.
+    strval = os.environ.get(envvar)
+    if strval is None:
+        return default
+    try:
+        return int(strval)
+    except ValueError:
+        raise ValueError("Invalid value for environment variable %s: expected an integer, but got %r"%(envvar,strval))
 
 def mkdir_p(d, mode=448):
     """Create directory 'd' and all of its parents as needed.  Unlike
@@ -1151,7 +1167,7 @@ class Network(object):
 
     def wait_for_bootstrap(self):
         print("Waiting for nodes to bootstrap...")
-        limit = 20 #bootstrap time
+        limit = getenv_int("CHUTNEY_START_TIME", 20)
         delay = 0.5
         controllers = [n.getController() for n in self._nodes]
         elapsed = 0.0
