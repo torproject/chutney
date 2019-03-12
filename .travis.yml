@@ -74,18 +74,40 @@ matrix:
             - tor
       env: TOR="master-nightly"
     ## Test all supported python releases
+    ## Pre-installed in Travis xenial:
+    ## https://docs.travis-ci.com/user/reference/xenial/#python-support
+    ## End of Life: 1 January 2020
+    ## https://www.python.org/dev/peps/pep-0373/#id2
     - python: "2.7"
+    ## Final Release: 17 March 2019
+    ## https://www.python.org/dev/peps/pep-0429/#release-schedule
     - python: "3.4"
+    ## Final Release: 17 March 2019
+    ## https://www.python.org/dev/peps/pep-0478/#id4
     - python: "3.5"
+    ## End of Life: December 2021
+    ## https://www.python.org/dev/peps/pep-0494/#lifespan
     - python: "3.6"
-    ## TODO: check if Travis Xenial supports these versions
-    #- python: "3.7"
-    #- python: "3.8-dev"
+    ## End of Life: June 2023
+    ## https://www.python.org/dev/peps/pep-0537/#lifespan
+    - python: "3.7"
+    ## Stable: 20 October 2019
+    ## (Switch from 3.8-dev to 3.8, and check for 3.9-dev)
+    ## End of Life: October2024
+    ## https://www.python.org/dev/peps/pep-0569/#lifespan
+    - python: "3.8-dev"
     - python: "nightly"
     # PyPy versions
-    ## TODO: check if Travis Xenial supports these versions
+    ## End of Life: "forever"
+    ## http://doc.pypy.org/en/latest/faq.html#how-long-will-pypy-support-python2
+    ## But chutney can decide not to support python 2 after 1 Jan 2020.
+    ## Travis Xenial does not support pypy2.7
     #- python: "pypy2.7"
+    ## PyPy does not have documented end of life dates
     - python: "pypy3.5"
+    ## PyPy 3.6 is currently in alpha
+    ## Travis Xenial does not support pypy3.6-dev yet?
+    #- python: "pypy3.6-dev"
 
   ## Uncomment to allow the build to report success (with non-required
   ## sub-builds continuing to run) if all required sub-builds have
