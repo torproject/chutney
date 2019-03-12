@@ -797,7 +797,7 @@ class LocalNodeController(NodeController):
         return os.path.join(datadir, logname)
 
     def getLastBootstrapStatus(self):
-        """Look through the logs and return the last bootstrapp message
+        """Look through the logs and return the last bootstrap message
            received as a 3-tuple of percentage complete, keyword
            (optional), and message.
         """
