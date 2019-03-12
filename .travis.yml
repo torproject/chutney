@@ -48,12 +48,12 @@ matrix:
     - python: "3.4"
     - python: "3.5"
     - python: "3.6"
-    ## Travis Xenial doesn't support these versions
+    ## TODO: check if Travis Xenial supports these versions
     #- python: "3.7"
     #- python: "3.8-dev"
     - python: "nightly"
     # PyPy versions
-    ## Travis Xenial doesn't support these versions
+    ## TODO: check if Travis Xenial supports these versions
     #- python: "pypy2.7"
     - python: "pypy3.5"
 
@@ -74,7 +74,8 @@ matrix:
 ## sudo; otherwise, we would need it for getting dependencies.)
 sudo: false
 
-## (Linux only) Use the latest Linux image (Ubuntu Xenial)
+## (Linux only) Use the Ubuntu Xenial Linux Image
+## deb.torproject.org doesn't support Trusty any more
 dist: xenial
 
 ## (OSX only) Use the default OSX image
@@ -92,7 +93,7 @@ addons:
   ## (Linux only)
   apt:
     sources:
-      ## Xenial has Tor 0.2.4, so we need a newer version of Tor from the
+      ## Xenial has Tor 0.2.7, so we need a newer version of Tor from the
       ## torproject repositories, and the torproject key from deb.tpo
       - sourceline: 'deb https://deb.torproject.org/torproject.org xenial main'
         key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
