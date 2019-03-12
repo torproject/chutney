@@ -15,6 +15,9 @@ export CHUTNEY_WARNINGS_SUMMARY=${CHUTNEY_WARNINGS_SUMMARY:-true}
 # default to exiting when this script exits
 export CHUTNEY_CONTROLLING_PID=${CHUTNEY_CONTROLLING_PID:-$$}
 
+# default to allowing zero failures
+export CHUTNEY_ALLOW_FAILURES=${CHUTNEY_ALLOW_FAILURES:-0}
+
 # default to no DNS: this is a safe, working default for most users
 # If a custom test expects DNS, it needs to set CHUTNEY_DNS_CONF
 export CHUTNEY_DNS_CONF=${CHUTNEY_DNS_CONF:-/dev/null}
@@ -156,6 +159,11 @@ do
         # The net directory, usually chutney/net
         --net-dir)
             export CHUTNEY_DATA_DIR="$2"
+            shift
+            ;;
+        # How many failures should we allow? Defaults to 0.
+        --allow-failures)
+            export CHUTNEY_ALLOW_FAILURES="$2"
             shift
             ;;
         # Try not to say anything (applies only to this script)
@@ -333,4 +341,17 @@ if [ "$NETWORK_DRY_RUN" = true ] || [ "$CHUTNEY_WARNINGS_ONLY" = true ]; then
     exit 0
 fi
 
-exec "$CHUTNEY_PATH/tools/test-network-impl.sh"
+n_attempts=0
+max_attempts=$((CHUTNEY_ALLOW_FAILURES+1))
+
+while [ "$n_attempts" -lt "$max_attempts" ]; do
+    n_attempts=$((n_attempts+1))
+    $ECHO "==== Running tests: attempt $n_attempts/$max_attempts"
+    if "$CHUTNEY_PATH/tools/test-network-impl.sh"; then
+	$ECHO "==== Chutney succeeded after $n_attempts attempt(s)."
+	exit 0
+    fi
+done
+
+$ECHO "Chutney failed $n_attempts times; we may have a problem here."
+exit 1
