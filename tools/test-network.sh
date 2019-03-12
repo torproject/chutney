@@ -201,7 +201,7 @@ if [ ! -d "$TOR_DIR" ]; then
         # But only if it looks like one
         $ECHO "$myname: \$TOR_DIR not set, trying \$PWD"
         export TOR_DIR="$PWD"
-    elif [ -d "$PWD/../tor" -a -d "$PWD/../tor/src/tools" ]; then
+    elif [ -d "$PWD/../tor" ] && [ -d "$PWD/../tor/src/tools" ]; then
         # Guess the tor directory is next to the current directory
         # But only if it looks like one
         $ECHO "$myname: \$TOR_DIR not set, trying \$PWD/../tor"
@@ -214,7 +214,7 @@ fi
 
 # Now find the name of the Tor app dir, which changed in Tor 0.3.5
 if [ -d "$TOR_DIR" ]; then
-    if [ -d "$TOR_DIR/src/app" -a -d "$TOR_DIR/src/or" ]; then
+    if [ -d "$TOR_DIR/src/app" ] && [ -d "$TOR_DIR/src/or" ]; then
         $ECHO "$myname: \$TOR_DIR has a Tor 0.3.5 or later build directory, and a Tor 0.3.4 or earlier build directory"
         $ECHO "$myname: Please remove $TOR_DIR/src/app or $TOR_DIR/src/or, or set \$CHUTNEY_TOR"
         exit 1
@@ -231,30 +231,33 @@ if [ -d "$TOR_DIR" ]; then
 fi
 
 # make TOR_DIR and TOR_APP_DIR absolute
-if [ -d "$PWD/$TOR_DIR" -a -d "$PWD/$TOR_APP_DIR" -a \
-     -d "$PWD/$TOR_DIR/src/tools" ]; then
+if [ -d "$PWD/$TOR_DIR" ] && [ -d "$PWD/$TOR_APP_DIR" ] && \
+       [ -d "$PWD/$TOR_DIR/src/tools" ]; then
     export TOR_DIR="$PWD/$TOR_DIR"
     export TOR_APP_DIR="$PWD/$TOR_APP_DIR"
 fi
+
+TOOLS_DIR=$(dirname "$0")
 
 # mandatory: $CHUTNEY_PATH is the path to the chutney launch script
 # if it's not set:
 #  - if $PWD looks like a chutney directory, set it to $PWD, or
 #  - set it based on $TOR_DIR, expecting chutney to be next to tor, or
 #  - fail and tell the user how to clone the chutney repository
-if [ ! -d "$CHUTNEY_PATH" -o ! -x "$CHUTNEY_PATH/chutney" -o \
-     ! -f "$CHUTNEY_PATH/chutney" ]; then
-    if [ -x "$PWD/chutney" -a -f "$PWD/chutney" ]; then
+if [ ! -d "$CHUTNEY_PATH" ] || [ ! -x "$CHUTNEY_PATH/chutney" ] || \
+    [ ! -f "$CHUTNEY_PATH/chutney" ]; then
+    if [ -x "$PWD/chutney" ] && [ -f "$PWD/chutney" ]; then
         $ECHO "$myname: \$CHUTNEY_PATH not valid, trying \$PWD"
         export CHUTNEY_PATH="$PWD"
-    elif [ -d "`dirname \"$0\"`/.." -a \
-           -x "`dirname \"$0\"`/../chutney" -a \
-           -f "`dirname \"$0\"`/../chutney" ]; then
+    elif [ -d "$TOOLS_DIR/.." ] && \
+         [ -x "$TOOLS_DIR)/../chutney" ] && \
+         [ -f "$TOOLS_DIR/../chutney" ]; then
         $ECHO "$myname: \$CHUTNEY_PATH not valid, using this script's location"
-        export CHUTNEY_PATH="`dirname \"$0\"`/.."
-    elif [ -d "$TOR_DIR" -a -d "$TOR_DIR/../chutney" -a \
-           -x "$TOR_DIR/../chutney/chutney" -a \
-           -f "$TOR_DIR/../chutney/chutney" ]; then
+        export CHUTNEY_PATH="$TOOLS_DIR/.."
+    elif [ -d "$TOR_DIR" ] && \
+	 [ -d "$TOR_DIR/../chutney" ] && \
+         [ -x "$TOR_DIR/../chutney/chutney" ] && \
+	 [ -f "$TOR_DIR/../chutney/chutney" ]; then
         $ECHO "$myname: \$CHUTNEY_PATH not valid, trying \$TOR_DIR/../chutney"
         export CHUTNEY_PATH="$TOR_DIR/../chutney"
     else
@@ -269,7 +272,7 @@ if [ ! -d "$CHUTNEY_PATH" -o ! -x "$CHUTNEY_PATH/chutney" -o \
 fi
 
 # make chutney path absolute
-if [ -d "$PWD/$CHUTNEY_PATH" -a -x "$PWD/$CHUTNEY_PATH/chutney" ]; then
+if [ -d "$PWD/$CHUTNEY_PATH" ] && [ -x "$PWD/$CHUTNEY_PATH/chutney" ]; then
     export CHUTNEY_PATH="$PWD/$CHUTNEY_PATH"
 fi
 
@@ -291,7 +294,7 @@ if [ -d "$TOR_DIR" ]; then
 else
     if [ -x "$CHUTNEY_TOR" ]; then
         $ECHO "$myname: Assuming \$CHUTNEY_TOR is a path to a binary"
-    elif [ ! -z "$CHUTNEY_TOR" ]; then
+    elif [ -n "$CHUTNEY_TOR" ]; then
         $ECHO "$myname: Assuming \$CHUTNEY_TOR is a binary name in \$PATH"
     else
         $ECHO "$myname: Setting \$CHUTNEY_TOR to the standard binary name in \$PATH"
@@ -299,7 +302,7 @@ else
     fi
     if [ -x "$CHUTNEY_TOR_GENCERT" ]; then
         $ECHO "$myname: Assuming \$CHUTNEY_TOR_GENCERT is a path to a binary"
-    elif [ ! -z "$CHUTNEY_TOR_GENCERT" ]; then
+    elif [ -n "$CHUTNEY_TOR_GENCERT" ]; then
         $ECHO "$myname: Assuming \$CHUTNEY_TOR_GENCERT is a binary name in \$PATH"
     else
         $ECHO "$myname: Setting \$CHUTNEY_TOR_GENCERT to the standard binary name in \$PATH"
@@ -320,7 +323,7 @@ else
 fi
 
 # And finish up if we're doing a dry run
-if [ "$NETWORK_DRY_RUN" = true -o "$CHUTNEY_WARNINGS_ONLY" = true ]; then
+if [ "$NETWORK_DRY_RUN" = true ] || [ "$CHUTNEY_WARNINGS_ONLY" = true ]; then
     if [ "$CHUTNEY_WARNINGS_ONLY" = true ]; then
         "$WARNINGS"
     fi
