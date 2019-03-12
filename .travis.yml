@@ -11,12 +11,18 @@ matrix:
     ## Test macOS with its default python version, and work around an issue
     ## with language: python on Travis macOS
     ## We get the tor version in the homebrew cache on the macOS image
+    ## The current tor version in homebrew is on this page:
+    ## https://formulae.brew.sh/formula/tor
     - os: osx
       language: c
-      env: TOR_VERSION="cached-stable"
+      env: TOR_VERSION="stable-release"
     ## Test tor lts, stable, alpha, and nightly
-    ## lts and alpha versions need to be manually updated after tor releases
-    ## (alpha will revert to stable if the version in its URL is not updated)
+    ## Standard dpkg configs fall back to stable when newer
+    ## repositories are removed. But we want to fail, so we notice and
+    ## update the repositories.
+    ## TODO: check what happens when they fall back to 0.2.7 in xenial main
+    ## The current tor versions in Ubuntu are on this page:
+    ## https://packages.ubuntu.com/search?keywords=tor&searchon=names&exact=1
     - addons:
         apt:
           sources:
@@ -24,25 +30,23 @@ matrix:
               key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
           packages:
             - tor
-      env: TOR_VERSION="0.2.9"
+      env: TOR_VERSION="0.2.9-nightly"
     - addons:
         apt:
           sources:
-            - sourceline: 'deb https://deb.torproject.org/torproject.org xenial main'
+            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-0.3.5.x-xenial main'
               key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
-            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-experimental-0.3.5.x-xenial main'
           packages:
             - tor
-      env: TOR_VERSION="0.3.5"
+      env: TOR_VERSION="0.3.5-nightly"
     - addons:
         apt:
           sources:
-            - sourceline: 'deb https://deb.torproject.org/torproject.org xenial main'
-              key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
             - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-master-xenial main'
+              key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
           packages:
             - tor
-      env: TOR_VERSION="nightly"
+      env: TOR_VERSION="master-nightly"
     ## Test all supported python releases
     - python: "2.7"
     - python: "3.4"
@@ -66,9 +70,8 @@ matrix:
   #fast_finish: true
 
   ## These builds fail in Travis at the moment
-  allow_failures:
-    - env: TOR_VERSION="0.3.5"
-    - env: TOR_VERSION="nightly"
+  #allow_failures:
+  #  - env: TOR_VERSION="master-nightly"
 
 ## We don't need sudo. (The "apt:" stanza after this allows us to not need
 ## sudo; otherwise, we would need it for getting dependencies.)
@@ -86,7 +89,7 @@ dist: xenial
 ## This env var isn't used by the build, but it's useful for debugging
 ## It should be kept in sync with the Linux tor version below
 env:
-  - TOR_VERSION="stable"
+  - TOR_VERSION="stable-release"
 
 ## Download our dependencies
 addons:
