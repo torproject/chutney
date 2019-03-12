@@ -1,5 +1,9 @@
 language: python
 
+# The default python version on Travis is 2.7
+# But we add this line to show the python version in the Travis UI
+python: "2.7"
+
 os:
   - linux
   ## We add a single macOS build below
@@ -8,14 +12,17 @@ matrix:
   # include creates Linux, python 2.7, tor stable builds by default
   # the key(s) in each item override these defaults
   include:
-    ## Test macOS with its default python version, and work around an issue
-    ## with language: python on Travis macOS
+    ## Test macOS with its default python version, which is currently 2.7.
+    ## (But we don't show the version, because Travis might change it without
+    ## us noticing.)
+    ## Use language: c to work around an issue with language: python on macOS.
     ## We get the tor version in the homebrew cache on the macOS image
     ## The current tor version in homebrew is on this page:
     ## https://formulae.brew.sh/formula/tor
     - os: osx
       language: c
-      env: TOR_VERSION="stable-release"
+      python:
+      env: TOR="stable-release"
     ## Test tor lts, stable, alpha, and nightly
     ## Standard dpkg configs fall back to stable when newer
     ## repositories are removed. But we want to fail, so we notice and
@@ -30,7 +37,7 @@ matrix:
               key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
           packages:
             - tor
-      env: TOR_VERSION="0.2.9-nightly"
+      env: TOR="0.2.9-nightly"
     - addons:
         apt:
           sources:
@@ -38,7 +45,7 @@ matrix:
               key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
           packages:
             - tor
-      env: TOR_VERSION="0.3.5-nightly"
+      env: TOR="0.3.5-nightly"
     - addons:
         apt:
           sources:
@@ -46,7 +53,7 @@ matrix:
               key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
           packages:
             - tor
-      env: TOR_VERSION="master-nightly"
+      env: TOR="master-nightly"
     ## Test all supported python releases
     - python: "2.7"
     - python: "3.4"
@@ -71,7 +78,7 @@ matrix:
 
   ## These builds fail in Travis at the moment
   #allow_failures:
-  #  - env: TOR_VERSION="master-nightly"
+  #  - env: TOR="master-nightly"
 
 ## We don't need sudo. (The "apt:" stanza after this allows us to not need
 ## sudo; otherwise, we would need it for getting dependencies.)
@@ -89,7 +96,7 @@ dist: xenial
 ## This env var isn't used by the build, but it's useful for debugging
 ## It should be kept in sync with the Linux tor version below
 env:
-  - TOR_VERSION="stable-release"
+  - TOR="stable-release"
 
 ## Download our dependencies
 addons:
