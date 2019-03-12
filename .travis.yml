@@ -163,7 +163,7 @@ install:
   - tor --version
 
 script:
-  - tools/test-network.sh
+  - tools/test-network.sh --allow-failures 1
 
 after_failure:
   ## List the contents of net/nodes
