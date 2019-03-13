@@ -1199,6 +1199,7 @@ class Network(object):
 
         print("Bootstrap failed. Node status:")
         for c in controllers:
+            c.check(listRunning=False, listNonRunning=True)
             print(c.getLastBootstrapStatus())
 
         return False
