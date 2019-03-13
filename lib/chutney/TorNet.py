@@ -37,6 +37,22 @@ torrc_option_warn_count =  0
 # Get verbose tracebacks, so we can diagnose better.
 cgitb.enable(format="plain")
 
+def getenv_int(envvar, default):
+    """
+       Return the value of the environment variable 'envar' as an integer,
+       or 'default' if no such variable exists.
+
+       Raise ValueError if the environment variable is set, but not to
+       an integer.
+    """
+    # TODO: Use this function in more places.
+    strval = os.environ.get(envvar)
+    if strval is None:
+        return default
+    try:
+        return int(strval)
+    except ValueError:
+        raise ValueError("Invalid value for environment variable %s: expected an integer, but got %r"%(envvar,strval))
 
 def mkdir_p(d, mode=448):
     """Create directory 'd' and all of its parents as needed.  Unlike
@@ -801,6 +817,38 @@ class LocalNodeController(NodeController):
                     self._env['poll_launch_time_default']
             return False
 
+    def getLogfile(self, info=False):
+        """Return the expected path to the logfile for this instance."""
+        datadir = self._env['dir']
+        if info:
+            logname = "info.log"
+        else:
+            logname = "notice.log"
+        return os.path.join(datadir, logname)
+
+    def getLastBootstrapStatus(self):
+        """Look through the logs and return the last bootstrap message
+           received as a 3-tuple of percentage complete, keyword
+           (optional), and message.
+        """
+        logfname = self.getLogfile()
+        if not os.path.exists(logfname):
+            return (-200, "no_logfile", "There is no logfile yet.")
+        percent,keyword,message=-100,"no_message","No bootstrap messages yet."
+        with open(logfname, 'r') as f:
+            for line in f:
+                m = re.search(r'Bootstrapped (\d+)% (\([^\)]*\))?: (.*)', line)
+                if m:
+                    percent, keyword, message = m.groups()
+                    percent = int(percent)
+        return (percent, keyword, message)
+
+    def isBootstrapped(self):
+        """Return true iff the logfile says that this instance is
+           bootstrapped."""
+        pct, _, _ = self.getLastBootstrapStatus()
+        return pct == 100
+
 # XXX: document these options
 DEFAULTS = {
     'authority': False,
@@ -1130,6 +1178,30 @@ class Network(object):
     def hup(self):
         print("Sending SIGHUP to nodes")
         return all([n.getController().hup() for n in self._nodes])
+
+    def wait_for_bootstrap(self):
+        print("Waiting for nodes to bootstrap...")
+        limit = getenv_int("CHUTNEY_START_TIME", 20)
+        delay = 0.5
+        controllers = [n.getController() for n in self._nodes]
+        elapsed = 0.0
+        while elapsed < limit:
+            all_bootstrapped = True
+            for c in controllers:
+                if not c.isBootstrapped():
+                    all_bootstrapped = False
+                    break
+            if all_bootstrapped:
+                print("Everything bootstrapped after %s sec"%elapsed)
+                return True
+            time.sleep(delay)
+            elapsed += delay
+
+        print("Bootstrap failed. Node status:")
+        for c in controllers:
+            print(c.getLastBootstrapStatus())
+
+        return False
 
     def stop(self):
         controllers = [n.getController() for n in self._nodes]
