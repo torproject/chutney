@@ -837,7 +837,7 @@ class LocalNodeController(NodeController):
         percent,keyword,message=-100,"no_message","No bootstrap messages yet."
         with open(logfname, 'r') as f:
             for line in f:
-                m = re.search(r'Bootstrapped (\d+)% (\([^\)]*\))?: (.*)', line)
+                m = re.search(r'Bootstrapped (\d+)%( \([^\)]*\))?: (.*)', line)
                 if m:
                     percent, keyword, message = m.groups()
                     percent = int(percent)
