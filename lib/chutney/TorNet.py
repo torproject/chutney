@@ -647,6 +647,10 @@ class LocalNodeController(NodeController):
         NodeController.__init__(self, env)
         self._env = env
 
+    def getNick(self):
+        """Return the nickname for this node."""
+        return self._env['nick']
+
     def getPid(self):
         """Assuming that this node has its pidfile in ${dir}/pid, return
            the pid of the running process, or None if there is no pid in the
@@ -1200,7 +1204,7 @@ class Network(object):
         print("Bootstrap failed. Node status:")
         for c in controllers:
             c.check(listRunning=False, listNonRunning=True)
-            print(c.getLastBootstrapStatus())
+            print("{}: {}".format(c.getNick(), c.getLastBootstrapStatus()))
 
         return False
 
