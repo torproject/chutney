@@ -10,7 +10,8 @@ It is supposed to be a good tool for:
 Right now it only sorta does these things.
 
 You will need:
-  - Python 2.7 or later (Python 3 support is an ongoing work), and
+  - Python 2.7, or a supported Python 3,
+    - (we support Python versions that are still getting updates),
   - Tor binaries.
 
 Chutney checks for Tor binaries in this order:
@@ -33,6 +34,7 @@ Automated Setup, Verification, and Shutdown:
   (The script tries hard to find tor.)
   ./tools/test-network.sh --chutney-path <chutney-directory>
   (The script is pretty good at finding chutney.)
+  ./tools/test-network.sh --allow-failures <N>
 
 test-network.sh looks for some tor binaries (either in a nearby build
 directory or in your $PATH), configures a comprehensive tor test network,
@@ -42,6 +44,14 @@ itself. Relative paths are supported.
 You can modify its configuration using command-line arguments, or use the
 chutney environmental variables documented below:
 
+Verification Options:
+  # repeats bootstrap and verify
+  --allow-failures   CHUTNEY_ALLOW_FAILURES=N
+  # repeats verify
+  --rounds           CHUTNEY_ROUNDS=N
+  # makes multiple connections within verify
+  --connections      CHUTNEY_CONNECTIONS=N
+
 Timing Options:
   --start-time       CHUTNEY_START_TIME=N
   --bootstrap-time   CHUTNEY_BOOTSTRAP_TIME=N
@@ -49,9 +59,6 @@ Timing Options:
 
 Traffic Options:
   --data             CHUTNEY_DATA_BYTES=N
-  # connections are simultaneous, rounds are sequential
-  --connections      CHUTNEY_CONNECTIONS=N
-  --rounds           CHUTNEY_ROUNDS=N
   --hs-multi-client  CHUTNEY_HS_MULTI_CLIENT=N
 
 Address/DNS Options:
@@ -83,6 +90,7 @@ Standard Actions:
   ./chutney configure networks/basic
   ./chutney start networks/basic
   ./chutney status networks/basic
+  ./chutney wait_for_bootstrap networks/basic
   ./chutney verify networks/basic
   ./chutney hup networks/basic
   ./chutney stop networks/basic
@@ -127,15 +135,33 @@ Bandwidth File Tests:
   date +%s > /tmp/bwfile
   ./tools/test-network.sh --flavour bwfile
 
+Multiple Tests:
+
+  Chutney can allow a certain number of failed tests. You can either set
+  CHUTNEY_ALLOW_FAILURES or use an --allow-failures command-line option to
+  control this.  Chutney will then reattempt the test, from bootstrap
+  through shutdown, until either it succeeds, or until it has failed
+  $CHUTNEY_ALLOW_FAILURES+1 times. The default value is zero, so the default
+  behavior will not change.
+
+  You can also use CHUTNEY_ROUNDS=N to run multiple verification rounds, or
+  CHUTNEY_CONNECTIONS=N to make multiple connections within each verification
+  round. Any round or connection failure will fail the current test.
+
 Waiting for the network:
 
   The tools/test-network.sh script waits CHUTNEY_START_TIME seconds
-  (default: 20) before calling chutney verify, because that's the minimum
+  (default: 40) before calling chutney verify, because that's the minimum
   amount of time it takes to bootstrap a consensus containing relays.
-  (It takes 5-10 seconds for the authorities to create the first consensus,
-  then 10 seconds for relays to bootstrap, submit their descriptors, and be
+  (It takes 20 seconds for the authorities to create the first consensus,
+  then 20 seconds for relays to bootstrap, submit their descriptors, and be
   included in the next consensus.) If CHUTNEY_START_TIME is negative, the
   script leaves the network running, and exits immediately (without verifying).
+
+  chutney also has an experimental wait_for_bootstrap command. It waits for
+  up to CHUTNEY_START_TIME seconds, checking whether the logged bootstrapped
+  status for every node is 100%. If it is, great: it succeeds. If not, it
+  dumps the bootstrap statuses and exits.
 
   Commands like "chutney verify" start immediately, and keep trying for
   CHUTNEY_BOOTSTRAP_TIME seconds (default: 60). If it hasn't been
@@ -191,10 +217,12 @@ Using DNS:
    Use --dns-conf resolv.conf (relative paths work).
 
 The configuration files:
+
   networks/basic holds the configuration for the network you're configuring
   above.  It refers to some torrc template files in torrc_templates/.
 
 The working files:
+
   chutney sticks its working files, including all data directories, log
   files, etc, in ./net/.  Each tor instance gets a subdirectory of net/nodes.
 
@@ -202,6 +230,7 @@ The working files:
   environment variable.
 
 Test scripts:
+
   The test scripts are stored in the "scripts/chutney_tests" directory. These
   Python files must define a "run_test(network)" function. Files starting with
   an underscore ("_") are ignored.
