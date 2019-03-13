@@ -150,18 +150,23 @@ Multiple Tests:
 
 Waiting for the network:
 
-  The tools/test-network.sh script waits CHUTNEY_START_TIME seconds
-  (default: 40) before calling chutney verify, because that's the minimum
+  The tools/test-network.sh script waits for all the tor nodes to bootstrap
+  before calling chutney verify. If CHUTNEY_START_TIME is negative, the
+  script leaves the network running, and exits immediately (without waiting
+  for bootstrap, or verifying).
+
+  The wait_for_bootstrap command waits for up to CHUTNEY_START_TIME seconds,
+  checking whether the logged bootstrapped status for every node is 100%. If
+  it is, great: it succeeds. If not, it dumps the bootstrap statuses and
+  exits. test-network.sh does not exit immediately if a tor node fails to
+  bootstrap. Instead, it attempts to verify. We'll add an option to fail on
+  tor bootstrap failure in #20473.
+
+  The default CHUTNEY_START_TIME is 40 seconds, because that's the minimum
   amount of time it takes to bootstrap a consensus containing relays.
   (It takes 20 seconds for the authorities to create the first consensus,
   then 20 seconds for relays to bootstrap, submit their descriptors, and be
-  included in the next consensus.) If CHUTNEY_START_TIME is negative, the
-  script leaves the network running, and exits immediately (without verifying).
-
-  chutney also has an experimental wait_for_bootstrap command. It waits for
-  up to CHUTNEY_START_TIME seconds, checking whether the logged bootstrapped
-  status for every node is 100%. If it is, great: it succeeds. If not, it
-  dumps the bootstrap statuses and exits.
+  included in the next consensus.)
 
   Commands like "chutney verify" start immediately, and keep trying for
   CHUTNEY_BOOTSTRAP_TIME seconds (default: 60). If it hasn't been
