@@ -1190,22 +1190,28 @@ class Network(object):
         delay = 0.5
         controllers = [n.getController() for n in self._nodes]
         elapsed = 0.0
-        while elapsed < limit:
+        most_recent_status = [ None ] * len(controllers)
+        while True:
             all_bootstrapped = True
+            most_recent_status = [ ]
             for c in controllers:
-                if not c.isBootstrapped():
+                pct, kwd, msg = c.getLastBootstrapStatus()
+                most_recent_status.append((pct, kwd, msg))
+                if pct != 100:
                     all_bootstrapped = False
-                    break
+
             if all_bootstrapped:
                 print("Everything bootstrapped after %s sec"%elapsed)
                 return True
+            if elapsed >= limit:
+                break
             time.sleep(delay)
             elapsed += delay
 
         print("Bootstrap failed. Node status:")
-        for c in controllers:
+        for c, status in zip(controllers,most_recent_status):
             c.check(listRunning=False, listNonRunning=True)
-            print("{}: {}".format(c.getNick(), c.getLastBootstrapStatus()))
+            print("{}: {}".format(c.getNick(), status))
 
         return False
 
