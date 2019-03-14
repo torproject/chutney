@@ -1186,7 +1186,7 @@ class Network(object):
 
     def wait_for_bootstrap(self):
         print("Waiting for nodes to bootstrap...")
-        limit = getenv_int("CHUTNEY_START_TIME", 20)
+        limit = getenv_int("CHUTNEY_START_TIME", 60)
         delay = 0.5
         controllers = [n.getController() for n in self._nodes]
         elapsed = 0.0

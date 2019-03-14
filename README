@@ -130,7 +130,7 @@ Bandwidth File Tests:
 Waiting for the network:
 
   The tools/test-network.sh script waits CHUTNEY_START_TIME seconds
-  (default: 20) before calling chutney verify, because that's the minimum
+  (default: 60) before calling chutney verify, because that's the minimum
   amount of time it takes to bootstrap a consensus containing relays.
   (It takes 5-10 seconds for the authorities to create the first consensus,
   then 10 seconds for relays to bootstrap, submit their descriptors, and be
