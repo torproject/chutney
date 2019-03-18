@@ -8,11 +8,13 @@ if ! "$CHUTNEY_PATH/tools/bootstrap-network.sh" "$NETWORK_FLAVOUR"; then
     exit 1
 fi
 
-# chutney starts verifying after 20 seconds, keeps on trying for 60 seconds,
-# and then stops immediately (by default)
+# chutney starts verifying after CHUTNEY_START_TIME seconds,
+# keeps on trying for CHUTNEY_BOOTSTRAP_TIME seconds,
+# and then stops after CHUTNEY_STOP_TIME seconds.
 # Even the fastest chutney networks take 5-10 seconds for their first consensus
 # and then 10 seconds after that for relays to bootstrap and upload descriptors
-export CHUTNEY_START_TIME=${CHUTNEY_START_TIME:-40}
+# But chutney defaults to running a bit more slowly, so it is more reliable.
+export CHUTNEY_START_TIME=${CHUTNEY_START_TIME:-60}
 export CHUTNEY_BOOTSTRAP_TIME=${CHUTNEY_BOOTSTRAP_TIME:-60}
 export CHUTNEY_STOP_TIME=${CHUTNEY_STOP_TIME:-0}
 
