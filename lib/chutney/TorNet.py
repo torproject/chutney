@@ -889,22 +889,22 @@ DEFAULTS = {
     # Set low so that we don't interfere with the voting interval
     'poll_launch_time_default': 0.1,
     # the number of bytes of random data we send on each connection
-    'data_bytes': int(os.environ.get('CHUTNEY_DATA_BYTES', 10 * 1024)),
+    'data_bytes': getenv_int('CHUTNEY_DATA_BYTES', 10 * 1024),
     # the number of times each client will connect
-    'connection_count': int(os.environ.get('CHUTNEY_CONNECTIONS', 1)),
+    'connection_count': getenv_int('CHUTNEY_CONNECTIONS', 1),
     # Do we want every client to connect to every HS, or one client
     # to connect to each HS?
     # (Clients choose an exit at random, so this doesn't apply to exits.)
-    'hs_multi_client': int(os.environ.get('CHUTNEY_HS_MULTI_CLIENT', 0)),
+    'hs_multi_client': getenv_int('CHUTNEY_HS_MULTI_CLIENT', 0),
     # How long should verify (and similar commands) wait for a successful
     # outcome? (seconds)
     # We check BOOTSTRAP_TIME for compatibility with old versions of
     # test-network.sh
-    'bootstrap_time': int(os.environ.get('CHUTNEY_BOOTSTRAP_TIME',
-                                         os.environ.get('BOOTSTRAP_TIME',
-                                                        60))),
+    'bootstrap_time': getenv_int('CHUTNEY_BOOTSTRAP_TIME',
+                                 getenv_int('BOOTSTRAP_TIME',
+                                            60)),
     # the PID of the controlling script (for __OwningControllerProcess)
-    'controlling_pid': (int(os.environ.get('CHUTNEY_CONTROLLING_PID', 0))
+    'controlling_pid': (getenv_int('CHUTNEY_CONTROLLING_PID', None)
                         if 'CHUTNEY_CONTROLLING_PID' in os.environ
                         else None),
     # a DNS config file (for ServerDNSResolvConfFile)
@@ -1020,9 +1020,9 @@ class TorEnviron(chutney.Templating.Environ):
         ocp_line = ('__OwningControllerProcess %d' % (cpid))
         # if we want to leave the network running, or controlling_pid is 1
         # (or invalid)
-        if (os.environ.get('CHUTNEY_START_TIME', 0) < 0 or
-            os.environ.get('CHUTNEY_BOOTSTRAP_TIME', 0) < 0 or
-            os.environ.get('CHUTNEY_STOP_TIME', 0) < 0 or
+        if (getenv_int('CHUTNEY_START_TIME', 0) < 0 or
+            getenv_int('CHUTNEY_BOOTSTRAP_TIME', 0) < 0 or
+            getenv_int('CHUTNEY_STOP_TIME', 0) < 0 or
             cpid <= 1):
             return '#' + ocp_line
         else:
