@@ -904,9 +904,7 @@ DEFAULTS = {
                                  getenv_int('BOOTSTRAP_TIME',
                                             60)),
     # the PID of the controlling script (for __OwningControllerProcess)
-    'controlling_pid': (getenv_int('CHUTNEY_CONTROLLING_PID', None)
-                        if 'CHUTNEY_CONTROLLING_PID' in os.environ
-                        else None),
+    'controlling_pid': getenv_int('CHUTNEY_CONTROLLING_PID', 0),
     # a DNS config file (for ServerDNSResolvConfFile)
     'dns_conf': (os.environ.get('CHUTNEY_DNS_CONF', '/etc/resolv.conf')
                         if 'CHUTNEY_DNS_CONF' in os.environ
@@ -1015,8 +1013,6 @@ class TorEnviron(chutney.Templating.Environ):
 
     def _get_owning_controller_process(self, my):
         cpid = my['controlling_pid']
-        if cpid is None:
-            cpid = 0
         ocp_line = ('__OwningControllerProcess %d' % (cpid))
         # if we want to leave the network running, or controlling_pid is 1
         # (or invalid)
