@@ -11,7 +11,7 @@ Right now it only sorta does these things.
 
 You will need:
   - Python 2.7, or a supported Python 3,
-    - (we support Python versions that are still getting updates),
+    - (we support Python versions that are still getting updates), and
   - Tor binaries.
 
 Chutney checks for Tor binaries in this order:
