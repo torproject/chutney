@@ -99,14 +99,17 @@ Bandwidth Tests:
   ./chutney configure networks/basic-min
   ./chutney start networks/basic-min
   ./chutney status networks/basic-min
-  CHUTNEY_DATA_BYTES=104857600 ./chutney verify networks/basic-min
   # Send 100MB of data per client connection
-  # verify produces performance figures for:
-  # Single Stream Bandwidth: the speed of the slowest stream, end-to-end
-  # Overall tor Bandwidth: the sum of the bandwidth across each tor instance
-  # This approximates the CPU-bound tor performance on the current machine,
-  # assuming everything is multithreaded and network performance is infinite.
+  CHUTNEY_DATA_BYTES=104857600 ./chutney verify networks/basic-min
   ./chutney stop networks/basic-min
+
+If chutney sends at least 5 MB of data, and it takes at least one second,
+verify produces performance figures for:
+ - Single Stream Bandwidth: the speed of the slowest stream, end-to-end
+ - Overall tor Bandwidth: the sum of the bandwidth across each tor instance
+The overall bandwidth approximates the CPU-bound tor performance on the
+current machine, assuming tor, chutney, and the OS are multithreaded, and
+network performance is infinite.
 
 Connection Tests:
   ./chutney configure networks/basic-025
