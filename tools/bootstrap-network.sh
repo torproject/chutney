@@ -50,7 +50,7 @@ export CHUTNEY_NETWORK="$CHUTNEY_PATH/networks/$NETWORK_FLAVOUR"
 
 "$CHUTNEY" stop "$CHUTNEY_NETWORK"
 
-echo "$myname: bootstrapping network: $flavour"
+echo "$myname: bootstrapping network: $NETWORK_FLAVOUR"
 "$CHUTNEY" configure "$CHUTNEY_NETWORK"
 
 "$CHUTNEY" start "$CHUTNEY_NETWORK"
