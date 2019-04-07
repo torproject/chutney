@@ -41,8 +41,10 @@ myname=$(basename "$0")
     { echo "$myname: missing chutney directory: $CHUTNEY_PATH"; exit 1; }
 [ -x "$CHUTNEY" ] || \
     { echo "$myname: missing chutney: $CHUTNEY"; exit 1; }
-flavour=basic; [ -n "$1" ] && { flavour=$1; shift; }
 
+# Set the variables for the chutney network flavour
+export NETWORK_FLAVOUR=${NETWORK_FLAVOUR:-"bridges+hs-v2"}
+[ -n "$1" ] && { NETWORK_FLAVOUR=$1; shift; }
 export CHUTNEY_NETWORK="$CHUTNEY_PATH/networks/$NETWORK_FLAVOUR"
 
 [ -e "$CHUTNEY_NETWORK" ] || \
