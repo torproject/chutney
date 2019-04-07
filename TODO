@@ -19,13 +19,6 @@
 
 - Pipe stdout to a file, not to nowhere with "quiet"
 
-- Log stuff.
-
 - Have launcher check for configuration
 
 - Resolve XXXX comments
-
-- Document everything
-
-- Start writing passive "tests" like "did it bootstrap?" or "any
-  warnings in the logs?", etc
