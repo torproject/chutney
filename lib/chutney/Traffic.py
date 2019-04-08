@@ -430,7 +430,7 @@ class TrafficTester():
 
 def main():
     """Test the TrafficTester by sending and receiving some data."""
-    DATA = "a foo is a bar" * 1000
+    DATA = b"a foo is a bar" * 1000
     bind_to = ('localhost', int(sys.argv[1]))
 
     tt = TrafficTester(bind_to, DATA)
