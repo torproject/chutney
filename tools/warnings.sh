@@ -11,12 +11,13 @@
 # CHUTNEY_WARNINGS_IGNORE_EXPECTED: set to "true" to filter expected warnings
 # CHUTNEY_WARNINGS_SUMMARY: set to "true" to merge warnings from all instances
 
-if [ ! -d "$CHUTNEY_PATH" -o ! -x "$CHUTNEY_PATH/chutney" ]; then
+if [ ! -d "$CHUTNEY_PATH" ] || [ ! -x "$CHUTNEY_PATH/chutney" ]; then
     # looks like a broken path: use the path to this tool instead
-    TOOLS_PATH=`dirname "$0"`
-    export CHUTNEY_PATH=`dirname "$TOOLS_PATH"`
+    TOOLS_PATH=$(dirname "$0")
+    CHUTNEY_PATH=$(dirname "$TOOLS_PATH")
+    export CHUTNEY_PATH
 fi
-if [ -d "$PWD/$CHUTNEY_PATH" -a -x "$PWD/$CHUTNEY_PATH/chutney" ]; then
+if [ -d "$PWD/$CHUTNEY_PATH" ] && [ -x "$PWD/$CHUTNEY_PATH/chutney" ]; then
     # looks like a relative path: make chutney path absolute
     export CHUTNEY_PATH="$PWD/$CHUTNEY_PATH"
 fi
@@ -33,42 +34,45 @@ fi
 
 show_warnings() {
     # Work out the file and filter settings
+    LOGS=$(mktemp)
     if [ "$CHUTNEY_WARNINGS_SUMMARY" = true ]; then
-        FILE="$1/*/$LOG_FILE"
+        cat "$1"/*/"$LOG_FILE" > "$LOGS"
     else
-        FILE="$1/$LOG_FILE"
+        cat "$1/$LOG_FILE" > "$LOGS"
     fi
-    if [ "$CHUTNEY_WARNINGS_IGNORE_EXPECTED" = true -a \
-        -e "$IGNORE_FILE" ]; then
-        CAT="grep -v -f"
+    FILTERED_LOGS=$(mktemp)
+    if [ "$CHUTNEY_WARNINGS_IGNORE_EXPECTED" = true ] && \
+           [ -e "$IGNORE_FILE" ]; then
+        grep -v -f "$IGNORE_FILE" "$LOGS" | $SED_E "$FILTER" > "$FILTERED_LOGS"
     else
-        CAT=cat
+        $SED_E "$FILTER" "$LOGS" > "$FILTERED_LOGS"
         IGNORE_FILE=
     fi
     # Silence any messages if we are in summary mode, and there are no warnings
     # must be kept in sync with the filter commands below
-    if [ `$CAT $IGNORE_FILE $FILE | $SED_E "$FILTER" | wc -c` -eq 0 -a \
-        "$CHUTNEY_WARNINGS_SUMMARY" = true ]; then
-        ECHO_Q=true
-        ECHO_A=true
+    if [ "$CHUTNEY_WARNINGS_SUMMARY" = true ] && \
+       [ "$(wc -c < "$FILTERED_LOGS")" -eq 0 ]; \
+       then
+        ECHO_Q="true"
+        ECHO_A="true"
      else
         # if there is output, always echo the detail message
-        ECHO_A=echo
+        ECHO_A="echo"
     fi
     # Give context to the warnings we're about to display
     if [ "$CHUTNEY_WARNINGS_SUMMARY" = true ]; then
-        $ECHO_Q "${GREEN}Summary: `basename $1`${NC}"
+        $ECHO_Q "${GREEN}Summary: $(basename "$1")${NC}"
     else
-        $ECHO_Q "${GREEN}Node: `basename $1`${NC}"
+        $ECHO_Q "${GREEN}Node: $(basename "$1")${NC}"
     fi
-    if [ "$CHUTNEY_WARNINGS_IGNORE_EXPECTED" = true -a \
-        -e "$IGNORE_FILE" ]; then
-        PERMANENT_DIR=`readlink -n "$1" || echo "$1"`
+    if [ "$CHUTNEY_WARNINGS_IGNORE_EXPECTED" = true ] && \
+       [ -e "$IGNORE_FILE" ]; then
+        PERMANENT_DIR=$(readlink -n "$1" || echo "$1")
         $ECHO_A "${GREEN}Detail: chutney/tools/warnings.sh $PERMANENT_DIR${NC}"
     fi
     # Display the warnings, after filtering and counting occurrences
     # must be kept in sync with the filter commands above
-    $CAT $IGNORE_FILE $FILE | $SED_E "$FILTER" | sort | uniq -c | \
+    sort "$FILTERED_LOGS" | uniq -c | \
     sed -e 's/^\s*//' -e "s/ *\([0-9][0-9]*\) *\(.*\)/${YELLOW}Warning:${NC} \2${YELLOW} Number: \1${NC}/"
     if [ "$CHUTNEY_WARNINGS_SUMMARY" != true ]; then
         $ECHO_Q ""
@@ -86,7 +90,7 @@ if [ -t 1 ]; then
     YELLOW=$(tput setaf 3)
     GREEN=$(tput setaf 2)
 fi
-CHUTNEY="$CHUTNEY_PATH/chutney"
+
 NAME=$(basename "$0")
 DEST="$CHUTNEY_DATA_DIR/nodes"
 LOG_FILE=info.log
