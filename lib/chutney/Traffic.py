@@ -431,11 +431,11 @@ class TrafficTester():
 def main():
     """Test the TrafficTester by sending and receiving some data."""
     DATA = "a foo is a bar" * 1000
-    proxy = ('localhost', 9008)
     bind_to = ('localhost', int(sys.argv[1]))
 
     tt = TrafficTester(bind_to, DATA)
-    tt.add(Source(tt, bind_to, DATA, proxy))
+    # Don't use a proxy for self-testing, so that we avoid tor entirely
+    tt.add(Source(tt, bind_to, DATA))
     success = tt.run()
 
     if success:
