@@ -7,12 +7,13 @@
 # Examples: tools/hsaddress.sh
 #           tools/hsaddress.sh 025h
 
-if [ ! -d "$CHUTNEY_PATH" -o ! -x "$CHUTNEY_PATH/chutney" ]; then
+if [ ! -d "$CHUTNEY_PATH" ] || [ ! -x "$CHUTNEY_PATH/chutney" ]; then
     # looks like a broken path: use the path to this tool instead
-    TOOLS_PATH=`dirname "$0"`
-    export CHUTNEY_PATH=`dirname "$TOOLS_PATH"`
+    TOOLS_PATH=$(dirname "$0")
+    CHUTNEY_PATH=$(dirname "$TOOLS_PATH")
+    export CHUTNEY_PATH
 fi
-if [ -d "$PWD/$CHUTNEY_PATH" -a -x "$PWD/$CHUTNEY_PATH/chutney" ]; then
+if [ -d "$PWD/$CHUTNEY_PATH" ] && [ -x "$PWD/$CHUTNEY_PATH/chutney" ]; then
     # looks like a relative path: make chutney path absolute
     export CHUTNEY_PATH="$PWD/$CHUTNEY_PATH"
 fi
@@ -48,7 +49,7 @@ then
     do
         FILE="${dir}/$TARGET"
         [ -e "$FILE" ] || continue
-        echo -n "Node `basename ${dir}`: "
+        echo "Node $(basename "$dir"): " | tr -d "\n"
         show_address "$FILE"
     done
 elif [ $# -eq 1 ];
