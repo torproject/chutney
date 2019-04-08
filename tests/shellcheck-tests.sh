@@ -5,6 +5,8 @@ set -e
 # Verbose mode
 set -v
 
+# SC1117 was disabled after 0.5, because it was too pedantic
+EXCLUSIONS="--exclude=SC1117"
 
 # Output is prefixed with the name of the script
 myname=$(basename "$0")
@@ -17,7 +19,8 @@ echo "$myname: changing to chutney directory"
 cd "$CHUTNEY_DIR"
 
 
-echo "$myname: running shellcheck tests"
+echo "$myname: running shellcheck tests with $EXCLUSIONS"
 
-shellcheck chutney
-find . -name "*.sh" -exec shellcheck {} +
+shellcheck "$EXCLUSIONS" chutney
+
+find . -name "*.sh" -exec shellcheck "$EXCLUSIONS" {} +
