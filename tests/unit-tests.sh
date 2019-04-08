@@ -26,7 +26,7 @@ test -n "$LOG_FILE"
 unset CHUTNEY_DEBUG
 export CHUTNEY_DEBUG
 lib/chutney/Debug.py | tee "$LOG_FILE"
-LOG_FILE_LINES=$(wc -l "$LOG_FILE" | tr -s " " | cut -d " " -f2)
+LOG_FILE_LINES=$(wc -l "$LOG_FILE" | sed -e "s/[^0-9]*\([0-9]*\).*/\1/")
 test "$LOG_FILE_LINES" -eq 1
 
 LOG_FILE=$(mktemp)
@@ -35,7 +35,7 @@ test -n "$LOG_FILE"
 
 export CHUTNEY_DEBUG=1
 lib/chutney/Debug.py | tee "$LOG_FILE"
-LOG_FILE_LINES=$(wc -l "$LOG_FILE" | tr -s " " | cut -d " " -f2)
+LOG_FILE_LINES=$(wc -l "$LOG_FILE" | sed -e "s/[^0-9]*\([0-9]*\).*/\1/")
 test "$LOG_FILE_LINES" -eq 2
 
 unset CHUTNEY_DEBUG
@@ -68,9 +68,9 @@ PYTHONPATH=$PYTHONPATH:lib lib/chutney/Traffic.py 9999 | tee "$LOG_FILE"
 
 # Traffic.py produces output with a single newline. But we don't want to get
 # too picky about the details: allow an extra line and a few extra chars.
-LOG_FILE_LINES=$(wc -l "$LOG_FILE" | tr -s " " | cut -d " " -f2)
+LOG_FILE_LINES=$(wc -l "$LOG_FILE" | sed -e "s/[^0-9]*\([0-9]*\).*/\1/")
 test "$LOG_FILE_LINES" -le 2
-LOG_FILE_CHARS=$(wc -c "$LOG_FILE" | tr -s " " | cut -d " " -f2)
+LOG_FILE_CHARS=$(wc -c "$LOG_FILE" | sed -e "s/[^0-9]*\([0-9]*\).*/\1/")
 test "$LOG_FILE_CHARS" -le 4
 
 
