@@ -154,7 +154,7 @@ Multiple Tests:
 Waiting for the network:
 
   The tools/test-network.sh script uses the chutney wait_for_bootstrap
-  command to wait for up to CHUTNEY_START_TIME seconds (default: 60), checking
+  command to wait for up to CHUTNEY_START_TIME seconds (default: 120), checking
   whether the logged bootstrapped status for every node is 100%. It it is,
   great: it succeeds. If not, it dumps the bootstrap statuses and exits.
   test-network.sh does not exit immediately if a tor node fails to bootstrap.
