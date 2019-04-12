@@ -163,6 +163,7 @@ install:
   - tor --version
 
 script:
+  - tests/unit-tests.sh
   - tools/test-network.sh --allow-failures 1
 
 after_failure:
