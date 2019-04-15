@@ -6,7 +6,7 @@ python: "2.7"
 
 os:
   - linux
-  ## We add a single macOS build below
+  ## We also use macOS for some networks
 
 matrix:
   # include creates Linux, python 2.7, tor stable builds by default
@@ -16,26 +16,39 @@ matrix:
     ## Let's just use the 0.2.9 names to start with
     ## TODO: use the 0.3.4+ names and networks
     ## TODO: work out the tor version/OS/python version matrix
+    ##
+    ## We need to use macOS to test IPv6 networks, because Travis Linux doesn't
+    ## support IPv6. But macOS is tricky:
+    ##   - We use the default python version on macOS, which is currently 2.7.
+    ##     (But we don't show the version, because Travis might change it
+    ##     without us noticing.)
+    ##   - We use language: c, because language: python fails on Travis macOS.
+    ##   - We get the tor version in the homebrew cache on the macOS image.
+    ##     The latest tor version in homebrew is on this page:
+    ##       https://formulae.brew.sh/formula/tor
+    ##     The Travis version might be slightly older.
     - env: NETWORK_FLAVOUR="basic-min"
     - env: NETWORK_FLAVOUR="bridges-min"
     - env: NETWORK_FLAVOUR="hs-min"
     - env: NETWORK_FLAVOUR="single-onion"
     - env: NETWORK_FLAVOUR="bridges+ipv6-min"
-    - env: NETWORK_FLAVOUR="ipv6-exit-min"
-    - env: NETWORK_FLAVOUR="hs-ipv6"
-    - env: NETWORK_FLAVOUR="single-onion-ipv6"
-
-    ## Test macOS with its default python version, which is currently 2.7.
-    ## (But we don't show the version, because Travis might change it without
-    ## us noticing.)
-    ## Use language: c to work around an issue with language: python on macOS.
-    ## We get the tor version in the homebrew cache on the macOS image
-    ## The current tor version in homebrew is on this page:
-    ## https://formulae.brew.sh/formula/tor
-    - os: osx
+           TOR="stable-release"
+      os: osx
       language: c
       python:
-      env: TOR="stable-release"
+    ## The IPv6 exit test doesn't actually require IPv6, see #30182.
+    ## But we'll keep this test, because it does test IPv6 exit config.
+    - env: NETWORK_FLAVOUR="ipv6-exit-min"
+    - env: NETWORK_FLAVOUR="hs-ipv6"
+      TOR="stable-release"
+      os: osx
+      language: c
+      python:
+   - env: NETWORK_FLAVOUR="single-onion-ipv6"
+      TOR="stable-release"
+      os: osx
+      language: c
+      python:
 
     ## Test all supported and available tor versions on Linux
     ## If the deb.torproject.org repositories are removed, we will fall back to
