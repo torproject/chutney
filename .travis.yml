@@ -9,7 +9,8 @@ os:
   ## We also use macOS for some networks
 
 matrix:
-  # include creates Linux, python 2.7, tor stable builds by default
+  # include creates Linux, python 2.7, tor master builds by default
+  # we use tor master to catch tor issues before stable releases
   # the key(s) in each item override these defaults
   include:
     ## Test different network flavours
@@ -68,8 +69,17 @@ matrix:
             - shellcheck
             - tor
       env: TOR="0.3.4-nightly"
-    ## The current stable release is listed at the end of the file, because
-    ## it is the default for other build variants
+    ## The current stable release is 0.3.5, so we don't have a separate
+    ## 0.3.5-stable job
+    - addons:
+        apt:
+          sources:
+            - sourceline: 'deb https://deb.torproject.org/torproject.org xenial main'
+              key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
+          packages:
+            - shellcheck
+            - tor
+      env: TOR="stable-release"
     - addons:
         apt:
           sources:
@@ -89,15 +99,6 @@ matrix:
             - shellcheck
             - tor
       env: TOR="0.4.0-nightly"
-    - addons:
-        apt:
-          sources:
-            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-master-xenial main'
-              key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
-          packages:
-            - shellcheck
-            - tor
-      env: TOR="master-nightly"
 
     ## Test all supported python releases
     ## Pre-installed in Travis xenial:
@@ -158,16 +159,14 @@ dist: xenial
 ## We use the basic-min network by default, to reduce load and increase
 ## reliability
 env:
-  - TOR="stable-release" NETWORK_FLAVOUR="basic-min"
+  - TOR="master-nightly" NETWORK_FLAVOUR="basic-min"
 
 ## Download our dependencies
 addons:
   ## (Linux only)
   apt:
     sources:
-      ## Xenial has Tor 0.2.7, so we need a newer version of Tor from the
-      ## torproject repositories, and the torproject key from deb.tpo
-      - sourceline: 'deb https://deb.torproject.org/torproject.org xenial main'
+      - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-master-xenial main'
         key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
     packages:
       - shellcheck
