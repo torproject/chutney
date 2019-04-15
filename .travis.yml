@@ -14,7 +14,7 @@ matrix:
   # the key(s) in each item override these defaults
   include:
     ## Test different network flavours
-    ## We're using the 0.2.9 networks from tor's "make test-network-all"
+    ## We're using the networks from tor master's "make test-network-all"
     ##
     ## We need to use macOS to test IPv6 networks, because Travis Linux doesn't
     ## support IPv6. But macOS is tricky:
@@ -27,8 +27,9 @@ matrix:
     ##       https://formulae.brew.sh/formula/tor
     ##     The Travis version might be slightly older.
     - env: NETWORK_FLAVOUR="bridges-min"
-    - env: NETWORK_FLAVOUR="hs-min"
-    - env: NETWORK_FLAVOUR="single-onion"
+    - env: NETWORK_FLAVOUR="hs-v2-min"
+    - env: NETWORK_FLAVOUR="hs-v3-min"
+    - env: NETWORK_FLAVOUR="single-onion-v23"
     - env: NETWORK_FLAVOUR="bridges+ipv6-min"
       os: osx
       language: c
@@ -36,11 +37,11 @@ matrix:
     ## The IPv6 exit test doesn't actually require IPv6, see #30182.
     ## But we'll keep this test, because it does test IPv6 exit config.
     - env: NETWORK_FLAVOUR="ipv6-exit-min"
-    - env: NETWORK_FLAVOUR="hs-ipv6"
+    - env: NETWORK_FLAVOUR="hs-v23-ipv6-md"
       os: osx
       language: c
       python:
-    - env: NETWORK_FLAVOUR="single-onion-ipv6"
+    - env: NETWORK_FLAVOUR="single-onion-ipv6-md"
       os: osx
       language: c
       python:
