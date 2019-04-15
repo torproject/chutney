@@ -25,7 +25,6 @@ matrix:
     ##     The latest tor version in homebrew is on this page:
     ##       https://formulae.brew.sh/formula/tor
     ##     The Travis version might be slightly older.
-    - env: NETWORK_FLAVOUR="basic-min"
     - env: NETWORK_FLAVOUR="bridges-min"
     - env: NETWORK_FLAVOUR="hs-min"
     - env: NETWORK_FLAVOUR="single-onion"
@@ -161,10 +160,11 @@ dist: xenial
 ## Default is Xcode 9.4 on macOS 10.13 as of August 2018
 #osx_image: xcode9.4
 
-## This env var isn't used by the build, but it's useful for debugging
-## It should be kept in sync with the Linux tor version below
+## The TOR env var should be kept in sync with the Linux tor version below
+## We use the basic-min network by default, to reduce load and increase
+## reliability
 env:
-  - TOR="stable-release"
+  - TOR="stable-release" NETWORK_FLAVOUR="basic-min"
 
 ## Download our dependencies
 addons:
