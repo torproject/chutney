@@ -12,6 +12,19 @@ matrix:
   # include creates Linux, python 2.7, tor stable builds by default
   # the key(s) in each item override these defaults
   include:
+    ## Test different network flavours
+    ## Let's just use the 0.2.9 names to start with
+    ## TODO: use the 0.3.4+ names and networks
+    ## TODO: work out the tor version/OS/python version matrix
+    - env: NETWORK_FLAVOUR="basic-min"
+    - env: NETWORK_FLAVOUR="bridges-min"
+    - env: NETWORK_FLAVOUR="hs-min"
+    - env: NETWORK_FLAVOUR="single-onion"
+    - env: NETWORK_FLAVOUR="bridges+ipv6-min"
+    - env: NETWORK_FLAVOUR="ipv6-exit-min"
+    - env: NETWORK_FLAVOUR="hs-ipv6"
+    - env: NETWORK_FLAVOUR="single-onion-ipv6"
+
     ## Test macOS with its default python version, which is currently 2.7.
     ## (But we don't show the version, because Travis might change it without
     ## us noticing.)
@@ -23,6 +36,7 @@ matrix:
       language: c
       python:
       env: TOR="stable-release"
+
     ## Test all supported and available tor versions on Linux
     ## If the deb.torproject.org repositories are removed, we will fall back to
     ## Ubuntu security's tor version (currently 0.2.9.14). We might want to
@@ -77,6 +91,7 @@ matrix:
             - shellcheck
             - tor
       env: TOR="master-nightly"
+
     ## Test all supported python releases
     ## Pre-installed in Travis xenial:
     ## https://docs.travis-ci.com/user/reference/xenial/#python-support
@@ -171,9 +186,23 @@ install:
   - tor --version
 
 script:
+  ## Basic tests
   - tests/shellcheck-tests.sh
   - tests/unit-tests.sh
-  - tools/test-network.sh --allow-failures 1
+  ## Quick smoke test
+  - tools/test-network.sh --dry-run
+  ## Now, allow one failure for each test (--allow-failures 1)
+  - export CHUTNEY_ALLOW_FAILURES=1
+  ## Different data directory
+  - tools/test-network.sh --net-dir "$(mktemp -d)"
+  ## IP address handling
+  - tools/test-network.sh --ipv4 "127.0.0.1" --ipv6 "[::1]"
+  ## Offline mode
+  - tools/test-network.sh --offline
+  ## --data fails on python3, and on some tor versions
+  ## We'll fix this issue in #30071
+  #- FIVE_MEGABYTES=$((5*1024*1024))
+  #- tools/test-network.sh --data "$FIVE_MEGABYTES" --connections 2 --rounds 2 --hs-multi-client 1 --start-time 130 --bootstrap-time 70 --stop-time 10
 
 after_failure:
   ## List the contents of net/nodes
@@ -191,6 +220,8 @@ after_failure:
   #- cat net/nodes/00*a*/state
   - for f in net/nodes/00*a*/v3-status-votes ; do echo "$f"; cat "$f"; done
   - for f in net/nodes/00*a*/unparseable-descs/* ; do echo "$f"; cat "$f"; done
+  ## And repeat the warnings at the end
+  - tools/test-network.sh --only-warnings
 
 notifications:
   irc:
