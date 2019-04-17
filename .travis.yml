@@ -60,7 +60,7 @@ matrix:
           packages:
             - shellcheck
             - tor
-      env: TOR="0.2.9-nightly"
+      env: TOR="0.2.9-nightly" NETWORK_FLAVOUR="basic-min"
     - addons:
         apt:
           sources:
@@ -69,7 +69,7 @@ matrix:
           packages:
             - shellcheck
             - tor
-      env: TOR="0.3.4-nightly"
+      env: TOR="0.3.4-nightly" NETWORK_FLAVOUR="basic-min"
     ## The current stable release is 0.3.5, so we don't have a separate
     ## 0.3.5-stable job
     - addons:
@@ -80,7 +80,7 @@ matrix:
           packages:
             - shellcheck
             - tor
-      env: TOR="stable-release"
+      env: TOR="stable-release" NETWORK_FLAVOUR="basic-min"
     - addons:
         apt:
           sources:
@@ -89,7 +89,7 @@ matrix:
           packages:
             - shellcheck
             - tor
-      env: TOR="0.3.5-nightly"
+      env: TOR="0.3.5-nightly" NETWORK_FLAVOUR="basic-min"
     ## The experimental deb line needs to be updated when 0.4.0 becomes stable
     - addons:
         apt:
@@ -99,7 +99,7 @@ matrix:
           packages:
             - shellcheck
             - tor
-      env: TOR="0.4.0-nightly"
+      env: TOR="0.4.0-nightly" NETWORK_FLAVOUR="basic-min"
 
     ## Test all supported python releases
     ## Pre-installed in Travis xenial:
@@ -141,7 +141,7 @@ matrix:
 
   ## These builds fail in Travis at the moment
   #allow_failures:
-  #  - env: TOR="master-nightly"
+  #  - env: TOR="master-nightly" NETWORK_FLAVOUR="basic-min"
 
 ## We don't need sudo. (The "apt:" stanza after this allows us to not need
 ## sudo; otherwise, we would need it for getting dependencies.)
