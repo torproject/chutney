@@ -41,7 +41,9 @@ matrix:
       os: osx
       language: c
       python:
-    - env: NETWORK_FLAVOUR="single-onion-ipv6-md"
+    ## We expect this test to fail, until #23588 is merged into tor master, and
+    ## built into a nightly binary
+    - env: NETWORK_FLAVOUR="single-onion-v23-ipv6-md"
       os: osx
       language: c
       python:
