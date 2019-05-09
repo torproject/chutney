@@ -1295,10 +1295,11 @@ def runConfigFile(verb, data):
     if verb in getTests():
         test_module = importlib.import_module("chutney_tests.{}".format(verb))
         try:
-            return test_module.run_test(network)
+            run_test = test_module.run_test
         except AttributeError as e:
             print("Error running test {!r}: {}".format(verb, e))
             return False
+        return run_test(network)
 
     # tell the user we don't know what their verb meant
     if not hasattr(network, verb):
