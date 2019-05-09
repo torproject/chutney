@@ -23,6 +23,7 @@ import importlib
 
 from chutney.Debug import debug_flag, debug
 
+import chutney.Host
 import chutney.Templating
 import chutney.Traffic
 import chutney.Util
@@ -37,6 +38,9 @@ torrc_option_warn_count =  0
 
 # Get verbose tracebacks, so we can diagnose better.
 cgitb.enable(format="plain")
+
+class MissingBinaryException(Exception):
+    pass
 
 def getenv_int(envvar, default):
     """
@@ -132,11 +136,14 @@ def _warnMissingTor(tor_path, cmdline, tor_name="tor"):
            "containing {}.")
           .format(tor_name, tor_path, " ".join(cmdline), tor_name))
 
-def run_tor(cmdline):
+def run_tor(cmdline, exit_on_missing=True):
     """Run the tor command line cmdline, which must start with the path or
        name of a tor binary.
 
        Returns the combined stdout and stderr of the process.
+
+       If exit_on_missing is true, warn and exit if the tor binary is missing.
+       Otherwise, raise a MissingBinaryException.
     """
     if not debug_flag:
         cmdline.append("--quiet")
@@ -149,20 +156,26 @@ def run_tor(cmdline):
     except OSError as e:
         # only catch file not found error
         if e.errno == errno.ENOENT:
-            _warnMissingTor(cmdline[0], cmdline)
-            sys.exit(1)
+            if exit_on_missing:
+                _warnMissingTor(cmdline[0], cmdline)
+                sys.exit(1)
+            else:
+                raise MissingBinaryException()
         else:
             raise
     except subprocess.CalledProcessError as e:
         # only catch file not found error
         if e.returncode == 127:
-            _warnMissingTor(cmdline[0], cmdline)
-            sys.exit(1)
+            if exit_on_missing:
+                _warnMissingTor(cmdline[0], cmdline)
+                sys.exit(1)
+            else:
+                raise MissingBinaryException()
         else:
             raise
     return stdouterr
 
-def launch_process(cmdline, tor_name="tor", stdin=None):
+def launch_process(cmdline, tor_name="tor", stdin=None, exit_on_missing=True):
     """Launch the command line cmdline, which must start with the path or
        name of a binary. Use tor_name as the canonical name of the binary.
        Pass stdin to the Popen constructor.
@@ -183,8 +196,11 @@ def launch_process(cmdline, tor_name="tor", stdin=None):
     except OSError as e:
         # only catch file not found error
         if e.errno == errno.ENOENT:
-            _warnMissingTor(cmdline[0], cmdline, tor_name=tor_name)
-            sys.exit(1)
+            if exit_on_missing:
+                _warnMissingTor(cmdline[0], cmdline, tor_name=tor_name)
+                sys.exit(1)
+            else:
+                raise MissingBinaryException()
         else:
             raise
     return p
@@ -204,6 +220,25 @@ def run_tor_gencert(cmdline, passphrase):
     assert p.returncode == 0  # XXXX BAD!
     assert empty_stderr is None
     return stdouterr
+
+@chutney.Util.memoized
+def tor_exists(tor):
+    """Return true iff this tor binary exists."""
+    try:
+        run_tor([tor, "--quiet", "--version"], exit_on_missing=False)
+        return True
+    except MissingBinaryException:
+        return False
+
+@chutney.Util.memoized
+def tor_gencert_exists(gencert):
+    """Return true iff this tor-gencert binary exists."""
+    try:
+        p = launch_process([gencert, "--help"], exit_on_missing=False)
+        p.wait()
+        return True
+    except MissingBinaryException:
+        return False
 
 @chutney.Util.memoized
 def get_tor_version(tor):
@@ -239,6 +274,41 @@ def get_torrc_options(tor):
     torrc_opts = opts.split()
 
     return torrc_opts
+
+@chutney.Util.memoized
+def get_tor_modules(tor):
+    """Check the list of compile-time modules advertised by the given
+       'tor' binary, and return a map from module name to a boolean
+       describing whether it is supported.
+
+       Unlisted modules are ones that Tor did not treat as compile-time
+       optional modules.
+    """
+    cmdline = [
+        tor,
+        "--list-modules",
+        "--quiet"
+        ]
+    try:
+        mods = run_tor(cmdline)
+    except subprocess.CalledProcessError as e:
+        # Tor doesn't support --list-modules; act as if it said nothing.
+        mods = ""
+
+    supported = {}
+    for line in mods.split("\n"):
+        m = re.match(r'^(\S+): (yes|no)', line)
+        if not m:
+            continue
+        supported[m.group(1)] = (m.group(2) == "yes")
+
+    return supported
+
+def tor_has_module(tor, modname):
+    """Return true iff the given tor binary supports a given compile-time
+       module.  Assume that any unlisted module is supported.
+    """
+    return get_tor_modules(tor).get(modname, True)
 
 class Node(object):
 
@@ -356,6 +426,11 @@ class NodeBuilder(_NodeCommon):
 
     def postConfig(self, net):
         """Called on each nodes after all nodes configure."""
+
+
+    def isSupported(self, net):
+        """Return true if this node appears to have everything it needs;
+           false otherwise."""
 
 
 class NodeController(_NodeCommon):
@@ -500,6 +575,21 @@ class LocalNodeBuilder(NodeBuilder):
         """Called on each nodes after all nodes configure."""
         # self.net.addNode(self)
         pass
+
+    def isSupported(self, net):
+        """Return true if this node appears to have everything it needs;
+           false otherwise."""
+
+        if not tor_exists(self._env['tor']):
+            print("No binary found for %r"%self._env['tor'])
+            return False
+
+        if self._env['authority']:
+            if not tor_has_module(self._env['tor'], "dirauth"):
+                print("No dirauth support in %r"%self._env['tor'])
+                return False
+            if not tor_gencert_exists(self._env['tor-gencert']):
+                print("No binary found for tor-gencert %r"%self._env['tor-gencrrt'])
 
     def _makeDataDir(self):
         """Create the data directory (with keys subdirectory) for this node.
@@ -1044,14 +1134,17 @@ class TorEnviron(chutney.Templating.Environ):
             dns_conf = TorEnviron.OFFLINE_DNS_RESOLV_CONF
         return "ServerDNSResolvConfFile %s" % (dns_conf)
 
+KNOWN_REQUIREMENTS = {
+    "IPV6": chutney.Host.is_ipv6_supported
+}
 
 class Network(object):
-
     """A network of Tor nodes, plus functions to manipulate them
     """
 
     def __init__(self, defaultEnviron):
         self._nodes = []
+        self._requirements = []
         self._dfltEnv = defaultEnviron
         self._nextnodenum = 0
 
@@ -1059,6 +1152,12 @@ class Network(object):
         n.setNodenum(self._nextnodenum)
         self._nextnodenum += 1
         self._nodes.append(n)
+
+    def _addRequirement(self, requirement):
+        requirement = requirement.upper()
+        if requirement not in KNOWN_REQUIREMENTS:
+            raise RuntimemeError(("Unrecognized requirement %r"%requirement))
+        self._requirements.append(requirement)
 
     def move_aside_nodes_dir(self):
         """Move aside the nodes directory, if it exists and is not a link.
@@ -1119,6 +1218,22 @@ class Network(object):
     def _checkConfig(self):
         for n in self._nodes:
             n.getBuilder().checkConfig(self)
+
+    def supported(self):
+        """Check whether this network is supported by the set of binaries
+           and host information we have.
+        """
+        missing_any = False
+        for r in self._requirements:
+            if not KNOWN_REQUIREMENTS[r]():
+                print(("Can't run this network: %s is missing."))
+                missing_any = True
+        for n in self._nodes:
+            if not n.getBuilder().isSupported(self):
+                missing_any = False
+
+        if missing_any:
+            sys.exit(1)
 
     def configure(self):
         self.create_new_nodes_dir()
@@ -1236,6 +1351,10 @@ class Network(object):
                 sys.stdout.flush()
 
 
+def Require(feature):
+    network = _THE_NETWORK
+    network._addRequirement(feature)
+
 def ConfigureNodes(nodelist):
     network = _THE_NETWORK
 
@@ -1243,7 +1362,6 @@ def ConfigureNodes(nodelist):
         network._addNode(n)
         if n._env['bridgeauthority']:
             network._dfltEnv['hasbridgeauth'] = True
-
 
 def getTests():
     tests = []
@@ -1275,6 +1393,7 @@ def exit_on_error(err_msg):
 def runConfigFile(verb, data):
     _GLOBALS = dict(_BASE_ENVIRON=_BASE_ENVIRON,
                     Node=Node,
+                    Require=Require,
                     ConfigureNodes=ConfigureNodes,
                     _THE_NETWORK=_THE_NETWORK,
                     torrc_option_warn_count=0,
