@@ -351,6 +351,9 @@ while [ "$n_attempts" -lt "$max_attempts" ]; do
 	$ECHO "==== Chutney succeeded after $n_attempts attempt(s)."
 	exit 0
     fi
+    if test "$?" = 77; then
+	exit 77
+    fi
 done
 
 $ECHO "Chutney failed $n_attempts times; we may have a problem here."
