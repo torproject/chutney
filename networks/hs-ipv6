@@ -1,3 +1,4 @@
+Require("IPV6")
 import os
 # By default, Authorities are not configured as exits
 Authority6 = Node(tag="a", authority=1, relay=1,
