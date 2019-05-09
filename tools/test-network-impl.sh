@@ -1,6 +1,10 @@
 #!/bin/sh
 
 if ! "$CHUTNEY_PATH/tools/bootstrap-network.sh" "$NETWORK_FLAVOUR"; then
+    if test "$?" = 77; then
+	$ECHO "SKIP: $NETWORK_FLAVOR not supported."
+	exit 77
+    fi
     CHUTNEY_WARNINGS_IGNORE_EXPECTED=false CHUTNEY_WARNINGS_SUMMARY=false \
         "$WARNING_COMMAND"
     "$WARNINGS"
