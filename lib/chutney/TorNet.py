@@ -25,6 +25,7 @@ from chutney.Debug import debug_flag, debug
 
 import chutney.Templating
 import chutney.Traffic
+import chutney.Util
 
 _BASE_ENVIRON = None
 _TOR_VERSIONS = None
@@ -204,49 +205,40 @@ def run_tor_gencert(cmdline, passphrase):
     assert empty_stderr is None
     return stdouterr
 
+@chutney.Util.memoized
 def get_tor_version(tor):
     """Return the version of the tor binary.
        Versions are cached for each unique tor path.
     """
-    # find the version of the current tor binary, and cache it
-    if tor not in _TOR_VERSIONS:
-        cmdline = [
-            tor,
-            "--version",
-        ]
-        tor_version = run_tor(cmdline)
-        # clean it up a bit
-        tor_version = tor_version.strip()
-        tor_version = tor_version.replace("version ", "")
-        tor_version = tor_version.replace(").", ")")
-        # check we received a tor version, and nothing else
-        assert re.match(r'^[-+.() A-Za-z0-9]+$', tor_version)
-        # cache the version for this tor binary's path
-        _TOR_VERSIONS[tor] = tor_version
-    else:
-        tor_version = _TOR_VERSIONS[tor]
+    cmdline = [
+        tor,
+        "--version",
+    ]
+    tor_version = run_tor(cmdline)
+    # clean it up a bit
+    tor_version = tor_version.strip()
+    tor_version = tor_version.replace("version ", "")
+    tor_version = tor_version.replace(").", ")")
+    # check we received a tor version, and nothing else
+    assert re.match(r'^[-+.() A-Za-z0-9]+$', tor_version)
+
     return tor_version
 
+@chutney.Util.memoized
 def get_torrc_options(tor):
     """Return the torrc options supported by the tor binary.
        Options are cached for each unique tor path.
     """
-    # find the options the current tor binary supports, and cache them
-    if tor not in _TORRC_OPTIONS:
-        cmdline = [
-            tor,
-            "--list-torrc-options",
-        ]
-        opts = run_tor(cmdline)
-        # check we received a list of options, and nothing else
-        assert re.match(r'(^\w+$)+', opts, flags=re.MULTILINE)
-        torrc_opts = opts.split()
-        # cache the options for this tor binary's path
-        _TORRC_OPTIONS[tor] = torrc_opts
-    else:
-        torrc_opts = _TORRC_OPTIONS[tor]
-    return torrc_opts
+    cmdline = [
+        tor,
+        "--list-torrc-options",
+    ]
+    opts = run_tor(cmdline)
+    # check we received a list of options, and nothing else
+    assert re.match(r'(^\w+$)+', opts, flags=re.MULTILINE)
+    torrc_opts = opts.split()
 
+    return torrc_opts
 
 class Node(object):
 
@@ -1319,17 +1311,8 @@ def parseArgs():
 
 def main():
     global _BASE_ENVIRON
-    global _TOR_VERSIONS
-    global _TORRC_OPTIONS
     global _THE_NETWORK
     _BASE_ENVIRON = TorEnviron(chutney.Templating.Environ(**DEFAULTS))
-    # _TOR_VERSIONS gets initialised on demand as a map of
-    # "/path/to/tor" => "Tor version ..."
-    _TOR_VERSIONS = dict()
-    # _TORRC_OPTIONS gets initialised on demand as a map of
-    # "/path/to/tor" => ["SupportedOption1", "SupportedOption2", ...]
-    # Or it can be pre-populated as a static whitelist of options
-    _TORRC_OPTIONS = dict()
     _THE_NETWORK = Network(_BASE_ENVIRON)
 
     args = parseArgs()
