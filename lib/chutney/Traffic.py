@@ -34,6 +34,13 @@ import asynchat
 
 from chutney.Debug import debug_flag, debug
 
+if sys.version_info[0] >= 3:
+    def byte_to_int(b):
+        return b
+else:
+    def byte_to_int(b):
+        return ord(b)
+
 def addr_to_family(addr):
     for family in [socket.AF_INET, socket.AF_INET6]:
         try:
@@ -274,7 +281,7 @@ class Source(asynchat.async_chat):
                     self.push_output()
                 else:
                     debug("proxy handshake failed (0x%x)! (fd=%d)" %
-                          (ord(self.inbuf[1]), self.fileno()))
+                          (byte_to_int(self.inbuf[1]), self.fileno()))
                     self.state = self.NOT_CONNECTED
                     self.close()
 
