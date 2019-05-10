@@ -286,6 +286,49 @@ class Source(asynchat.async_chat):
     def fileno(self):
         return self.socket.fileno()
 
+class EchoServer(asynchat.async_chat):
+    def __init__(self, sock, tt):
+        asynchat.async_chat.__init__(self, sock)
+        self.set_terminator(None)
+        self.tt = tt
+
+    def collect_incoming_data(self, data):
+        self.push(data)
+
+    def handle_close(self):
+        self.close_when_done()
+
+class EchoClient(Source):
+    def __init__(self, tt, server, proxy=None):
+        Source.__init__(self, tt, server, proxy)
+        self.data_checker = DataChecker(tt.data_source.copy())
+        self.testname_check = "check-%s"%id(self)
+
+    def get_test_names(self):
+        return [ self.testname, self.testname_check ]
+
+    def handle_close(self):
+        self.close_when_done()
+
+    def collect_incoming_data(self, data):
+        if self.state == self.CONNECTING_THROUGH_PROXY:
+            Source.collect_incoming_data(self, data)
+            if self.state == self.CONNECTING_THROUGH_PROXY:
+                return
+            data = self.inbuf
+            self.inbuf = b""
+
+        self.data_checker.consume(data)
+
+        if self.data_checker.succeeded:
+            debug("successful verification")
+            self.close()
+            self.tt.success(self.testname_check)
+        elif self.data_checker.failed:
+            debug("receive comparison failed")
+            self.tt.failure(self.testname_check)
+            self.close()
+
 class TrafficTester(object):
     """
     Hang on select.select() and dispatch to Sources and Sinks.
@@ -300,7 +343,15 @@ class TrafficTester(object):
                  data=b"",
                  timeout=3,
                  repetitions=1,
-                 dot_repetitions=0):
+                 dot_repetitions=0,
+                 chat_type="Echo"):
+        if chat_type == "Echo":
+            self.client_class = EchoClient
+            self.responder_class = EchoServer
+        else:
+            self.client_class = Source
+            self.responder_class = Sink
+
         self.listener = Listener(self, endpoint)
         self.pending_close = []
         self.timeout = timeout
@@ -320,11 +371,11 @@ class TrafficTester(object):
                 self.tests.add(name)
 
     def add_client(self, server, proxy=None):
-        source = Source(self, server, proxy)
+        source = self.client_class(self, server, proxy)
         self.add(source)
 
     def add_responder(self, socket):
-        sink = Sink(socket, self)
+        sink = self.responder_class(socket, self)
         self.add(sink)
 
     def success(self, name):
