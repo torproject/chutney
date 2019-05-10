@@ -118,7 +118,7 @@ class Listener(asyncore.dispatcher):
     "A TCP listener, binding, listening and accepting new connections."
 
     def __init__(self, tt, endpoint):
-        asyncore.dispatcher.__init__(self)
+        asyncore.dispatcher.__init__(self, map=tt.socket_map)
         self.create_socket(addr_to_family(endpoint[0]), socket.SOCK_STREAM)
         self.set_reuse_addr()
         self.bind(endpoint)
@@ -199,7 +199,7 @@ class DataChecker(object):
 class Sink(asynchat.async_chat):
     "A data sink, reading from its peer and verifying the data."
     def __init__(self, sock, tt):
-        asynchat.async_chat.__init__(self, sock)
+        asynchat.async_chat.__init__(self, sock, map=tt.socket_map)
         self.set_terminator(None)
         self.tt = tt
         self.data_checker = DataChecker(tt.data_source.copy())
@@ -243,7 +243,7 @@ class Source(asynchat.async_chat):
     CONNECTED = 5
 
     def __init__(self, tt, server, proxy=None):
-        asynchat.async_chat.__init__(self)
+        asynchat.async_chat.__init__(self, map=tt.socket_map)
         self.data_source = tt.data_source.copy()
         self.inbuf = b''
         self.proxy = proxy
@@ -299,7 +299,7 @@ class Source(asynchat.async_chat):
 
 class EchoServer(asynchat.async_chat):
     def __init__(self, sock, tt):
-        asynchat.async_chat.__init__(self, sock)
+        asynchat.async_chat.__init__(self, sock, map=tt.socket_map)
         self.set_terminator(None)
         self.tt = tt
 
@@ -363,6 +363,8 @@ class TrafficTester(object):
             self.client_class = Source
             self.responder_class = Sink
 
+        self.socket_map = {}
+
         self.listener = Listener(self, endpoint)
         self.pending_close = []
         self.timeout = timeout
@@ -405,7 +407,7 @@ class TrafficTester(object):
         while now < end and not self.tests.all_done():
             # run only one iteration at a time, with a nice short timeout, so we
             # can actually detect completion and timeouts.
-            asyncore.loop(0.2, False, None, 1)
+            asyncore.loop(0.2, False, self.socket_map, 1)
             now = time.time()
             if now > dump_at:
                 debug("Test status: %s"%self.tests.status())
