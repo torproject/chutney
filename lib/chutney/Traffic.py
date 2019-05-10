@@ -125,6 +125,9 @@ class Listener(asyncore.dispatcher):
         self.listen(0)
         self.tt = tt
 
+    def writable(self):
+        return False
+
     def handle_accept(self):
         # deprecated in python 3.2
         pair = self.accept()
