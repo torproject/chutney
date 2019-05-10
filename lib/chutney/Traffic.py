@@ -232,9 +232,9 @@ class Source(asynchat.async_chat):
     CONNECTING_THROUGH_PROXY = 2
     CONNECTED = 5
 
-    def __init__(self, tt, server, buf, proxy=None, repetitions=1):
+    def __init__(self, tt, server, proxy=None):
         asynchat.async_chat.__init__(self)
-        self.data_source = DataSource(buf, repetitions)
+        self.data_source = tt.data_source.copy()
         self.inbuf = b''
         self.proxy = proxy
         self.server = server
@@ -355,7 +355,7 @@ def main():
 
     tt = TrafficTester(bind_to, DATA)
     # Don't use a proxy for self-testing, so that we avoid tor entirely
-    tt.add(Source(tt, bind_to, DATA))
+    tt.add(Source(tt, bind_to))
     success = tt.run()
 
     if success:
