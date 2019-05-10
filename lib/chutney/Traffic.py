@@ -227,6 +227,7 @@ class CloseSourceProducer:
 class Source(asynchat.async_chat):
     """A data source, connecting to a TCP server, optionally over a
     SOCKS proxy, sending data."""
+    NOT_CONNECTED = 0
     CONNECTING = 1
     CONNECTING_THROUGH_PROXY = 2
     CONNECTED = 5
