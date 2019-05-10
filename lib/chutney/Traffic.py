@@ -72,20 +72,30 @@ class TestSuite(object):
     and how many have succeeded."""
 
     def __init__(self):
+        self.tests = {}
         self.not_done = 0
         self.successes = 0
         self.failures = 0
 
-    def add(self):
-        self.not_done += 1
+    def add(self, name):
+        if name not in self.tests:
+            debug("Registering %s"%name)
+            self.not_done += 1
+            self.tests[name] = 'not done'
 
-    def success(self):
-        self.not_done -= 1
-        self.successes += 1
+    def success(self, name):
+        if self.tests[name] == 'not done':
+            debug("Succeeded %s"%name)
+            self.tests[name] = 'success'
+            self.not_done -= 1
+            self.successes += 1
 
-    def failure(self):
-        self.not_done -= 1
-        self.failures += 1
+    def failure(self, name):
+        if self.tests[name] == 'not done':
+            debug("Failed %s"%name)
+            self.tests[name] = 'failure'
+            self.not_done -= 1
+            self.failures += 1
 
     def failure_count(self):
         return self.failures
@@ -94,7 +104,9 @@ class TestSuite(object):
         return self.not_done == 0
 
     def status(self):
-        return('%d/%d/%d' % (self.not_done, self.successes, self.failures))
+        return('%s: %d/%d/%d' % (self.tests, self.not_done, self.successes,
+                                 self.failures))
+
 
 class Listener(asyncore.dispatcher):
     "A TCP listener, binding, listening and accepting new connections."
@@ -115,6 +127,7 @@ class Listener(asyncore.dispatcher):
             debug("new client from %s:%s (fd=%d)" %
                   (endpoint[0], endpoint[1], newsock.fileno()))
             handler = Sink(newsock, self.tt)
+            self.tt.add(handler)
 
     def fileno(self):
         return self.socket.fileno()
@@ -127,6 +140,10 @@ class Sink(asynchat.async_chat):
         self.set_terminator(None)
         self.tt = tt
         self.repetitions = tt.repetitions
+        self.testname = "recv-data%s"%id(self)
+
+    def get_test_names(self):
+        return [ self.testname ]
 
     def collect_incoming_data(self, inp):
         # shortcut read when we don't ever expect any data
@@ -138,7 +155,7 @@ class Sink(asynchat.async_chat):
             assert(len(self.inbuf) <= len(data) or self.repetitions > 1)
             if self.inbuf[:len(data)] != data:
                 debug("receive comparison failed (bytes=%d)" % len(data))
-                self.tt.failure()
+                self.tt.failure(self.testname)
                 self.close()
             # if we're not debugging, print a dot every dot_repetitions reps
             elif (not debug_flag and self.tt.dot_repetitions > 0 and
@@ -154,7 +171,7 @@ class Sink(asynchat.async_chat):
         if self.repetitions == 0 and len(self.inbuf) == 0:
             debug("successful verification")
             self.close()
-            self.tt.success()
+            self.tt.success(self.testname)
         # calculate the actual length of data remaining, including reps
         debug("receive remaining bytes (bytes=%d)"
               % (self.repetitions*len(data) - len(self.inbuf)))
@@ -168,7 +185,8 @@ class CloseSourceProducer:
         self.source = source
 
     def more(self):
-        self.source.tt.success()
+        self.source.sent_ok()
+        return b""
 
 class Source(asynchat.async_chat):
     """A data source, connecting to a TCP server, optionally over a
@@ -187,6 +205,8 @@ class Source(asynchat.async_chat):
         self.repetitions = repetitions
         self._sent_no_bytes = 0
         self.tt = tt
+        self.testname = "send-data%s"%id(self)
+
         # sanity checks
         if len(self.data) == 0:
             self.repetitions = 0
@@ -199,6 +219,12 @@ class Source(asynchat.async_chat):
         debug("socket %d connecting to %r..."%(self.fileno(),dest))
         self.state = self.CONNECTING
         self.connect(dest)
+
+    def get_test_names(self):
+        return [ self.testname ]
+
+    def sent_ok(self):
+        self.tt.success(self.testname)
 
     def handle_connect(self):
         if self.proxy:
@@ -264,19 +290,20 @@ class TrafficTester(object):
         debug("listener fd=%d" % self.listener.fileno())
 
     def add(self, item):
-        """Register a single item as a test."""
+        """Register a single item."""
         # We used to hold on to these items for their fds, but now
         # asyncore manages them for us.
+        if hasattr(item, "get_test_names"):
+            for name in item.get_test_names():
+                self.tests.add(name)
 
-        self.tests.add()
-
-    def success(self):
+    def success(self, name):
         """Declare that a single test has passed."""
-        self.tests.success()
+        self.tests.success(name)
 
-    def failure(self):
+    def failure(self, name):
         """Declare that a single test has failed."""
-        self.tests.failure()
+        self.tests.failure(name)
 
     def run(self):
         start = now = time.time()
