@@ -400,12 +400,16 @@ class TrafficTester(object):
     def run(self):
         start = now = time.time()
         end = time.time() + self.timeout
+        DUMP_TEST_STATUS_INTERVAL=0.5
+        dump_at = start+DUMP_TEST_STATUS_INTERVAL
         while now < end and not self.tests.all_done():
             # run only one iteration at a time, with a nice short timeout, so we
             # can actually detect completion and timeouts.
             asyncore.loop(0.2, False, None, 1)
             now = time.time()
-            debug("Test status: %s"%self.tests.status())
+            if now > dump_at:
+                debug("Test status: %s"%self.tests.status())
+                dump_at += DUMP_TEST_STATUS_INTERVAL
 
         if not debug_flag:
             sys.stdout.write('\n')
