@@ -125,8 +125,7 @@ class Listener(asyncore.dispatcher):
             newsock, endpoint = pair
             debug("new client from %s:%s (fd=%d)" %
                   (endpoint[0], endpoint[1], newsock.fileno()))
-            handler = Sink(newsock, self.tt)
-            self.tt.add(handler)
+            self.tt.add_responder(newsock)
 
     def fileno(self):
         return self.socket.fileno()
@@ -320,6 +319,14 @@ class TrafficTester(object):
             for name in item.get_test_names():
                 self.tests.add(name)
 
+    def add_client(self, server, proxy=None):
+        source = Source(self, server, proxy)
+        self.add(source)
+
+    def add_responder(self, socket):
+        sink = Sink(socket, self)
+        self.add(sink)
+
     def success(self, name):
         """Declare that a single test has passed."""
         self.tests.success(name)
@@ -355,7 +362,7 @@ def main():
 
     tt = TrafficTester(bind_to, DATA)
     # Don't use a proxy for self-testing, so that we avoid tor entirely
-    tt.add(Source(tt, bind_to))
+    tt.add_client(bind_to)
     success = tt.run()
 
     if success:

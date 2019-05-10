@@ -155,7 +155,7 @@ def _configure_exits(tt, bind_to, tmpdata, reps, client_list, exit_list,
                      'localhost', op._env['socksport']))
             for _ in range(connection_count):
                 proxy = ('localhost', int(op._env['socksport']))
-                tt.add(chutney.Traffic.Source(tt, bind_to, proxy))
+                tt.add_client(bind_to, proxy)
     return exit_path_node_count
 
 
@@ -187,7 +187,7 @@ def _configure_hs(tt, tmpdata, reps, client_list, hs_list, HS_PORT,
                      'localhost', client._env['socksport']))
             for _ in range(connection_count):
                 proxy = ('localhost', int(client._env['socksport']))
-                tt.add(chutney.Traffic.Source(tt, hs_bind_to, proxy))
+                tt.add_client(hs_bind_to, proxy)
 
     return hs_path_node_count
 
