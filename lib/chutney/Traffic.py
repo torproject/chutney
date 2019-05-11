@@ -34,6 +34,17 @@ import asynchat
 
 from chutney.Debug import debug_flag, debug
 
+def note(s):
+    sys.stderr.write("NOTE: %s\n"%s)
+def warn(s):
+    sys.stderr.write("WARN: %s\n"%s)
+
+UNIQ_CTR = 0
+def uniq(s):
+    global UNIQ_CTR
+    UNIQ_CTR += 1
+    return "%s-%s"%(s,UNIQ_CTR)
+
 if sys.version_info[0] >= 3:
     def byte_to_int(b):
         return b
@@ -85,24 +96,33 @@ class TestSuite(object):
         self.failures = 0
 
     def add(self, name):
+        note("Registering %s"%name)
         if name not in self.tests:
             debug("Registering %s"%name)
             self.not_done += 1
             self.tests[name] = 'not done'
+        else:
+            warn("... already registered!")
 
     def success(self, name):
+        note("Success for %s"%name)
         if self.tests[name] == 'not done':
             debug("Succeeded %s"%name)
             self.tests[name] = 'success'
             self.not_done -= 1
             self.successes += 1
+        else:
+            warn("... status was %s"%self.tests.get(name))
 
     def failure(self, name):
+        note("Failure for %s"%name)
         if self.tests[name] == 'not done':
             debug("Failed %s"%name)
             self.tests[name] = 'failure'
             self.not_done -= 1
             self.failures += 1
+        else:
+            warn("... status was %s"%self.tests.get(name))
 
     def failure_count(self):
         return self.failures
@@ -203,7 +223,7 @@ class Sink(asynchat.async_chat):
         self.set_terminator(None)
         self.tt = tt
         self.data_checker = DataChecker(tt.data_source.copy())
-        self.testname = "recv-data%s"%id(self)
+        self.testname = uniq("recv-data")
 
     def get_test_names(self):
         return [ self.testname ]
@@ -249,7 +269,7 @@ class Source(asynchat.async_chat):
         self.proxy = proxy
         self.server = server
         self.tt = tt
-        self.testname = "send-data%s"%id(self)
+        self.testname = uniq("send-data")
 
         self.set_terminator(None)
         dest = (self.proxy or self.server)
@@ -313,7 +333,7 @@ class EchoClient(Source):
     def __init__(self, tt, server, proxy=None):
         Source.__init__(self, tt, server, proxy)
         self.data_checker = DataChecker(tt.data_source.copy())
-        self.testname_check = "check-%s"%id(self)
+        self.testname_check = uniq("check")
 
     def get_test_names(self):
         return [ self.testname, self.testname_check ]
