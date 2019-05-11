@@ -94,6 +94,10 @@ class TestSuite(object):
         self.not_done = 0
         self.successes = 0
         self.failures = 0
+        self.teststatus = {}
+
+    def note(self, testname, status):
+        self.teststatus[testname] = status
 
     def add(self, name):
         note("Registering %s"%name)
@@ -251,6 +255,7 @@ class CloseSourceProducer:
         self.source = source
 
     def more(self):
+        self.source.note("Flushed")
         self.source.sent_ok()
         return b""
 
@@ -284,9 +289,13 @@ class Source(asynchat.async_chat):
     def sent_ok(self):
         self.tt.success(self.testname)
 
+    def note(self, s):
+        self.tt.tests.note(self.testname, s)
+
     def handle_connect(self):
         if self.proxy:
             self.state = self.CONNECTING_THROUGH_PROXY
+            self.note("connected, sending socks handshake")
             self.push(socks_cmd(self.server))
         else:
             self.state = self.CONNECTED
@@ -297,7 +306,7 @@ class Source(asynchat.async_chat):
         if self.state == self.CONNECTING_THROUGH_PROXY:
             if len(self.inbuf) >= 8:
                 if self.inbuf[:2] == b'\x00\x5a':
-                    debug("proxy handshake successful (fd=%d)" % self.fileno())
+                    self.note("proxy handshake successful")
                     self.state = self.CONNECTED
                     debug("successfully connected (fd=%d)" % self.fileno())
                     self.inbuf = self.inbuf[8:]
@@ -309,6 +318,7 @@ class Source(asynchat.async_chat):
                     self.close()
 
     def push_output(self):
+        self.note("pushed output")
         self.push_with_producer(self.data_source)
 
         self.push_with_producer(CloseSourceProducer(self))
@@ -335,6 +345,9 @@ class EchoClient(Source):
         self.data_checker = DataChecker(tt.data_source.copy())
         self.testname_check = uniq("check")
 
+    def enote(self, s):
+        self.tt.tests.note(self.testname_check, s)
+
     def get_test_names(self):
         return [ self.testname, self.testname_check ]
 
@@ -350,8 +363,10 @@ class EchoClient(Source):
             self.inbuf = b""
 
         self.data_checker.consume(data)
+        self.enote("consumed some")
 
         if self.data_checker.succeeded:
+            self.enote("successful verification")
             debug("successful verification")
             self.close()
             self.tt.success(self.testname_check)
@@ -439,6 +454,8 @@ class TrafficTester(object):
         debug("Done with run(); all_done == %s and failure_count == %s"
               %(self.tests.all_done(), self.tests.failure_count()))
 
+        note("Status:\n%s"%self.tests.teststatus)
+        
         self.listener.close()
 
         return self.tests.all_done() and self.tests.failure_count() == 0
