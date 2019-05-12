@@ -322,7 +322,6 @@ class Source(asynchat.async_chat):
         self.push_with_producer(self.data_source)
 
         self.push_with_producer(CloseSourceProducer(self))
-        self.close_when_done()
 
     def fileno(self):
         return self.socket.fileno()
@@ -332,27 +331,23 @@ class EchoServer(asynchat.async_chat):
         asynchat.async_chat.__init__(self, sock, map=tt.socket_map)
         self.set_terminator(None)
         self.tt = tt
+        self.am_closing = False
 
     def collect_incoming_data(self, data):
         self.push(data)
-
-    def handle_close(self):
-        self.close_when_done()
 
 class EchoClient(Source):
     def __init__(self, tt, server, proxy=None):
         Source.__init__(self, tt, server, proxy)
         self.data_checker = DataChecker(tt.data_source.copy())
         self.testname_check = uniq("check")
+        self.am_closing = False
 
     def enote(self, s):
         self.tt.tests.note(self.testname_check, s)
 
     def get_test_names(self):
         return [ self.testname, self.testname_check ]
-
-    def handle_close(self):
-        self.close_when_done()
 
     def collect_incoming_data(self, data):
         if self.state == self.CONNECTING_THROUGH_PROXY:
@@ -455,7 +450,7 @@ class TrafficTester(object):
               %(self.tests.all_done(), self.tests.failure_count()))
 
         note("Status:\n%s"%self.tests.teststatus)
-        
+
         self.listener.close()
 
         return self.tests.all_done() and self.tests.failure_count() == 0
