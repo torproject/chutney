@@ -922,6 +922,15 @@ DEFAULTS = {
     'dns_conf': (os.environ.get('CHUTNEY_DNS_CONF', '/etc/resolv.conf')
                         if 'CHUTNEY_DNS_CONF' in os.environ
                         else None),
+
+    # The phase at which this instance needs to be
+    # configured/launched, if we're doing multiphase
+    # configuration/launch.
+    'config_phase' : 1,
+    'launch_phase' : 1,
+
+    'CUR_CONFIG_PHASE': getenv_int('CHUTNEY_CONFIG_PHASE', 1),
+    'CUR_LAUNCH_PHASE': getenv_int('CHUTNEY_LAUNCH_PHASE', 1),
 }
 
 
@@ -1148,17 +1157,21 @@ class Network(object):
             n.getBuilder().checkConfig(self)
 
     def configure(self):
-        self.create_new_nodes_dir()
+        phase = self._dfltEnv['CUR_CONFIG_PHASE']
+        if phase == 1:
+            self.create_new_nodes_dir()
         network = self
         altauthlines = []
         bridgelines = []
-        builders = [n.getBuilder() for n in self._nodes]
+        all_builders = [ n.getBuilder() for n in self._nodes ]
+        builders = [ b for b in all_builders
+                     if b._env['config_phase'] == phase ]
         self._checkConfig()
 
         # XXX don't change node names or types or count if anything is
         # XXX running!
 
-        for b in builders:
+        for b in all_builders:
             b.preConfig(network)
             altauthlines.append(b._getAltAuthLines(
                 self._dfltEnv['hasbridgeauth']))
@@ -1188,7 +1201,9 @@ class Network(object):
         # format polling correctly - avoid printing a newline
         sys.stdout.write("Starting nodes")
         sys.stdout.flush()
-        rv = all([n.getController().start() for n in self._nodes])
+        rv = all([n.getController().start() for n in self._nodes
+                  if n._env['launch_phase'] ==
+                     self._dfltEnv['CUR_LAUNCH_PHASE']])
         # now print a newline unconditionally - this stops poll()ing
         # output from being squashed together, at the cost of a blank
         # line in wait()ing output
