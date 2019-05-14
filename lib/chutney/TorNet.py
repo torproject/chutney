@@ -633,11 +633,20 @@ class LocalNodeBuilder(NodeBuilder):
         if not self._env['bridge']:
             return ""
 
-        bridgelines = "Bridge %s:%s\n" % (self._env['ip'],
-                                          self._env['orport'])
+        if self._env['pt_bridge']:
+            port = self._env['ptport']
+            transport = self._env['pt_transport']
+        else:
+            port = self._env['orport']
+            transport = ""
+
+        bridgelines = "Bridge %s %s:%s\n" % (transport,
+                                             self._env['ip'],
+                                             port)
         if self._env['ipv6_addr'] is not None:
-            bridgelines += "Bridge %s:%s\n" % (self._env['ipv6_addr'],
-                                               self._env['orport'])
+            bridgelines += "Bridge %s:%s\n" % (transport,
+                                               self._env['ipv6_addr'],
+                                               port)
         return bridgelines
 
 
@@ -861,6 +870,8 @@ DEFAULTS = {
     'hasbridgeauth': False,
     'relay': False,
     'bridge': False,
+    'pt_bridge': False,
+    'pt_transport' : "",
     'hs': False,
     'hs_directory': 'hidden_service',
     'hs-hostname': None,
@@ -879,6 +890,8 @@ DEFAULTS = {
     'dirport_base': 7000,
     'controlport_base': 8000,
     'socksport_base': 9000,
+    'extorport_base' : 9500,
+    'ptport_base' : 9900,
     'authorities': "AlternateDirAuthority bleargh bad torrc file!",
     'bridges': "Bridge bleargh bad torrc file!",
     'core': True,
@@ -967,6 +980,12 @@ class TorEnviron(chutney.Templating.Environ):
 
     def _get_dirport(self, my):
         return my['dirport_base'] + my['nodenum']
+
+    def _get_extorport(self, my):
+        return my['extorport_base'] + my['nodenum']
+
+    def _get_ptport(self, my):
+        return my['ptport_base'] + my['nodenum']
 
     def _get_dir(self, my):
         return os.path.abspath(os.path.join(my['net_base_dir'],
