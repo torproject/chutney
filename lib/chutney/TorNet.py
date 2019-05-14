@@ -643,17 +643,23 @@ class LocalNodeBuilder(NodeBuilder):
         if self._env['pt_bridge']:
             port = self._env['ptport']
             transport = self._env['pt_transport']
+            extra = self._env['pt_extra']
         else:
             port = self._env['orport']
             transport = ""
+            extra = ''
 
-        bridgelines = "Bridge %s %s:%s\n" % (transport,
+        bridgelines = "Bridge %s %s:%s %s %s\n" % (transport,
                                              self._env['ip'],
-                                             port)
+                                             port,
+                                             self._env['fingerprint'],
+                                             extra)
         if self._env['ipv6_addr'] is not None:
-            bridgelines += "Bridge %s:%s\n" % (transport,
+            bridgelines += "Bridge %s:%s %s %s\n" % (transport,
                                                self._env['ipv6_addr'],
-                                               port)
+                                               port,
+                                               self._env['fingerprint'],
+                                               extra)
         return bridgelines
 
 
@@ -879,6 +885,7 @@ DEFAULTS = {
     'bridge': False,
     'pt_bridge': False,
     'pt_transport' : "",
+    'pt_extra' : "",
     'hs': False,
     'hs_directory': 'hidden_service',
     'hs-hostname': None,
