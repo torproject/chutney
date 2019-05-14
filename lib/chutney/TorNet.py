@@ -278,6 +278,13 @@ class Node(object):
     def specialize(self, **kwargs):
         return Node(parent=self, **kwargs)
 
+    def set_runtime(self, key, fn):
+        """Specify a runtime function that gets invoked to find the
+           runtime value of a key.  It should take a single argument, which
+           will be an environment.
+        """
+        setattr(self._env, "_get_"+key, fn)
+
     ######
     # Chutney uses these:
 
