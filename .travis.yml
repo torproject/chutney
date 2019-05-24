@@ -26,22 +26,22 @@ matrix:
     ##     The latest tor version in homebrew is on this page:
     ##       https://formulae.brew.sh/formula/tor
     ##     The Travis version might be slightly older.
-    - env: NETWORK_FLAVOUR="bridges-min"
-    - env: NETWORK_FLAVOUR="hs-v2-min"
-    - env: NETWORK_FLAVOUR="hs-v3-min"
-    - env: NETWORK_FLAVOUR="single-onion-v23"
-    - env: NETWORK_FLAVOUR="bridges+ipv6-min"
+    - env: TOR="master-nightly" NETWORK_FLAVOUR="bridges-min"
+    - env: TOR="master-nightly" NETWORK_FLAVOUR="hs-v2-min"
+    - env: TOR="master-nightly" NETWORK_FLAVOUR="hs-v3-min"
+    - env: TOR="master-nightly" NETWORK_FLAVOUR="single-onion-v23"
+    - env: TOR="stable-release" NETWORK_FLAVOUR="bridges+ipv6-min"
       os: osx
       language: c
       python:
     ## The IPv6 exit test doesn't actually require IPv6, see #30182.
     ## But we'll keep this test, because it does test IPv6 exit config.
-    - env: NETWORK_FLAVOUR="ipv6-exit-min"
-    - env: NETWORK_FLAVOUR="hs-v23-ipv6-md"
+    - env: TOR="master-nightly" NETWORK_FLAVOUR="ipv6-exit-min"
+    - env: TOR="stable-release" NETWORK_FLAVOUR="hs-v23-ipv6-md"
       os: osx
       language: c
       python:
-    - env: NETWORK_FLAVOUR="single-onion-ipv6-md"
+    - env: TOR="stable-release" NETWORK_FLAVOUR="single-onion-ipv6-md"
       os: osx
       language: c
       python:
