@@ -41,6 +41,8 @@ matrix:
       os: osx
       language: c
       python:
+    ## v2 onion services only, see #30279 for v3 onion services
+    ## needs #23588 in macOS homebrew, once 0.4.1-stable is released
     - env: TOR="stable-release" NETWORK_FLAVOUR="single-onion-ipv6-md"
       os: osx
       language: c
