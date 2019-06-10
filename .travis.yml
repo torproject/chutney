@@ -30,20 +30,20 @@ matrix:
     - env: NETWORK_FLAVOUR="hs-v2-min"
     - env: NETWORK_FLAVOUR="hs-v3-min"
     - env: NETWORK_FLAVOUR="single-onion-v23"
-    - env: NETWORK_FLAVOUR="bridges+ipv6-min" TOR="stable-release"
+    - env: NETWORK_FLAVOUR="bridges+ipv6-min"
       os: osx
       language: c
       python:
     ## The IPv6 exit test doesn't actually require IPv6, see #30182.
     ## But we'll keep this test, because it does test IPv6 exit config.
     - env: NETWORK_FLAVOUR="ipv6-exit-min"
-    - env: NETWORK_FLAVOUR="hs-v23-ipv6-md" TOR="stable-release"
+    - env: NETWORK_FLAVOUR="hs-v23-ipv6-md"
       os: osx
       language: c
       python:
     ## We expect this test to fail, until #23588 is merged into tor master, and
     ## built into a nightly binary
-    - env: NETWORK_FLAVOUR="single-onion-v23-ipv6-md" TOR="stable-release"
+    - env: NETWORK_FLAVOUR="single-onion-v23-ipv6-md"
       os: osx
       language: c
       python:
