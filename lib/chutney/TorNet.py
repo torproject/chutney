@@ -647,7 +647,7 @@ class LocalNodeBuilder(NodeBuilder):
         else:
             port = self._env['orport']
             transport = ""
-            extra = ''
+            extra = ""
 
         bridgelines = "Bridge %s %s:%s %s %s\n" % (transport,
                                              self._env['ip'],
