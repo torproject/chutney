@@ -304,11 +304,11 @@ def get_tor_modules(tor):
 
     return supported
 
-def tor_has_module(tor, modname):
+def tor_has_module(tor, modname, default=True):
     """Return true iff the given tor binary supports a given compile-time
-       module.  Assume that any unlisted module is supported.
+       module.  If the module is not listed, return 'default'.
     """
-    return get_tor_modules(tor).get(modname, True)
+    return get_tor_modules(tor).get(modname, default)
 
 class Node(object):
 
