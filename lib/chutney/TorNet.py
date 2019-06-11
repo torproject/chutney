@@ -655,7 +655,7 @@ class LocalNodeBuilder(NodeBuilder):
                                              self._env['fingerprint'],
                                              extra)
         if self._env['ipv6_addr'] is not None:
-            bridgelines += "Bridge %s:%s %s %s\n" % (transport,
+            bridgelines += "Bridge %s %s:%s %s %s\n" % (transport,
                                                self._env['ipv6_addr'],
                                                port,
                                                self._env['fingerprint'],
