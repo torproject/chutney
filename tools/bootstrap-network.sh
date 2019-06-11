@@ -53,6 +53,11 @@ export CHUTNEY_NETWORK="$CHUTNEY_PATH/networks/$NETWORK_FLAVOUR"
 
 "$CHUTNEY" stop "$CHUTNEY_NETWORK"
 
+if ! "$CHUTNEY" supported "$CHUTNEY_NETWORK"; then
+    echo "%myname: network not supported."
+    exit 77
+fi
+
 echo "$myname: bootstrapping network: $NETWORK_FLAVOUR"
 "$CHUTNEY" configure "$CHUTNEY_NETWORK"
 
