@@ -413,9 +413,10 @@ class LocalNodeBuilder(NodeBuilder):
     # tor_gencert -- path to tor_gencert binary
     # tor -- path to tor binary
     # auth_cert_lifetime -- lifetime of authority certs, in months.
-    # ip -- IP to listen on
-    # ipv6_addr -- IPv6 address to listen on
-    # orport, dirport -- used on authorities, relays, and bridges
+    # ip -- primary IP address (usually IPv4) to listen on
+    # ipv6_addr -- secondary IP address (usually IPv6) to listen on
+    # orport, dirport -- used on authorities, relays, and bridges. The orport
+    #                    is used for both IPv4 and IPv6, if present
     # fingerprint -- used only if authority
     # dirserver_flags -- used only if authority
     # nick -- nickname of this router
@@ -625,6 +626,7 @@ class LocalNodeBuilder(NodeBuilder):
                 authopt, self._env['nick'], self._env['orport'])
             # It's ok to give an authority's IPv6 address to an IPv4-only
             # client or relay: it will and must ignore it
+            # and yes, the orport is the same on IPv4 and IPv6
             if self._env['ipv6_addr'] is not None:
                 authlines += " ipv6=%s:%s" % (self._env['ipv6_addr'],
                                               self._env['orport'])
@@ -645,6 +647,7 @@ class LocalNodeBuilder(NodeBuilder):
             transport = self._env['pt_transport']
             extra = self._env['pt_extra']
         else:
+            # the orport is the same on IPv4 and IPv6
             port = self._env['orport']
             transport = ""
             extra = ""
