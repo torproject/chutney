@@ -168,7 +168,7 @@ install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then dpkg-query --show; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew list --versions; fi
   - python --version
-  - shellcheck --version
+  - if command -v shellcheck ; then shellcheck --version; fi
   - tor --version
 
 script:
