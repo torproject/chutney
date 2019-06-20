@@ -161,6 +161,9 @@ addons:
     packages:
       - shellcheck
       - tor
+    # See ticket #30928 for more information. This key should be removed at
+    # some point to speed up builds.
+    update: true
 
 install:
   ## Chutney has no dependencies, apart from tor
