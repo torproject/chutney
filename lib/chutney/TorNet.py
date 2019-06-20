@@ -649,17 +649,19 @@ class LocalNodeBuilder(NodeBuilder):
             transport = ""
             extra = ""
 
-        bridgelines = "Bridge %s %s:%s %s %s\n" % (transport,
-                                             self._env['ip'],
-                                             port,
-                                             self._env['fingerprint'],
-                                             extra)
+        BRIDGE_LINE_TEMPLATE = "Bridge %s %s:%s %s %s\n"
+
+        bridgelines = BRIDGE_LINE_TEMPLATE % (transport,
+                                              self._env['ip'],
+                                              port,
+                                              self._env['fingerprint'],
+                                              extra)
         if self._env['ipv6_addr'] is not None:
-            bridgelines += "Bridge %s %s:%s %s %s\n" % (transport,
-                                               self._env['ipv6_addr'],
-                                               port,
-                                               self._env['fingerprint'],
-                                               extra)
+            bridgelines += BRIDGE_LINE_TEMPLATE % (transport,
+                                                   self._env['ipv6_addr'],
+                                                   port,
+                                                   self._env['fingerprint'],
+                                                   extra)
         return bridgelines
 
 
