@@ -176,7 +176,7 @@ install:
 
 script:
   ## Basic tests
-  - tests/shellcheck-tests.sh
+  - if command -v shellcheck ; then tests/shellcheck-tests.sh; fi
   - tests/unit-tests.sh
   ## Quick smoke test
   - tools/test-network.sh --dry-run
