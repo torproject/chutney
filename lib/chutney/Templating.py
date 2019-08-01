@@ -230,7 +230,6 @@ class Environ(_DictWrapper):
         s.update(name[5:] for name in dir(self) if name.startswith("_get_"))
         return s
 
-
 class IncluderDict(_DictWrapper):
 
     """Helper to implement ${include:} template substitution.  Acts as a
@@ -279,6 +278,33 @@ class IncluderDict(_DictWrapper):
     def getUpdateTime(self):
         return self._st_mtime
 
+class PathDict(_DictWrapper):
+    """
+       Implements ${path:} patterns, which map ${path:foo} to the location
+       of 'foo' in the PATH environment variable.
+    """
+    def __init__(self, parent, path=None):
+        _DictWrapper.__init__(self, parent)
+        if path is None:
+            path = os.getenv('PATH').split(":")
+        self._path = path
+
+    def _getitem(self, key, my):
+        if not key.startswith("path:"):
+            raise KeyError(key)
+
+        key = key[len("path:"):]
+
+        for location in self._path:
+            p = os.path.join(location, key)
+            try:
+                s = os.stat(p)
+                if s and s.st_mode & 0x111:
+                    return p
+            except OSError:
+                pass
+
+        raise KeyError(key)
 
 class _BetterTemplate(string.Template):
 
@@ -355,6 +381,7 @@ class Template(object):
            values in the mapping 'values'.
         """
         values = IncluderDict(values, self._includePath)
+        values = PathDict(values)
         orig_val = self._pat
         nIterations = 0
         while True:

@@ -340,6 +340,13 @@ class Node(object):
     def specialize(self, **kwargs):
         return Node(parent=self, **kwargs)
 
+    def set_runtime(self, key, fn):
+        """Specify a runtime function that gets invoked to find the
+           runtime value of a key.  It should take a single argument, which
+           will be an environment.
+        """
+        setattr(self._env, "_get_"+key, fn)
+
     ######
     # Chutney uses these:
 
@@ -473,9 +480,10 @@ class LocalNodeBuilder(NodeBuilder):
     # tor_gencert -- path to tor_gencert binary
     # tor -- path to tor binary
     # auth_cert_lifetime -- lifetime of authority certs, in months.
-    # ip -- IP to listen on
-    # ipv6_addr -- IPv6 address to listen on
-    # orport, dirport -- used on authorities, relays, and bridges
+    # ip -- primary IP address (usually IPv4) to listen on
+    # ipv6_addr -- secondary IP address (usually IPv6) to listen on
+    # orport, dirport -- used on authorities, relays, and bridges. The orport
+    #                    is used for both IPv4 and IPv6, if present
     # fingerprint -- used only if authority
     # dirserver_flags -- used only if authority
     # nick -- nickname of this router
@@ -700,6 +708,7 @@ class LocalNodeBuilder(NodeBuilder):
                 authopt, self._env['nick'], self._env['orport'])
             # It's ok to give an authority's IPv6 address to an IPv4-only
             # client or relay: it will and must ignore it
+            # and yes, the orport is the same on IPv4 and IPv6
             if self._env['ipv6_addr'] is not None:
                 authlines += " ipv6=%s:%s" % (self._env['ipv6_addr'],
                                               self._env['orport'])
@@ -715,11 +724,29 @@ class LocalNodeBuilder(NodeBuilder):
         if not self._env['bridge']:
             return ""
 
-        bridgelines = "Bridge %s:%s\n" % (self._env['ip'],
-                                          self._env['orport'])
+        if self._env['pt_bridge']:
+            port = self._env['ptport']
+            transport = self._env['pt_transport']
+            extra = self._env['pt_extra']
+        else:
+            # the orport is the same on IPv4 and IPv6
+            port = self._env['orport']
+            transport = ""
+            extra = ""
+
+        BRIDGE_LINE_TEMPLATE = "Bridge %s %s:%s %s %s\n"
+
+        bridgelines = BRIDGE_LINE_TEMPLATE % (transport,
+                                              self._env['ip'],
+                                              port,
+                                              self._env['fingerprint'],
+                                              extra)
         if self._env['ipv6_addr'] is not None:
-            bridgelines += "Bridge %s:%s\n" % (self._env['ipv6_addr'],
-                                               self._env['orport'])
+            bridgelines += BRIDGE_LINE_TEMPLATE % (transport,
+                                                   self._env['ipv6_addr'],
+                                                   port,
+                                                   self._env['fingerprint'],
+                                                   extra)
         return bridgelines
 
 
@@ -943,6 +970,9 @@ DEFAULTS = {
     'hasbridgeauth': False,
     'relay': False,
     'bridge': False,
+    'pt_bridge': False,
+    'pt_transport' : "",
+    'pt_extra' : "",
     'hs': False,
     'hs_directory': 'hidden_service',
     'hs-hostname': None,
@@ -961,6 +991,8 @@ DEFAULTS = {
     'dirport_base': 7000,
     'controlport_base': 8000,
     'socksport_base': 9000,
+    'extorport_base' : 9500,
+    'ptport_base' : 9900,
     'authorities': "AlternateDirAuthority bleargh bad torrc file!",
     'bridges': "Bridge bleargh bad torrc file!",
     'core': True,
@@ -991,6 +1023,15 @@ DEFAULTS = {
     'dns_conf': (os.environ.get('CHUTNEY_DNS_CONF', '/etc/resolv.conf')
                         if 'CHUTNEY_DNS_CONF' in os.environ
                         else None),
+
+    # The phase at which this instance needs to be
+    # configured/launched, if we're doing multiphase
+    # configuration/launch.
+    'config_phase' : 1,
+    'launch_phase' : 1,
+
+    'CUR_CONFIG_PHASE': getenv_int('CHUTNEY_CONFIG_PHASE', 1),
+    'CUR_LAUNCH_PHASE': getenv_int('CHUTNEY_LAUNCH_PHASE', 1),
 }
 
 
@@ -1049,6 +1090,12 @@ class TorEnviron(chutney.Templating.Environ):
 
     def _get_dirport(self, my):
         return my['dirport_base'] + my['nodenum']
+
+    def _get_extorport(self, my):
+        return my['extorport_base'] + my['nodenum']
+
+    def _get_ptport(self, my):
+        return my['ptport_base'] + my['nodenum']
 
     def _get_dir(self, my):
         return os.path.abspath(os.path.join(my['net_base_dir'],
@@ -1236,17 +1283,21 @@ class Network(object):
             sys.exit(1)
 
     def configure(self):
-        self.create_new_nodes_dir()
+        phase = self._dfltEnv['CUR_CONFIG_PHASE']
+        if phase == 1:
+            self.create_new_nodes_dir()
         network = self
         altauthlines = []
         bridgelines = []
-        builders = [n.getBuilder() for n in self._nodes]
+        all_builders = [ n.getBuilder() for n in self._nodes ]
+        builders = [ b for b in all_builders
+                     if b._env['config_phase'] == phase ]
         self._checkConfig()
 
         # XXX don't change node names or types or count if anything is
         # XXX running!
 
-        for b in builders:
+        for b in all_builders:
             b.preConfig(network)
             altauthlines.append(b._getAltAuthLines(
                 self._dfltEnv['hasbridgeauth']))
@@ -1276,7 +1327,9 @@ class Network(object):
         # format polling correctly - avoid printing a newline
         sys.stdout.write("Starting nodes")
         sys.stdout.flush()
-        rv = all([n.getController().start() for n in self._nodes])
+        rv = all([n.getController().start() for n in self._nodes
+                  if n._env['launch_phase'] ==
+                     self._dfltEnv['CUR_LAUNCH_PHASE']])
         # now print a newline unconditionally - this stops poll()ing
         # output from being squashed together, at the cost of a blank
         # line in wait()ing output
