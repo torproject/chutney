@@ -12,7 +12,13 @@ then
     export CHUTNEY_PATH
 fi
 
-binaries="python python3 python2"
+if [ "$(uname)" == "FreeBSD" ]
+then
+    binaries="python3.6 python2.7"
+  else
+    binaries="python python3 python2"
+fi
+
 
 if ! test "${PYTHON+y}"
 then
