@@ -214,6 +214,8 @@ install:
   - $PYTHON --version
   - if command -v shellcheck ; then shellcheck --version; fi
   - tor --version
+  ## List the permissions on chutney and chutney/net
+  - ls -al . net
 
 script:
   ## Basic tests
@@ -235,6 +237,8 @@ script:
   #- tools/test-network.sh --data "$FIVE_MEGABYTES" --connections 2 --rounds 2 --hs-multi-client 1 --start-time 130 --bootstrap-time 70 --stop-time 10
 
 after_failure:
+  ## List the permissions on chutney and chutney/net
+  - ls -al . net
   ## List the contents of net/nodes
   - ls -lR net/nodes/
   ## Dump the important directory documents
