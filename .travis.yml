@@ -8,6 +8,8 @@ os:
   - linux
   ## We also use macOS for some networks
 
+## We don't use the build matrix cross-product, because it makes too many jobs
+## Instead, we list each job under matrix: include:
 matrix:
   # include creates Linux, python 2.7, tor master builds by default
   # we use tor master to catch tor issues before stable releases
@@ -112,10 +114,17 @@ matrix:
 
     ## Test all supported python releases
 
+    ## Pre-installed in macOS
+    - os: osx
+      language: c
+      python:
+      ## python 3 is already installed, under this name
+      env: PYTHON="python3" TOR="stable-release"
+
     ## Pre-installed in Travis xenial:
     ## https://docs.travis-ci.com/user/reference/xenial/#python-support
     ## End of Life: 1 January 2020
-    ## https://www.python.org/dev/peps/pep-0373/#id2
+    ## https://www.python.org/dev/peps/pep-0373/#update
     - python: "2.7"
     ## End of Life: December 2021
     ## https://www.python.org/dev/peps/pep-0494/#lifespan
@@ -123,23 +132,28 @@ matrix:
     ## End of Life: June 2023
     ## https://www.python.org/dev/peps/pep-0537/#lifespan
     - python: "3.7"
-    ## Stable: 20 October 2019
-    ## (Switch from 3.8-dev to 3.8, and check for 3.9-dev)
+
+    ## Extra Installs
     ## End of Life: October 2024
     ## https://www.python.org/dev/peps/pep-0569/#lifespan
-    - python: "3.8-dev"
+    - python: "3.8"
+    ## Python 3.9
+    ## Travis Dev Package: ????
+    ## (Add 3.9-dev)
+    ## Stable: 10 October 2020
+    ## (Switch from 3.9-dev to 3.9, and check for {3.10,4.0}-dev)
+    ## End of Life: October 2025
+    ## https://www.python.org/dev/peps/pep-0596/#lifespan
+    #- python: "3.9-dev"
     - python: "nightly"
-    # PyPy versions
+
+    ## PyPy versions
     ## End of Life: "forever"
     ## http://doc.pypy.org/en/latest/faq.html#how-long-will-pypy-support-python2
     ## But chutney can decide not to support python 2 after 1 Jan 2020.
-    ## Travis Xenial does not support pypy2.7
-    #- python: "pypy2.7"
+    - python: "pypy"
     ## PyPy does not have documented end of life dates
-    - python: "pypy3.5"
-    ## PyPy 3.6 is currently in alpha
-    ## Travis Xenial does not support pypy3.6-dev yet?
-    #- python: "pypy3.6-dev"
+    - python: "pypy3"
 
   ## Uncomment to allow the build to report success (with non-required
   ## sub-builds continuing to run) if all required sub-builds have
@@ -195,7 +209,9 @@ install:
   ## List installed package versions
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then dpkg-query --show; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew list --versions; fi
-  - python --version
+  ## Use the default spelling for python, unless it is overridden
+  - export PYTHON=${PYTHON:-python}
+  - $PYTHON --version
   - if command -v shellcheck ; then shellcheck --version; fi
   - tor --version
 

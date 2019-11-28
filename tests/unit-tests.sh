@@ -5,9 +5,12 @@ set -e
 # Verbose mode
 set -v
 
-
 # Output is prefixed with the name of the script
 myname=$(basename "$0")
+
+# Respect the user's $PYTHON
+PYTHON=${PYTHON:-python}
+echo "$myname: using python '$PYTHON'"
 
 echo "$myname: finding chutney directory"
 TEST_DIR=$(dirname "$0")
@@ -25,7 +28,7 @@ test -n "$LOG_FILE"
 
 unset CHUTNEY_DEBUG
 export CHUTNEY_DEBUG
-lib/chutney/Debug.py | tee "$LOG_FILE"
+$PYTHON lib/chutney/Debug.py | tee "$LOG_FILE"
 LOG_FILE_LINES=$(wc -l < "$LOG_FILE")
 test "$LOG_FILE_LINES" -eq 1
 
@@ -34,7 +37,7 @@ export LOG_FILE
 test -n "$LOG_FILE"
 
 export CHUTNEY_DEBUG=1
-lib/chutney/Debug.py | tee "$LOG_FILE"
+$PYTHON lib/chutney/Debug.py | tee "$LOG_FILE"
 LOG_FILE_LINES=$(wc -l < "$LOG_FILE")
 test "$LOG_FILE_LINES" -eq 2
 
@@ -48,7 +51,7 @@ LOG_FILE=$(mktemp)
 export LOG_FILE
 test -n "$LOG_FILE"
 
-lib/chutney/Templating.py torrc_templates/common.i | tee "$LOG_FILE"
+$PYTHON lib/chutney/Templating.py torrc_templates/common.i | tee "$LOG_FILE"
 grep -q owning_controller_process "$LOG_FILE"
 grep -q connlimit "$LOG_FILE"
 grep -q controlport "$LOG_FILE"
@@ -64,7 +67,8 @@ export LOG_FILE
 test -n "$LOG_FILE"
 
 # Choose an arbitrary port
-PYTHONPATH=$PYTHONPATH:lib lib/chutney/Traffic.py 9999 | tee "$LOG_FILE"
+PYTHONPATH=$PYTHONPATH:lib $PYTHON lib/chutney/Traffic.py 9999 \
+    | tee "$LOG_FILE"
 
 # Traffic.py produces output with a single newline. But we don't want to get
 # too picky about the details: allow an extra line and a few extra chars.
