@@ -12,7 +12,7 @@ then
     export CHUTNEY_PATH
 fi
 
-binaries="python python3 python2"
+binaries="python3 python python2"
 
 if ! test "${PYTHON+y}"
 then
