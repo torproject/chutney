@@ -153,10 +153,6 @@ matrix:
   #allow_failures:
   #  - env: TOR="master-nightly" NETWORK_FLAVOUR="basic-min"
 
-## We don't need sudo. (The "apt:" stanza after this allows us to not need
-## sudo; otherwise, we would need it for getting dependencies.)
-sudo: false
-
 ## (Linux only) Use a recent Linux image (Ubuntu Xenial)
 ## We can't use Bionic, because chutney has file permissions and network
 ## issues (see #32630)
