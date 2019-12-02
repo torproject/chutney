@@ -204,6 +204,10 @@ addons:
     # some point to speed up builds.
     update: true
 
+before_install:
+  ## Set pipefail: we may use pipes in future
+  - set -o pipefail || echo "pipefail failed"
+
 install:
   ## Chutney has no dependencies, apart from tor
   ## List installed package versions
