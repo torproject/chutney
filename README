@@ -70,6 +70,10 @@ Address/DNS Options:
   # Use tor's compile-time default for ServerDNSResolvConfFile
   --dns-conf-default CHUTNEY_DNS_CONF=""
 
+Sandbox Options:
+
+  --sandbox          CHUTNEY_TOR_SANDBOX=N (0 or 1)
+
 Warning Options:
   --all-warnings     CHUTNEY_WARNINGS_IGNORE_EXPECTED=false
                      CHUTNEY_WARNINGS_SUMMARY=false
@@ -214,15 +218,26 @@ Using DNS:
    provides a local resolv.conf file containing IPv4, IPv6, and "localhost".
    Use --dns-conf resolv.conf (relative paths work).
 
+The tor sandbox:
+
+   Chutney can run with the tor seccomp sandbox enabled. But if tor's sandbox
+   is broken on your local version of glibc, you can set CHUTNEY_TOR_SANDBOX=0
+   to disable the sandbox. If CHUTNEY_TOR_SANDBOX is unset, Sandbox defaults
+   to 1 on Linux, and 0 on other platforms.
+
 The configuration files:
 
   networks/basic holds the configuration for the network you're configuring
   above.  It refers to some torrc template files in torrc_templates/.
 
+  Chutney uses a templating system to produce torrc files from the templates.
+  These torrc files can be modified using various chutney options.
+
 The working files:
 
-  chutney sticks its working files, including all data directories, log
-  files, etc, in ./net/.  Each tor instance gets a subdirectory of net/nodes.
+  chutney sticks its working files, including all generated torrc files,
+  data directories, log files, etc, in ./net/.  Each tor instance gets a
+  subdirectory of net/nodes.
 
   You can override the directory "./net" with the CHUTNEY_DATA_DIR
   environment variable.

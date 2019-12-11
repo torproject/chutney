@@ -22,6 +22,10 @@ export CHUTNEY_ALLOW_FAILURES=${CHUTNEY_ALLOW_FAILURES:-0}
 # If a custom test expects DNS, it needs to set CHUTNEY_DNS_CONF
 export CHUTNEY_DNS_CONF=${CHUTNEY_DNS_CONF:-/dev/null}
 
+# Chutney changes the sandbox default, based on the platform. It's set to 1 on
+# Linux, which is the only tor platform with a supported sandbox.
+#export CHUTNEY_TOR_SANDBOX=1
+
 # what we say when we fail
 UPDATE_YOUR_CHUTNEY="Please update your chutney using 'git pull'."
 
@@ -130,6 +134,11 @@ do
         # Use tor's compile-time default for ServerDNSResolvConfFile.
         --dns-conf-default)
             export CHUTNEY_DNS_CONF=""
+            ;;
+        # Enable or disable tor's sandbox, overriding the default
+        --sandbox)
+            export CHUTNEY_TOR_SANDBOX="$2"
+            shift
             ;;
         # Warning Options
         # we summarise unexpected warnings by default

@@ -11,15 +11,16 @@ from __future__ import print_function
 from __future__ import with_statement
 
 import cgitb
+import errno
+import importlib
 import os
+import platform
+import re
 import signal
+import shutil
 import subprocess
 import sys
-import re
-import errno
 import time
-import shutil
-import importlib
 
 from chutney.Debug import debug_flag, debug
 
@@ -42,22 +43,55 @@ cgitb.enable(format="plain")
 class MissingBinaryException(Exception):
     pass
 
-def getenv_int(envvar, default):
+def getenv_type(env_var, default, type_, type_name=None):
     """
-       Return the value of the environment variable 'envar' as an integer,
+       Return the value of the environment variable 'envar' as type_,
        or 'default' if no such variable exists.
 
-       Raise ValueError if the environment variable is set, but not to
-       an integer.
+       Raise ValueError using type_name if the environment variable is set,
+       but type_() raises a ValueError on its value. (If type_name is None
+       or empty, the ValueError uses type_'s string representation instead.)
     """
-    # TODO: Use this function in more places.
-    strval = os.environ.get(envvar)
+    strval = os.environ.get(env_var)
     if strval is None:
         return default
     try:
-        return int(strval)
+        return type_(strval)
     except ValueError:
-        raise ValueError("Invalid value for environment variable %s: expected an integer, but got %r"%(envvar,strval))
+        if not type_name:
+            type_name = str(type_)
+        raise ValueError(("Invalid value for environment variable '{}': "
+                          "expected {}, but got '{}'")
+                         .format(env_var, typename, strval))
+
+def getenv_int(env_var, default):
+    """
+       Return the value of the environment variable 'envar' as an int,
+       or 'default' if no such variable exists.
+
+       Raise ValueError if the environment variable is set, but is not an int.
+    """
+    return getenv_type(env_var, default, int, type_name='an int')
+
+def getenv_bool(env_var, default):
+    """
+       Return the value of the environment variable 'envar' as a bool,
+       or 'default' if no such variable exists.
+
+       Unlike bool(), converts 0, "False", and "No" to False.
+
+       Raise ValueError if the environment variable is set, but is not a bool.
+    """
+    try:
+        # Handle integer values
+        return bool(getenv_int(env_var, default))
+    except ValueError:
+        # Handle values that the user probably expects to be False
+        strval = os.environ.get(env_var)
+        if strval.lower() in ['false', 'no']:
+            return False
+        else:
+            return getenv_type(env_var, default, bool, type_name='a bool')
 
 def mkdir_p(d, mode=448):
     """Create directory 'd' and all of its parents as needed.  Unlike
@@ -1032,6 +1066,11 @@ DEFAULTS = {
 
     'CUR_CONFIG_PHASE': getenv_int('CHUTNEY_CONFIG_PHASE', 1),
     'CUR_LAUNCH_PHASE': getenv_int('CHUTNEY_LAUNCH_PHASE', 1),
+
+    # the Sandbox torrc option value
+    # defaults to 1 on Linux, and 0 otherwise
+    'sandbox': int(getenv_bool('CHUTNEY_TOR_SANDBOX',
+                               platform.system() == 'Linux')),
 }
 
 
@@ -1055,6 +1094,11 @@ class TorEnviron(chutney.Templating.Environ):
              disabled if tor should use the default DNS conf.
              If the dns_conf file is missing, this option is also disabled:
              otherwise, exits would not work due to tor bug #21900.
+          sandbox: Sets Sandbox to the value of CHUTNEY_TOR_SANDBOX.
+             The default is 1 on Linux, and 0 on other platforms.
+             Chutney users can disable the sandbox using:
+                export CHUTNEY_TOR_SANDBOX=0
+             if it doesn't work on their version of glibc.
 
        Environment fields used:
           nodenum: chutney's internal node number for the node
