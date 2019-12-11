@@ -11,15 +11,16 @@ from __future__ import print_function
 from __future__ import with_statement
 
 import cgitb
+import errno
+import importlib
 import os
+import platform
+import re
 import signal
+import shutil
 import subprocess
 import sys
-import re
-import errno
 import time
-import shutil
-import importlib
 
 from chutney.Debug import debug_flag, debug
 
@@ -1055,6 +1056,11 @@ class TorEnviron(chutney.Templating.Environ):
              disabled if tor should use the default DNS conf.
              If the dns_conf file is missing, this option is also disabled:
              otherwise, exits would not work due to tor bug #21900.
+          sandbox: Sets Sandbox to the value of CHUTNEY_TOR_SANDBOX.
+             The default is 1 on Linux, and 0 on other platforms.
+             Chutney users can disable the sandbox using:
+                export CHUTNEY_TOR_SANDBOX=0
+             if it doesn't work on their version of glibc.
 
        Environment fields used:
           nodenum: chutney's internal node number for the node
@@ -1180,6 +1186,16 @@ class TorEnviron(chutney.Templating.Environ):
                   .format(dns_conf, TorEnviron.OFFLINE_DNS_RESOLV_CONF))
             dns_conf = TorEnviron.OFFLINE_DNS_RESOLV_CONF
         return "ServerDNSResolvConfFile %s" % (dns_conf)
+
+    def _get_sandbox(self, my):
+        SANDBOX_DEFAULT = 1 if platform.system() == 'Linux' else 0
+        sandbox_value = getenv_int('CHUTNEY_TOR_SANDBOX', SANDBOX_DEFAULT)
+        if sandbox_value < 0 or sandbox_value > 1:
+            # Issue a warning so the user notices
+            print("CHUTNEY_TOR_SANDBOX '{}' is invalid, using '{}'."
+                  .format(sandbox_value, SANDBOX_DEFAULT))
+            sandbox_value = SANDBOX_DEFAULT
+        return "Sandbox {}".format(sandbox_value)
 
 KNOWN_REQUIREMENTS = {
     "IPV6": chutney.Host.is_ipv6_supported
