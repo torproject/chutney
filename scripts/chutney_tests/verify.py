@@ -1,6 +1,10 @@
+# Future imports for Python 2.7, mandatory in 3.0
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import time
 import chutney
-
 
 def run_test(network):
     wait_time = network._dfltEnv['bootstrap_time']
