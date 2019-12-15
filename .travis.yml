@@ -10,6 +10,15 @@ os:
 
 ## We don't use the build matrix cross-product, because it makes too many jobs
 ## Instead, we list each job under matrix: include:
+env:
+  global:
+    ## Turn off tor's sandbox in chutney, until we fix sandbox errors that are
+    ## triggered by Ubuntu Xenial and Bionic. See #32722.
+    - CHUTNEY_TOR_SANDBOX="0"
+  matrix:
+    ## This matrix entry is required, but it doesn't actually create any jobs
+    -
+
 matrix:
   # include creates Linux, python 2.7, tor master builds by default
   # we use tor master to catch tor issues before stable releases
