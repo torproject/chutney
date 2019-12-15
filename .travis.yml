@@ -161,10 +161,11 @@ sudo: false
 ## (Linux only) Use the Ubuntu Bionic Linux Image
 dist: bionic
 
-## (OSX only) Use the default OSX image
+## (OSX only) Use a recent macOS image
 ## See https://docs.travis-ci.com/user/reference/osx#os-x-version
-## Default is Xcode 9.4 on macOS 10.13 as of August 2018
-#osx_image: xcode9.4
+## Default is Xcode 9.4 on macOS 10.13 as of October 2019
+## Recent is Xcode 11.2 on macOS 10.14 as of October 2019
+osx_image: xcode11.2
 
 ## The TOR env var should be kept in sync with the Linux tor version below
 ## We use the basic-min network by default, to reduce load and increase
