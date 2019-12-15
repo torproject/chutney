@@ -130,18 +130,17 @@ matrix:
     ## https://www.python.org/dev/peps/pep-0569/#lifespan
     - python: "3.8-dev"
     - python: "nightly"
-    # PyPy versions
+
+    ## PyPy versions
+    ## PyPy isn't packaged for Travis Bionic yet
     ## End of Life: "forever"
     ## http://doc.pypy.org/en/latest/faq.html#how-long-will-pypy-support-python2
     ## But chutney can decide not to support python 2 after 1 Jan 2020.
-    ## Travis Xenial does not support pypy2.7
-    #- python: "pypy2.7"
-    ## PyPy does not have documented end of life dates
-    - python: "pypy3.5"
+    - python: "pypy"
       dist: xenial
-    ## PyPy 3.6 is currently in alpha
-    ## Travis Xenial does not support pypy3.6-dev yet?
-    #- python: "pypy3.6-dev"
+    ## PyPy does not have documented end of life dates
+    - python: "pypy3"
+      dist: xenial
 
   ## Uncomment to allow the build to report success (with non-required
   ## sub-builds continuing to run) if all required sub-builds have
