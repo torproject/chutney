@@ -67,7 +67,7 @@ matrix:
     - addons:
         apt:
           sources:
-            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-0.2.9.x-xenial main'
+            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-0.2.9.x-bionic main'
               key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
           packages:
             - shellcheck
@@ -76,7 +76,7 @@ matrix:
     - addons:
         apt:
           sources:
-            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-0.3.5.x-xenial main'
+            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-0.3.5.x-bionic main'
               key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
           packages:
             - shellcheck
@@ -85,7 +85,7 @@ matrix:
     - addons:
         apt:
           sources:
-            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-0.4.0.x-xenial main'
+            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-0.4.0.x-bionic main'
               key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
           packages:
             - shellcheck
@@ -95,7 +95,7 @@ matrix:
     - addons:
         apt:
           sources:
-            - sourceline: 'deb https://deb.torproject.org/torproject.org xenial main'
+            - sourceline: 'deb https://deb.torproject.org/torproject.org bionic main'
               key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
           packages:
             - shellcheck
@@ -105,7 +105,7 @@ matrix:
     - addons:
         apt:
           sources:
-            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-0.4.1.x-xenial main'
+            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-0.4.1.x-bionic main'
               key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
           packages:
             - shellcheck
@@ -114,7 +114,7 @@ matrix:
     - addons:
         apt:
           sources:
-            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-0.4.2.x-xenial main'
+            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-0.4.2.x-bionic main'
               key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
           packages:
             - shellcheck
@@ -130,22 +130,27 @@ matrix:
       ## python 3 is already installed, under this name
       env: PYTHON="python3" TOR="stable-release"
 
-    ## Pre-installed in Travis xenial:
-    ## https://docs.travis-ci.com/user/reference/xenial/#python-support
+    ## Pre-installed in Travis Bionic:
+    ## https://docs.travis-ci.com/user/reference/bionic/#python-support
+
     ## End of Life: 1 January 2020
     ## https://www.python.org/dev/peps/pep-0373/#update
     - python: "2.7"
+
     ## End of Life: December 2021
     ## https://www.python.org/dev/peps/pep-0494/#lifespan
     - python: "3.6"
+
     ## End of Life: June 2023
     ## https://www.python.org/dev/peps/pep-0537/#lifespan
     - python: "3.7"
 
     ## Extra Installs
+
     ## End of Life: October 2024
     ## https://www.python.org/dev/peps/pep-0569/#lifespan
     - python: "3.8"
+
     ## Python 3.9
     ## Travis Dev Package: ????
     ## (Add 3.9-dev)
@@ -154,15 +159,38 @@ matrix:
     ## End of Life: October 2025
     ## https://www.python.org/dev/peps/pep-0596/#lifespan
     #- python: "3.9-dev"
+
     - python: "nightly"
 
     ## PyPy versions
+    ## PyPy isn't packaged for Travis Bionic yet
+
+    ## Pypy 2
     ## End of Life: "forever"
     ## http://doc.pypy.org/en/latest/faq.html#how-long-will-pypy-support-python2
     ## But chutney can decide not to support python 2 after 1 Jan 2020.
     - python: "pypy"
+      dist: xenial
+      addons:
+        apt:
+          sources:
+            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-master-xenial main'
+              key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
+          packages:
+            - shellcheck
+            - tor
+
     ## PyPy does not have documented end of life dates
     - python: "pypy3"
+      dist: xenial
+      addons:
+        apt:
+          sources:
+            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-master-xenial main'
+              key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
+          packages:
+            - shellcheck
+            - tor
 
   ## Uncomment to allow the build to report success (with non-required
   ## sub-builds continuing to run) if all required sub-builds have
@@ -176,11 +204,8 @@ matrix:
   #allow_failures:
   #  - env: TOR="master-nightly" NETWORK_FLAVOUR="basic-min"
 
-## (Linux only) Use a recent Linux image (Ubuntu Xenial)
-## We can't use Bionic, because chutney has file permissions and network
-## issues (see #32630)
-## Also, pypy isn't packaged for Travis Bionic yet
-dist: xenial
+## (Linux only) Use the Ubuntu Bionic Linux Image
+dist: bionic
 
 ## (macOS only) Use a recent macOS image
 ## See https://docs.travis-ci.com/user/reference/osx#os-x-version
@@ -199,7 +224,7 @@ addons:
   ## (Linux only)
   apt:
     sources:
-      - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-master-xenial main'
+      - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-master-bionic main'
         key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
     packages:
       - shellcheck
