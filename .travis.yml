@@ -154,10 +154,6 @@ matrix:
   #allow_failures:
   #  - env: TOR="master-nightly" NETWORK_FLAVOUR="basic-min"
 
-## We don't need sudo. (The "apt:" stanza after this allows us to not need
-## sudo; otherwise, we would need it for getting dependencies.)
-sudo: false
-
 ## (Linux only) Use the Ubuntu Bionic Linux Image
 dist: bionic
 
