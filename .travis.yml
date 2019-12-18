@@ -279,6 +279,8 @@ after_failure:
   - ls -al . net
   ## List the contents of net/nodes
   - ls -lR net/nodes/
+  ## Dump the config
+  - cat net/nodes/000a*/torrc
   ## Dump the important directory documents
   #- cat net/nodes/000a*/cached-certs
   - cat net/nodes/000a*/cached-consensus
