@@ -68,12 +68,16 @@ matrix:
     ## If the deb.torproject.org repositories are removed, we will fall back to
     ## Ubuntu security's tor version (currently 0.2.9.14). We might want to
     ## automatically fail the job if we can't get a newer tor, see #29741.
+    ##
     ## The current tor versions in Ubuntu are on this page:
     ## https://packages.ubuntu.com/search?keywords=tor&searchon=names&exact=1
-    - addons:
+    ##
+    ## We run 0.2.9 on Xenial, because Bionic has an OpenSSL version mismatch
+    - dist: xenial
+      addons:
         apt:
           sources:
-            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-0.2.9.x-bionic main'
+            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-0.2.9.x-xenial main'
               key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
           packages:
             - shellcheck
