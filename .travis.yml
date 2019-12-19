@@ -17,7 +17,13 @@ env:
     - CHUTNEY_TOR_SANDBOX="0"
   matrix:
     ## This matrix entry is required, but it doesn't actually create any jobs
-    -
+    ## by itself. All jobs are created by matrix: include: entries
+    ##
+    ## The TOR env var should be kept in sync with the Linux tor version in
+    ## the addons section below
+    ## We use the basic-min network by default, to reduce load and increase
+    ## reliability
+    - TOR="master-nightly" NETWORK_FLAVOUR="basic-min"
 
 matrix:
   # include creates Linux, python 2.7, tor master builds by default
@@ -212,12 +218,6 @@ dist: bionic
 ## Default is Xcode 9.4 on macOS 10.13 as of October 2019
 ## Recent is Xcode 11.2 on macOS 10.14 as of October 2019
 osx_image: xcode11.2
-
-## The TOR env var should be kept in sync with the Linux tor version below
-## We use the basic-min network by default, to reduce load and increase
-## reliability
-env:
-  - TOR="master-nightly" NETWORK_FLAVOUR="basic-min"
 
 ## Download our dependencies
 addons:
