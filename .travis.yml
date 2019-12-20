@@ -8,6 +8,23 @@ os:
   - linux
   ## We also use macOS for some networks
 
+## We don't use the build matrix cross-product, because it makes too many jobs
+## Instead, we list each job under matrix: include:
+env:
+  global:
+    ## Turn off tor's sandbox in chutney, until we fix sandbox errors that are
+    ## triggered by Ubuntu Xenial and Bionic. See #32722.
+    - CHUTNEY_TOR_SANDBOX="0"
+  matrix:
+    ## This matrix entry is required, but it doesn't actually create any jobs
+    ## by itself. All jobs are created by matrix: include: entries
+    ##
+    ## The TOR env var should be kept in sync with the Linux tor version in
+    ## the addons section below
+    ## We use the basic-min network by default, to reduce load and increase
+    ## reliability
+    - TOR="master-nightly" NETWORK_FLAVOUR="basic-min"
+
 matrix:
   # include creates Linux, python 2.7, tor master builds by default
   # we use tor master to catch tor issues before stable releases
@@ -51,9 +68,13 @@ matrix:
     ## If the deb.torproject.org repositories are removed, we will fall back to
     ## Ubuntu security's tor version (currently 0.2.9.14). We might want to
     ## automatically fail the job if we can't get a newer tor, see #29741.
+    ##
     ## The current tor versions in Ubuntu are on this page:
     ## https://packages.ubuntu.com/search?keywords=tor&searchon=names&exact=1
-    - addons:
+    ##
+    ## We run 0.2.9 on Xenial, because Bionic has an OpenSSL version mismatch
+    - dist: xenial
+      addons:
         apt:
           sources:
             - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-0.2.9.x-xenial main'
@@ -65,71 +86,121 @@ matrix:
     - addons:
         apt:
           sources:
-            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-0.3.5.x-xenial main'
+            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-0.3.5.x-bionic main'
               key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
           packages:
             - shellcheck
             - tor
       env: TOR="0.3.5-nightly" NETWORK_FLAVOUR="basic-min"
-    ## The current stable release is 0.4.0
     - addons:
         apt:
           sources:
-            - sourceline: 'deb https://deb.torproject.org/torproject.org xenial main'
-              key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
-          packages:
-            - shellcheck
-            - tor
-      env: TOR="stable-release" NETWORK_FLAVOUR="basic-min"
-    ## We also have 0.4.0 and 0.4.1 nightlies
-    - addons:
-        apt:
-          sources:
-            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-0.4.0.x-xenial main'
+            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-0.4.0.x-bionic main'
               key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
           packages:
             - shellcheck
             - tor
       env: TOR="0.4.0-nightly" NETWORK_FLAVOUR="basic-min"
+    ## The current stable release is 0.4.1
     - addons:
         apt:
           sources:
-            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-0.4.1.x-xenial main'
+            - sourceline: 'deb https://deb.torproject.org/torproject.org bionic main'
+              key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
+          packages:
+            - shellcheck
+            - tor
+      env: TOR="stable-release" NETWORK_FLAVOUR="basic-min"
+    ## We also have 0.4.1 and 0.4.2 nightlies
+    - addons:
+        apt:
+          sources:
+            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-0.4.1.x-bionic main'
               key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
           packages:
             - shellcheck
             - tor
       env: TOR="0.4.1-nightly" NETWORK_FLAVOUR="basic-min"
+    - addons:
+        apt:
+          sources:
+            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-0.4.2.x-bionic main'
+              key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
+          packages:
+            - shellcheck
+            - tor
+      env: TOR="0.4.2-nightly" NETWORK_FLAVOUR="basic-min"
 
     ## Test all supported python releases
-    ## Pre-installed in Travis xenial:
-    ## https://docs.travis-ci.com/user/reference/xenial/#python-support
+
+    ## Pre-installed in macOS
+    - os: osx
+      language: c
+      python:
+      ## python 3 is already installed, under this name
+      env: PYTHON="python3" TOR="stable-release"
+
+    ## Pre-installed in Travis Bionic:
+    ## https://docs.travis-ci.com/user/reference/bionic/#python-support
+
     ## End of Life: 1 January 2020
-    ## https://www.python.org/dev/peps/pep-0373/#id2
+    ## https://www.python.org/dev/peps/pep-0373/#update
     - python: "2.7"
+
     ## End of Life: December 2021
     ## https://www.python.org/dev/peps/pep-0494/#lifespan
     - python: "3.6"
+
     ## End of Life: June 2023
     ## https://www.python.org/dev/peps/pep-0537/#lifespan
     - python: "3.7"
-    ## Stable: 20 October 2019
-    ## (Switch from 3.8-dev to 3.8, and check for 3.9-dev)
+
+    ## Extra Installs
+
     ## End of Life: October 2024
     ## https://www.python.org/dev/peps/pep-0569/#lifespan
-    - python: "3.8-dev"
+    - python: "3.8"
+
+    ## Python 3.9
+    ## Travis Dev Package: ????
+    ## (Add 3.9-dev)
+    ## Stable: 10 October 2020
+    ## (Switch from 3.9-dev to 3.9, and check for {3.10,4.0}-dev)
+    ## End of Life: October 2025
+    ## https://www.python.org/dev/peps/pep-0596/#lifespan
+    #- python: "3.9-dev"
+
     - python: "nightly"
-    # PyPy versions
+
+    ## PyPy versions
+    ## PyPy isn't packaged for Travis Bionic yet
+
+    ## Pypy 2
     ## End of Life: "forever"
     ## http://doc.pypy.org/en/latest/faq.html#how-long-will-pypy-support-python2
     ## But chutney can decide not to support python 2 after 1 Jan 2020.
-    ## Travis Xenial does not support pypy2.7
-    #- python: "pypy2.7"
+    - python: "pypy"
+      dist: xenial
+      addons:
+        apt:
+          sources:
+            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-master-xenial main'
+              key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
+          packages:
+            - shellcheck
+            - tor
+
     ## PyPy does not have documented end of life dates
-    - python: "pypy3.5"
-    ## PyPy 3.6 is currently in alpha
-    ## Travis Xenial does not support pypy3.6-dev yet?
-    #- python: "pypy3.6-dev"
+    - python: "pypy3"
+      dist: xenial
+      addons:
+        apt:
+          sources:
+            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-master-xenial main'
+              key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
+          packages:
+            - shellcheck
+            - tor
 
   ## Uncomment to allow the build to report success (with non-required
   ## sub-builds continuing to run) if all required sub-builds have
@@ -143,31 +214,21 @@ matrix:
   #allow_failures:
   #  - env: TOR="master-nightly" NETWORK_FLAVOUR="basic-min"
 
-## We don't need sudo. (The "apt:" stanza after this allows us to not need
-## sudo; otherwise, we would need it for getting dependencies.)
-sudo: false
+## (Linux only) Use the Ubuntu Bionic Linux Image
+dist: bionic
 
-## (Linux only) Use the Ubuntu Xenial Linux Image
-## deb.torproject.org doesn't support Trusty any more
-dist: xenial
-
-## (OSX only) Use the default OSX image
+## (macOS only) Use a recent macOS image
 ## See https://docs.travis-ci.com/user/reference/osx#os-x-version
-## Default is Xcode 9.4 on macOS 10.13 as of August 2018
-#osx_image: xcode9.4
-
-## The TOR env var should be kept in sync with the Linux tor version below
-## We use the basic-min network by default, to reduce load and increase
-## reliability
-env:
-  - TOR="master-nightly" NETWORK_FLAVOUR="basic-min"
+## Default is Xcode 9.4 on macOS 10.13 as of October 2019
+## Recent is Xcode 11.2 on macOS 10.14 as of October 2019
+osx_image: xcode11.2
 
 ## Download our dependencies
 addons:
   ## (Linux only)
   apt:
     sources:
-      - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-master-xenial main'
+      - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-master-bionic main'
         key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
     packages:
       - shellcheck
@@ -181,14 +242,22 @@ addons:
     # some point to speed up builds.
     update: true
 
+before_install:
+  ## Set pipefail: we may use pipes in future
+  - set -o pipefail || echo "pipefail failed"
+
 install:
   ## Chutney has no dependencies, apart from tor
   ## List installed package versions
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then dpkg-query --show; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew list --versions; fi
-  - python --version
+  ## Use the default spelling for python, unless it is overridden
+  - export PYTHON=${PYTHON:-python}
+  - $PYTHON --version
   - if command -v shellcheck ; then shellcheck --version; fi
   - tor --version
+  ## List the permissions on chutney and chutney/net
+  - ls -al . net
 
 script:
   ## Basic tests
@@ -210,8 +279,12 @@ script:
   #- tools/test-network.sh --data "$FIVE_MEGABYTES" --connections 2 --rounds 2 --hs-multi-client 1 --start-time 130 --bootstrap-time 70 --stop-time 10
 
 after_failure:
+  ## List the permissions on chutney and chutney/net
+  - ls -al . net
   ## List the contents of net/nodes
   - ls -lR net/nodes/
+  ## Dump the config
+  - cat net/nodes/000a*/torrc
   ## Dump the important directory documents
   #- cat net/nodes/000a*/cached-certs
   - cat net/nodes/000a*/cached-consensus
