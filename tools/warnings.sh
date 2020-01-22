@@ -77,6 +77,8 @@ show_warnings() {
     if [ "$CHUTNEY_WARNINGS_SUMMARY" != true ]; then
         $ECHO_Q ""
     fi
+    # Remove the temporary files we created
+    rm "${LOGS}" "${FILTERED_LOGS}"
 }
 
 usage() {
