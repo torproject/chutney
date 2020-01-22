@@ -10,7 +10,7 @@
 # Usage:
 #    tools/bootstrap-network.sh [network-flavour]
 #    network-flavour: one of the files in the networks directory,
-#                     (default: 'basic')
+#                     (default: 'bridges+hs-v2')
 #
 
 # Get a working chutney path
