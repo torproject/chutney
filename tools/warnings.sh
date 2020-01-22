@@ -23,14 +23,23 @@ if [ -d "$PWD/$CHUTNEY_PATH" ] && [ -x "$PWD/$CHUTNEY_PATH/chutney" ]; then
 fi
 
 # Get a working net path
-if [ ! -d "$CHUTNEY_DATA_DIR" ]; then
-    # looks like a broken path: use the chutney path as a base
-    export CHUTNEY_DATA_DIR="$CHUTNEY_PATH/net"
-fi
-if [ -d "$PWD/$CHUTNEY_DATA_DIR" ]; then
-    # looks like a relative path: make chutney path absolute
-    export CHUTNEY_DATA_DIR="$PWD/$CHUTNEY_DATA_DIR"
-fi
+case "$CHUTNEY_DATA_DIR" in
+  /*)
+    # if an absolute path, then leave as-is
+    # chutney will make this directory automatically if needed
+    ;;
+  *)
+    # if a relative path
+    if [ ! -d "$CHUTNEY_DATA_DIR" ]; then
+        # looks like a broken path: use the chutney path as a base
+        export CHUTNEY_DATA_DIR="$CHUTNEY_PATH/net"
+    fi
+    if [ -d "$PWD/$CHUTNEY_DATA_DIR" ]; then
+        # looks like a relative path: make chutney path absolute
+        export CHUTNEY_DATA_DIR="$PWD/$CHUTNEY_DATA_DIR"
+    fi
+    ;;
+esac
 
 show_warnings() {
     # Work out the file and filter settings
