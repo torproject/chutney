@@ -218,6 +218,8 @@ def _warnMissingTor(tor_path, cmdline, tor_name="tor"):
         help_msg = help_msg_fmt.format("CHUTNEY_TOR", tor_name)
     elif tor_name == "tor-gencert":
         help_msg = help_msg_fmt.format("CHUTNEY_TOR_GENCERT", tor_name)
+    else:
+        raise ValueError("Unknown tor_name: '{}'".format(tor_name))
     print(("Cannot find the {} binary at '{}' for the command line '{}'. {}")
           .format(tor_name, tor_path, " ".join(cmdline), help_msg))
 
@@ -267,10 +269,14 @@ def launch_process(cmdline, tor_name="tor", stdin=None, exit_on_missing=True):
 
        Returns the Popen object for the launched process.
     """
-    if tor_name == "tor" and not debug_flag:
-        cmdline.append("--quiet")
-    elif tor_name == "tor-gencert" and debug_flag:
-        cmdline.append("-v")
+    if tor_name == "tor":
+        if not debug_flag:
+            cmdline.append("--quiet")
+    elif tor_name == "tor-gencert":
+        if debug_flag:
+            cmdline.append("-v")
+    else:
+        raise ValueError("Unknown tor_name: '{}'".format(tor_name))
     try:
         p = subprocess.Popen(cmdline,
                              stdin=stdin,
