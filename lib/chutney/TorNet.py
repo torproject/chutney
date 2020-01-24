@@ -211,10 +211,14 @@ def _warnMissingTor(tor_path, cmdline, tor_name="tor"):
     """Log a warning that the binary tor_name can't be found at tor_path
        while running cmdline.
     """
-    print(("Cannot find the {} binary at '{}' for the command line '{}'. " +
-           "Set the TOR_DIR environment variable to the directory " +
-           "containing {}.")
-          .format(tor_name, tor_path, " ".join(cmdline), tor_name))
+    help_msg_fmt = "Set the '{}' environment variable to the directory containing '{}'."
+    help_msg = ""
+    if tor_name == "tor":
+        help_msg = help_msg_fmt.format("CHUTNEY_TOR", tor_name)
+    elif tor_name == "tor-gencert":
+        help_msg = help_msg_fmt.format("CHUTNEY_TOR_GENCERT", tor_name)
+    print(("Cannot find the {} binary at '{}' for the command line '{}'. {}")
+          .format(tor_name, tor_path, " ".join(cmdline), help_msg))
 
 def run_tor(cmdline, exit_on_missing=True):
     """Run the tor command line cmdline, which must start with the path or
