@@ -131,9 +131,13 @@ def get_absolute_chutney_path():
     return os.path.abspath(relative_chutney_path)
 
 def get_absolute_net_path():
+    data_dir = os.environ.get('CHUTNEY_DATA_DIR', 'net')
+    if os.path.isabs(data_dir):
+        # if we are given an absolute path, we should use it
+        return data_dir
     # use the chutney path as the default
     absolute_chutney_path = get_absolute_chutney_path()
-    relative_net_path = os.environ.get('CHUTNEY_DATA_DIR', 'net')
+    relative_net_path = data_dir
     # but what is it relative to?
     # let's check if it's in CHUTNEY_PATH first, to preserve
     # backwards-compatible behaviour
