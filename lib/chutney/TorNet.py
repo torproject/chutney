@@ -212,7 +212,9 @@ def _warnMissingTor(tor_path, cmdline, tor_name="tor"):
        at tor_path while running cmdline. Suggest the appropriate
        environmental variable to set to resolve the issue.
     """
-    help_msg_fmt = "Set the '{}' environment variable to the path of '{}'."
+    help_msg_fmt = ("Set the '{}' environment variable to the path of '{}'. " +
+                    "If using test-network.sh, set the 'TOR_DIR' " +
+                    "environment variable to the directory containing '{1}'.")
     help_msg = ""
     if tor_name == "tor":
         help_msg = help_msg_fmt.format("CHUTNEY_TOR", tor_name)
