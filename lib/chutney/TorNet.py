@@ -123,6 +123,10 @@ def make_datadir_subdirectory(datadir, subdir):
     mkdir_p(os.path.join(datadir, subdir))
 
 def get_absolute_chutney_path():
+    """
+       Returns the absolute path of the directory containing the chutney
+       executable script.
+    """
     # use the current directory as the default
     # (./chutney already sets CHUTNEY_PATH using the path to the script)
     # use tools/test-network.sh if you want chutney to try really hard to find
@@ -131,27 +135,63 @@ def get_absolute_chutney_path():
     return os.path.abspath(relative_chutney_path)
 
 def get_absolute_net_path():
+    """
+       Returns the absolute path of the "net" directory that chutney should
+       use to store "node*" directories containing torrcs and tor runtime data.
+
+       If the CHUTNEY_DATA_DIR environmental variable is an absolute path, it
+       is returned unmodified, regardless of whether the path actually exists.
+       (Chutney creates any directories that do not exist.)
+
+       Otherwise, if it is a relative path, and there is an existing directory
+       with that name in the directory containing the chutney executable
+       script, return that path (this check exists for legacy reasons).
+
+       Finally, return the path relative to the current working directory,
+       regardless of whether the path actually exists.
+    """
     data_dir = os.environ.get('CHUTNEY_DATA_DIR', 'net')
     if os.path.isabs(data_dir):
         # if we are given an absolute path, we should use it
+        # regardless of whether the directory exists
         return data_dir
     # use the chutney path as the default
     absolute_chutney_path = get_absolute_chutney_path()
     relative_net_path = data_dir
     # but what is it relative to?
-    # let's check if it's in CHUTNEY_PATH first, to preserve
-    # backwards-compatible behaviour
+    # let's check if there's an existing directory with this name in
+    # CHUTNEY_PATH first, to preserve backwards-compatible behaviour
     chutney_net_path = os.path.join(absolute_chutney_path, relative_net_path)
     if os.path.isdir(chutney_net_path):
         return chutney_net_path
-    # ok, it's relative to the current directory, whatever that is
+    # ok, it's relative to the current directory, whatever that is, and whether
+    # or not the path actually exists
     return os.path.abspath(relative_net_path)
 
 def get_absolute_nodes_path():
+    """
+       Returns the absolute path of the "nodes" symlink that points to the
+       "nodes*" directory that chutney should use to store the current
+       network's torrcs and tor runtime data.
+
+       See get_new_absolute_nodes_path() for more details.
+    """
     # there's no way to customise this: we really don't need more options
     return os.path.join(get_absolute_net_path(), 'nodes')
 
 def get_new_absolute_nodes_path(now=time.time()):
+    """
+       Returns the absolute path of a unique "nodes*" directory that chutney
+       should use to store the current network's torrcs and tor runtime data.
+
+       The nodes directory suffix is based on the current timestamp,
+       incremented if necessary to avoid collisions with existing directories.
+
+       (The existing directory check contains known race conditions: running
+       multiple simultaneous chutney instances on the same "net" directory is
+       not supported. The uniqueness check is only designed to avoid
+       collisions if the clock is set backwards.)
+    """
     # automatically chosen to prevent path collisions, and result in an ordered
     # series of directory path names
     # should only be called by 'chutney configure', all other chutney commands
