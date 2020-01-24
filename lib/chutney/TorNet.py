@@ -208,8 +208,9 @@ def get_new_absolute_nodes_path(now=time.time()):
     return newdir
 
 def _warnMissingTor(tor_path, cmdline, tor_name="tor"):
-    """Log a warning that the binary tor_name can't be found at tor_path
-       while running cmdline.
+    """Log a warning that the binary canonically named tor_name can't be found
+       at tor_path while running cmdline. Suggest the appropriate
+       environmental variable to set to resolve the issue.
     """
     help_msg_fmt = "Set the '{}' environment variable to the path of '{}'."
     help_msg = ""
@@ -261,8 +262,8 @@ def run_tor(cmdline, exit_on_missing=True):
 
 def launch_process(cmdline, tor_name="tor", stdin=None, exit_on_missing=True):
     """Launch the command line cmdline, which must start with the path or
-       name of a binary. Use tor_name as the canonical name of the binary.
-       Pass stdin to the Popen constructor.
+       name of a binary. Use tor_name as the canonical name of the binary in
+       logs. Pass stdin to the Popen constructor.
 
        Returns the Popen object for the launched process.
     """
