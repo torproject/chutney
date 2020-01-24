@@ -688,7 +688,7 @@ class LocalNodeBuilder(NodeBuilder):
                 print("No dirauth support in %r"%self._env['tor'])
                 return False
             if not tor_gencert_exists(self._env['tor-gencert']):
-                print("No binary found for tor-gencert %r"%self._env['tor-gencrrt'])
+                print("No binary found for tor-gencert %r"%self._env['tor-gencert'])
 
     def _makeDataDir(self):
         """Create the data directory (with keys subdirectory) for this node.
