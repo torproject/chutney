@@ -211,7 +211,7 @@ def _warnMissingTor(tor_path, cmdline, tor_name="tor"):
     """Log a warning that the binary tor_name can't be found at tor_path
        while running cmdline.
     """
-    help_msg_fmt = "Set the '{}' environment variable to the directory containing '{}'."
+    help_msg_fmt = "Set the '{}' environment variable to the path of '{}'."
     help_msg = ""
     if tor_name == "tor":
         help_msg = help_msg_fmt.format("CHUTNEY_TOR", tor_name)
