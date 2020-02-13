@@ -900,7 +900,9 @@ class LocalNodeController(NodeController):
         pid = self.getPid()
         nick = self._env['nick']
         datadir = self._env['dir']
-        corefile = "core.%s" % pid
+        corefile = None
+        if pid:
+            corefile = "core.%d" % pid
         tor_version = get_tor_version(self._env['tor'])
         if self.isRunning(pid):
             if listRunning:
@@ -908,7 +910,7 @@ class LocalNodeController(NodeController):
                 print("{:12} is running with PID {:5}: {}"
                       .format(nick, pid, tor_version))
             return True
-        elif os.path.exists(os.path.join(datadir, corefile)):
+        elif corefile and os.path.exists(os.path.join(datadir, corefile)):
             if listNonRunning:
                 print("{:12} seems to have crashed, and left core file {}: {}"
                       .format(nick, corefile, tor_version))
