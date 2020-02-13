@@ -10,8 +10,7 @@
 # Usage:
 #    tools/bootstrap-network.sh [network-flavour]
 #    network-flavour: one of the files in the networks directory,
-#                     (default: 'bridges+hs-v2')
-#
+#                     (default: 'bridges+hs-v23')
 
 # Get a working chutney path
 if [ ! -d "$CHUTNEY_PATH" ] || [ ! -x "$CHUTNEY_PATH/chutney" ]; then
@@ -53,7 +52,7 @@ myname=$(basename "$0")
     { echo "$myname: missing chutney: $CHUTNEY"; exit 1; }
 
 # Set the variables for the chutney network flavour
-export NETWORK_FLAVOUR=${NETWORK_FLAVOUR:-"bridges+hs-v2"}
+export NETWORK_FLAVOUR=${NETWORK_FLAVOUR:-"bridges+hs-v23"}
 [ -n "$1" ] && { NETWORK_FLAVOUR=$1; shift; }
 export CHUTNEY_NETWORK="$CHUTNEY_PATH/networks/$NETWORK_FLAVOUR"
 

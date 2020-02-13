@@ -329,7 +329,7 @@ fi
 $ECHO "$myname: Using \$CHUTNEY_TOR: '$CHUTNEY_TOR' and \$CHUTNEY_TOR_GENCERT: '$CHUTNEY_TOR_GENCERT'"
 
 # Set the variables for the chutney network flavour
-export NETWORK_FLAVOUR=${NETWORK_FLAVOUR:-"bridges+hs-v2"}
+export NETWORK_FLAVOUR=${NETWORK_FLAVOUR:-"bridges+hs-v23"}
 export CHUTNEY_NETWORK="$CHUTNEY_PATH/networks/$NETWORK_FLAVOUR"
 
 export WARNING_COMMAND="$CHUTNEY_PATH/tools/warnings.sh"
