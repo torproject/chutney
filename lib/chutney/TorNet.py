@@ -863,7 +863,10 @@ class LocalNodeController(NodeController):
             return None
 
         with open(pidfile, 'r') as f:
-            return int(f.read())
+            try:
+                return int(f.read())
+            except ValueError:
+                return None
 
     def isRunning(self, pid=None):
         """Return true iff this node is running.  (If 'pid' is provided, we
