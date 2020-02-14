@@ -10,7 +10,7 @@ Client = Node(tag="c", client=1, torrc="client.tmpl")
 OldClient = Node(tag="cOLD", client=1, torrc="client.tmpl", tor=OLD_TOR)
 
 NODES = Authority.getN(2) + OldAuthority.getN(2) + \
-        Relay.getN(2) + OldRelay.getN(2) + \
+        Relay.getN(1) + OldRelay.getN(1) + \
         Client.getN(2) + OldClient.getN(2)
 
 ConfigureNodes(NODES)

@@ -12,7 +12,7 @@ HSv2 = Node(tag="h", hs=1, torrc="hs.tmpl")
 OldHSv2 = Node(tag="hOLD", hs=1, torrc="hs.tmpl", tor=OLD_TOR)
 
 NODES = Authority.getN(2) + OldAuthority.getN(2) + \
-        Relay.getN(2) + OldRelay.getN(2) + \
+        Relay.getN(1) + OldRelay.getN(1) + \
         Client.getN(1) + OldClient.getN(1) + \
         HSv2.getN(1) + OldHSv2.getN(1)
 

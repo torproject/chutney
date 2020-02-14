@@ -10,15 +10,13 @@ Client = Node(tag="c", client=1, torrc="client.tmpl")
 OldClient = Node(tag="cOLD", client=1, torrc="client.tmpl", tor=OLD_TOR)
 HSv2 = Node(tag="h", hs=1, torrc="hs.tmpl")
 OldHSv2 = Node(tag="hOLD", hs=1, torrc="hs.tmpl", tor=OLD_TOR)
-# Old tor versions don't have HSv3 support yet
-# And chutney doesn't know how to tell old clients to avoid v3 services
-# See 23498
-#HSv3 = Node(tag="h", hs=1, torrc="hs-v3.tmpl")
+HSv3 = Node(tag="h", hs=1, torrc="hs-v3.tmpl")
+OldHSv3 = Node(tag="hOLD", hs=1, torrc="hs-v3.tmpl", tor=OLD_TOR)
 
 NODES = Authority.getN(2) + OldAuthority.getN(2) + \
-        Relay.getN(2) + OldRelay.getN(2) + \
+        Relay.getN(1) + OldRelay.getN(1) + \
         Client.getN(1) + OldClient.getN(1) + \
-        HSv2.getN(1) + OldHSv2.getN(1)
-#        HSv3.getN(1)
+        HSv2.getN(1) + OldHSv2.getN(1) + \
+        HSv3.getN(1) + OldHSv3.getN(1)
 
 ConfigureNodes(NODES)
