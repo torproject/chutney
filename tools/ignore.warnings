@@ -46,6 +46,7 @@ Not enough info to publish pending .* consensus
 # Necessary to make IPv4 and IPv6 exit templates work
 Option 'ExitPolicyRejectPrivate' used more than once
 Option 'ExitRelay' used more than once
+Option 'IPv6Exit' used more than once
 # We ignore consensus failure warnings
 Received http status code 404 .* from server .* while fetching
 # Tor Bug 21525
