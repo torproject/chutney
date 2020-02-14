@@ -17,6 +17,6 @@ Client6 = Node(tag="c", client=1, torrc="client-only-v6.tmpl")
 
 # The minimum number of authorities/relays/exits is 3, the minimum path length
 # But for some reason, Tor wants 4 "acceptable routers" (Tor bug #20071)
-NODES = Authority6.getN(3) + ExitRelay6.getN(1) + HS.getN(1) + Client6.getN(1)
+NODES = Authority6.getN(3) + ExitRelay6.getN(2) + HS.getN(1) + Client6.getN(1)
 
 ConfigureNodes(NODES)
