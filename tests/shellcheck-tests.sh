@@ -24,3 +24,5 @@ echo "$myname: running shellcheck tests with $EXCLUSIONS"
 shellcheck "$EXCLUSIONS" chutney
 
 find . -name "*.sh" -exec shellcheck "$EXCLUSIONS" {} +
+
+find . -name "*.git-hook" -exec shellcheck "$EXCLUSIONS" {} +
