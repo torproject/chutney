@@ -2,14 +2,25 @@
 #
 # Usage:
 #    tools/warnings.sh [node]
-# Output: for each node outputs its warnings and the number of times that
-# warning has ocurred. If the argument node is specified, it only shows
-# the warnings of that node.
-# Examples: tools/warnings.sh
-#           tools/warnings.sh 000a
+#
+# Output:
+#    for each node, show the warnings, and the number of times that warning
+#    has ocurred.
+#
+#    If the argument "node" is specified, only shows the warnings of that
+#    node.
+#
+# Examples:
+#    tools/warnings.sh
+#    tools/warnings.sh 000a
+#
 # Environmental variables:
-# CHUTNEY_WARNINGS_IGNORE_EXPECTED: set to "true" to filter expected warnings
-# CHUTNEY_WARNINGS_SUMMARY: set to "true" to merge warnings from all instances
+#
+#    CHUTNEY_WARNINGS_IGNORE_EXPECTED:
+#        set to "true" to filter expected warnings
+#
+#    CHUTNEY_WARNINGS_SUMMARY:
+#        set to "true" to merge warnings from all instances
 
 if [ ! -d "$CHUTNEY_PATH" ] || [ ! -x "$CHUTNEY_PATH/chutney" ]; then
     # looks like a broken path: use the path to this tool instead
@@ -41,6 +52,7 @@ case "$CHUTNEY_DATA_DIR" in
     ;;
 esac
 
+# Show the warnings for node $1
 show_warnings() {
     # Work out the file and filter settings
     LOGS=$(mktemp)
@@ -90,6 +102,7 @@ show_warnings() {
     rm "${LOGS}" "${FILTERED_LOGS}"
 }
 
+# Show the usage message for this script
 usage() {
     echo "Usage: $NAME [node]"
     exit 1
@@ -117,7 +130,7 @@ FILTER='s/^.*\[(warn|err)\]//p'
 # use the --quiet setting from test-network.sh, if available
 ECHO_Q=${ECHO:-"echo"}
 
-[ -d "$DEST" ] || { echo "$NAME: no logs available"; exit 1; }
+[ -d "$DEST" ] || { echo "$NAME: no logs available in '$DEST'"; exit 1; }
 if [ $# -eq 0 ];
 then
     if [ "$CHUTNEY_WARNINGS_SUMMARY" = true ]; then
