@@ -264,25 +264,10 @@ script:
   #- tools/test-network.sh --data "$FIVE_MEGABYTES" --connections 2 --rounds 2 --hs-multi-client 1 --start-time 130 --bootstrap-time 70 --stop-time 10
 
 after_failure:
-  ## List the permissions on chutney and chutney/net
-  - ls -al . net
-  ## List the contents of net/nodes
-  - ls -lR net/nodes/
-  ## Dump the config
-  - cat net/nodes/000a*/torrc
-  ## Dump the important directory documents
-  #- cat net/nodes/000a*/cached-certs
-  - cat net/nodes/000a*/cached-consensus
-  - cat net/nodes/000a*/cached-descriptors*
-  #- cat net/nodes/000a*/cached-extrainfo*
-  - cat net/nodes/000a*/cached-microdesc-consensus
-  - cat net/nodes/000a*/cached-microdescs*
-  #- cat net/nodes/000a*/key-pinning-journal
-  #- cat net/nodes/000a*/router-stability
-  #- cat net/nodes/00*a*/sr-state
-  #- cat net/nodes/00*a*/state
-  - for f in net/nodes/00*a*/v3-status-votes ; do echo "$f"; cat "$f"; done
-  - for f in net/nodes/00*a*/unparseable-descs/* ; do echo "$f"; cat "$f"; done
+  ## Show some diagnostics
+  ## Pass the node name as the first argument, to see detailed diagnostics for
+  ## a particular node
+  - tools/diagnostics.sh
   ## And repeat the warnings at the end
   - tools/test-network.sh --only-warnings
 
