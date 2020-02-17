@@ -155,6 +155,14 @@ do
         --no-warnings)
             export CHUTNEY_WARNINGS_SKIP=true
             ;;
+        # output diagnostics after chutney runs
+        --diagnostics)
+            export CHUTNEY_DIAGNOSTICS=true
+            ;;
+        # this doesn't run chutney, and only logs diagnostics
+        --only-diagnostics)
+            export CHUTNEY_DIAGNOSTICS_ONLY=true
+            ;;
         # Expert options
         # Code Coverage Binary
         --coverage)
@@ -192,9 +200,18 @@ do
     shift
 done
 
+if [ "$CHUTNEY_WARNINGS_ONLY" = true ] || \
+   [ "$CHUTNEY_DIAGNOSTICS_ONLY" = true ]; then
+    NETWORK_DRY_RUN=true
+fi
+
+if [ "$CHUTNEY_DIAGNOSTICS_ONLY" = true ]; then
+    export CHUTNEY_DIAGNOSTICS=true
+fi
+
 # If the DNS server doesn't work, tor exits may reject all exit traffic, and
 # chutney may fail
-if [ "$CHUTNEY_WARNINGS_ONLY" != true ]; then
+if [ "$NETWORK_DRY_RUN" != true ]; then
     $ECHO "$myname: using CHUTNEY_DNS_CONF '$CHUTNEY_DNS_CONF'"
 fi
 
@@ -332,6 +349,13 @@ $ECHO "$myname: Using \$CHUTNEY_TOR: '$CHUTNEY_TOR' and \$CHUTNEY_TOR_GENCERT: '
 export NETWORK_FLAVOUR=${NETWORK_FLAVOUR:-"bridges+hs-v23"}
 export CHUTNEY_NETWORK="$CHUTNEY_PATH/networks/$NETWORK_FLAVOUR"
 
+export DIAGNOSTIC_COMMAND="$CHUTNEY_PATH/tools/diagnostics.sh"
+if [ "$CHUTNEY_DIAGNOSTICS" = true ]; then
+    export DIAGNOSTICS="$DIAGNOSTIC_COMMAND"
+else
+    export DIAGNOSTICS=true
+fi
+
 export WARNING_COMMAND="$CHUTNEY_PATH/tools/warnings.sh"
 if [ "$CHUTNEY_WARNINGS_SKIP" = true ]; then
     export WARNINGS=true
@@ -340,7 +364,10 @@ else
 fi
 
 # And finish up if we're doing a dry run
-if [ "$NETWORK_DRY_RUN" = true ] || [ "$CHUTNEY_WARNINGS_ONLY" = true ]; then
+if [ "$NETWORK_DRY_RUN" = true ]; then
+    if [ "$CHUTNEY_DIAGNOSTICS_ONLY" = true ]; then
+        "$DIAGNOSTICS"
+    fi
     if [ "$CHUTNEY_WARNINGS_ONLY" = true ]; then
         "$WARNINGS"
     fi
