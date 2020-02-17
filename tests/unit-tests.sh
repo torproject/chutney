@@ -2,8 +2,6 @@
 
 # Exit on errors
 set -e
-# Verbose mode
-set -v
 
 # Output is prefixed with the name of the script
 myname=$(basename "$0")
@@ -51,6 +49,7 @@ LOG_FILE=$(mktemp)
 export LOG_FILE
 test -n "$LOG_FILE"
 
+echo "$myname: checking for Templating.py failures:"
 $PYTHON lib/chutney/Templating.py torrc_templates/common.i | tee "$LOG_FILE"
 grep -q owning_controller_process "$LOG_FILE"
 grep -q connlimit "$LOG_FILE"
