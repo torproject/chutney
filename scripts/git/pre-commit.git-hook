@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+#
+# To install this script, copy it to .git/hooks/pre-commit in local copy of
+# the chutney git repo, and make sure it has permission to execute.
+#
+# This is pre-commit git hook script that prevents commiting your changeset if
+# it fails our shellcheck or unit tests.
+
+workdir=$(git rev-parse --show-toplevel)
+
+cd "$workdir" || exit 1
+
+set -e
+
+if [ -e tests/shellcheck-tests.sh ]; then
+    tests/shellcheck-tests.sh
+fi
+
+if [ -e tests/unit-tests.sh ]; then
+    tests/unit-tests.sh
+fi
