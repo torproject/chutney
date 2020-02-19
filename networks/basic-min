@@ -7,6 +7,10 @@ Client = Node(tag="c", client=1, torrc="client.tmpl")
 # TestingDirAuthVoteGuard * may need to be used in small networks
 
 # The minimum number of authorities/relays/exits is 3, the minimum path length
-NODES = Authority.getN(2) + ExitRelay.getN(1) + Client.getN(1)
+# But relays and authorities need 1 extra node, because they won't make a path
+# that includes themselves.
+# Due to microdec download issues, tor 0.3.5 needs at least 5
+# authorities/relays/exits in the consensus.
+NODES = Authority.getN(4) + ExitRelay.getN(1) + Client.getN(1)
 
 ConfigureNodes(NODES)

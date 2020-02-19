@@ -8,7 +8,10 @@ HSv3 = Node(tag="h", hs=1, torrc="hs-v3.tmpl")
 # Since only 25% of relays get the guard flag,
 # TestingDirAuthVoteGuard * may need to be used in small networks
 
-# A hidden service needs 5 authorities/relays to ensure it can build HS
+# The minimum number of authorities/relays/exits is 3, the minimum path length
+# But relays and authorities need 1 extra node, because they won't make a path
+# that includes themselves.
+# A hidden service also needs 5 authorities/relays to ensure it can build HS
 # connections:
 # a minimum path length of 3, plus the client-nominated rendezvous point,
 # plus a seperate introduction point
