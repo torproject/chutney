@@ -157,21 +157,48 @@ Multiple Tests:
   CHUTNEY_CONNECTIONS=N to make multiple connections within each verification
   round. Any round or connection failure will fail the current test.
 
-Waiting for the network:
+Bootstrapping the network:
+
+  Chutney expects a tor network to bootstrap in these stages:
+    1.  All directory authorities (DirAuths) bootstrap to 100%.
+    2.  The DirAuths produce the first consensus.
+
+    3.  Relays bootstrap to 100%.
+    4.  Relays with "AssumeReachable 1" publish their descriptors to the
+        DirAuths.
+    5.  The DirAuths produce a consensus containing enough nodes for
+        relay reachability self-tests (usually 3 nodes).
+
+    6.  Relays perform ORPort reachability self-tests.
+        If the consensus contains at least 1 exit, relays also perform DirPort
+        reachability self-tests.
+    7.  Relays publish their descriptors to the DirAuths.
+    8.  The DirAuths produce a consensus containing all authorities (including
+        the bridge authority, if present) and all relays.
+
+    9.  Clients bootstrap to 100%.
+        (Clients start bootstrapping as soon as the first consensus is
+        available.)
+    10. Onion Services publish their descriptors to Onion Service directories
+        (otherwise known as hidden service directories, or HSDirs).
 
   The tools/test-network.sh script uses the chutney wait_for_bootstrap
   command to wait for up to CHUTNEY_START_TIME seconds (default: 120), checking
-  whether the logged bootstrapped status for every node is 100%. It it is,
-  great: it succeeds. If not, it dumps the bootstrap statuses and exits.
-  test-network.sh does not exit immediately if a tor node fails to bootstrap.
-  Instead, it attempts to verify. We'll add an option to fail on tor
-  bootstrap failure in #20473.
+  whether the logged bootstrapped status for every node is 100% (step 9). If
+  all the nodes have bootstrapped, wait_for_bootstrap succeeds. If some nodes
+  have not bootstrapped, wait_for_bootstrap dumps the bootstrap statuses, and
+  exits with a failure. But test-network.sh does not exit immediately if a tor
+  node fails to bootstrap. Instead, it attempts to verify.
+
+Verifying the network:
 
   Commands like "chutney verify" start immediately, and keep trying for
   CHUTNEY_BOOTSTRAP_TIME seconds (default: 60). If it hasn't been
   successful after that time, it fails. If CHUTNEY_BOOTSTRAP_TIME is negative,
   the script leaves the network running, and exits after CHUTNEY_START_TIME
   (without verifying).
+
+Shutting down the network:
 
   The tools/test-network.sh script waits CHUTNEY_STOP_TIME seconds
   after verifying, then exits (default: immediately). If CHUTNEY_STOP_TIME is
