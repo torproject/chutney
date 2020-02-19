@@ -1448,6 +1448,12 @@ class Network(object):
         print("Sending SIGHUP to nodes")
         return all([n.getController().hup() for n in self._nodes])
 
+    def print_bootstrap_status(self, controllers, most_recent_status):
+        print("Bootstrap failed. Node status:")
+        for c, status in zip(controllers,most_recent_status):
+            c.check(listRunning=False, listNonRunning=True)
+            print("{}: {}".format(c.getNick(), status))
+
     CHECK_NETWORK_STATUS_DELAY = 0.5
 
     def wait_for_bootstrap(self):
@@ -1475,11 +1481,7 @@ class Network(object):
                 break
             time.sleep(Network.CHECK_NETWORK_STATUS_DELAY)
 
-        print("Bootstrap failed. Node status:")
-        for c, status in zip(controllers,most_recent_status):
-            c.check(listRunning=False, listNonRunning=True)
-            print("{}: {}".format(c.getNick(), status))
-
+        self.print_bootstrap_status(controllers, most_recent_status)
         return False
 
     def stop(self):
