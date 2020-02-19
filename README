@@ -162,32 +162,51 @@ Bootstrapping the network:
   Chutney expects a tor network to bootstrap in these stages:
     1.  All directory authorities (DirAuths) bootstrap to 100%.
     2.  The DirAuths produce the first consensus.
+        Usually, this consensus only contains authorities.
+    3.  The DirAuths produce a bootstrap consensus.
+        This consensus has enough relays for:
+          * clients and relays to bootstrap, and
+          * relays to perform reachability self-tests.
+        Usually, this consensus needs at least 3 nodes.
+        This consensus is usually the first or second consensus.
 
-    3.  Relays bootstrap to 100%.
-    4.  Relays with "AssumeReachable 1" publish their descriptors to the
+    4.  Relays bootstrap to 100%.
+    5.  Relays with "AssumeReachable 1" publish their descriptors to the
         DirAuths.
-    5.  The DirAuths produce a consensus containing enough nodes for
-        relay reachability self-tests (usually 3 nodes).
 
     6.  Relays perform ORPort reachability self-tests.
         If the consensus contains at least 1 exit, relays also perform DirPort
         reachability self-tests.
     7.  Relays publish their descriptors to the DirAuths.
-    8.  The DirAuths produce a consensus containing all authorities (including
-        the bridge authority, if present) and all relays.
+    8.  The DirAuths produce a full consensus. A full consensus contains:
+          * the authorities
+          * any bridge authorities, if present, and
+          * all relays (including exits).
+        Bridges, clients, and onion services are not included in the consensus.
 
     9.  Clients bootstrap to 100%.
-        (Clients start bootstrapping as soon as the first consensus is
-        available.)
+        (Clients can bootstrap as soon as the consensus contains enough nodes,
+        so step 9 depends on step 3, not step 8.)
     10. Onion Services publish their descriptors to Onion Service directories
         (otherwise known as hidden service directories, or HSDirs).
 
   The tools/test-network.sh script uses the chutney wait_for_bootstrap
-  command to wait for up to CHUTNEY_START_TIME seconds (default: 120), checking
-  whether the logged bootstrapped status for every node is 100% (step 9). If
-  all the nodes have bootstrapped, wait_for_bootstrap succeeds. If some nodes
-  have not bootstrapped, wait_for_bootstrap dumps the bootstrap statuses, and
-  exits with a failure.
+  command to wait for the network to bootstrap. wait_for_bootstrap waits up to
+  CHUTNEY_START_TIME seconds (default: 120), checking whether the logged
+  bootstrapped status for every node is 100% (step 9). Once all the nodes have
+  bootstrapped, wait_for_bootstrap starts waiting for a full consensus.
+
+  When waiting for a full consensus, wait_for_bootstrap checks if each relay
+  is in the consensus (step 8). Once all the relays are in the consensus,
+  wait_for_bootstrap succeeds.
+
+  If the time limit has elapsed, and some nodes have not bootstrapped, or
+  there are some nodes missing from the consensus, wait_for_bootstrap dumps the
+  bootstrap statuses, and exits with a failure.
+
+  (wait_for_bootstrap does not check if all the onion services have published
+  their descriptors to the HSDirs. But we would like to implement that feature
+  some time.)
 
 Verifying the network:
 
