@@ -187,8 +187,7 @@ Bootstrapping the network:
   whether the logged bootstrapped status for every node is 100% (step 9). If
   all the nodes have bootstrapped, wait_for_bootstrap succeeds. If some nodes
   have not bootstrapped, wait_for_bootstrap dumps the bootstrap statuses, and
-  exits with a failure. But test-network.sh does not exit immediately if a tor
-  node fails to bootstrap. Instead, it attempts to verify.
+  exits with a failure.
 
 Verifying the network:
 

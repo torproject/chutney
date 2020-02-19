@@ -29,10 +29,16 @@ CHUTNEY="$CHUTNEY_PATH/chutney"
 
 if [ "$CHUTNEY_START_TIME" -ge 0 ]; then
     $ECHO "Waiting $CHUTNEY_START_TIME seconds for a consensus containing relays to be generated..."
-    # We log bootstrap status for debugging purposes.
-    # We'll fix bootstrap errors in #20473.
-    "$CHUTNEY" wait_for_bootstrap "$CHUTNEY_NETWORK" \
-        || $ECHO "Tor bootstrap failed, ignoring for now."
+    # We require the network to bootstrap, before we verify
+    if ! "$CHUTNEY" wait_for_bootstrap "$CHUTNEY_NETWORK"; then
+        "$DIAGNOSTICS"
+        CHUTNEY_WARNINGS_IGNORE_EXPECTED=false \
+            CHUTNEY_WARNINGS_SUMMARY=false \
+            "$WARNING_COMMAND"
+        "$WARNINGS"
+        $ECHO "chutney boostrap failed (in wait_for_bootstrap)"
+        exit 1
+    fi
 else
     $ECHO "Chutney network launched and running. To stop the network, use:"
     $ECHO "$CHUTNEY stop $CHUTNEY_NETWORK"
