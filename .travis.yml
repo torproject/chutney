@@ -131,7 +131,7 @@ matrix:
       language: c
       python:
       ## python 3 is already installed, under this name
-      env: PYTHON="python3" TOR="stable-release"
+      env: PYTHON="python3" TOR="stable-release" NETWORK_FLAVOUR="basic-min"
 
     ## Pre-installed in Travis Bionic:
     ## https://docs.travis-ci.com/user/reference/bionic/#python-support
