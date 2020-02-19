@@ -43,10 +43,22 @@ matrix:
     ##     The latest tor version in homebrew is on this page:
     ##       https://formulae.brew.sh/formula/tor
     ##     The Travis version might be slightly older.
+    ##
+    ## IPv4 networks
+    ## "make test-network-all" on all supported tor versions
     - env: TOR="master-nightly" NETWORK_FLAVOUR="bridges-min"
+    - env: TOR="master-nightly" NETWORK_FLAVOUR="single-onion-v23"
+    ## "make test-network-all" from 0.4.3 and earlier
     - env: TOR="master-nightly" NETWORK_FLAVOUR="hs-v2-min"
     - env: TOR="master-nightly" NETWORK_FLAVOUR="hs-v3-min"
-    - env: TOR="master-nightly" NETWORK_FLAVOUR="single-onion-v23"
+    ## "make test-network-all" from 0.4.4 and later
+    - env: TOR="master-nightly" NETWORK_FLAVOUR="hs-v23-min"
+    ## "make test-network" from 0.4.4 and later
+    ## (and the chutney default network)
+    - env: TOR="master-nightly" NETWORK_FLAVOUR="bridges+hs-v23"
+    ##
+    ## IPv6 networks (on macOS)
+    ## "make test-network-all" on all supported tor versions
     - env: TOR="stable-release" NETWORK_FLAVOUR="bridges+ipv6-min"
       os: osx
       language: c
