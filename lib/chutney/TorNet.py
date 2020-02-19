@@ -1448,18 +1448,29 @@ class Network(object):
         print("Sending SIGHUP to nodes")
         return all([n.getController().hup() for n in self._nodes])
 
-    def print_bootstrap_status(self, controllers, most_recent_status):
-        print("Bootstrap failed. Node status:")
+    def print_bootstrap_status(self, controllers, most_recent_status,
+                               elapsed=None,
+                               msg="Bootstrap in progress"):
+        header = "Node status:"
+        elapsed_msg = ""
+        if elapsed:
+            elapsed_msg = " for {} seconds".format(int(elapsed))
+        if msg:
+            header = "{}{}. {}".format(msg, elapsed_msg, header)
+        print(header)
         for c, status in zip(controllers,most_recent_status):
             c.check(listRunning=False, listNonRunning=True)
             print("{}: {}".format(c.getNick(), status))
+        print()
 
     CHECK_NETWORK_STATUS_DELAY = 0.5
+    PRINT_NETWORK_STATUS_DELAY = 20.0
 
     def wait_for_bootstrap(self):
-        print("Waiting for nodes to bootstrap...")
+        print("Waiting for nodes to bootstrap...\n")
         start = time.time()
         limit = start + getenv_int("CHUTNEY_START_TIME", 60)
+        next_print_status = start + Network.PRINT_NETWORK_STATUS_DELAY
         controllers = [n.getController() for n in self._nodes]
         most_recent_status = [ None ] * len(controllers)
         while True:
@@ -1472,16 +1483,22 @@ class Network(object):
                     all_bootstrapped = False
 
             now = time.time()
+            elapsed = now - start
             if all_bootstrapped:
-                elapsed = now - start
                 print("Everything bootstrapped after {} sec"
                       .format(int(elapsed)))
                 return True
             if now >= limit:
                 break
+            if now >= next_print_status:
+                self.print_bootstrap_status(controllers, most_recent_status,
+                                            elapsed=elapsed)
+                next_print_status = now + Network.PRINT_NETWORK_STATUS_DELAY
             time.sleep(Network.CHECK_NETWORK_STATUS_DELAY)
 
-        self.print_bootstrap_status(controllers, most_recent_status)
+        self.print_bootstrap_status(controllers, most_recent_status,
+                                    elapsed=elapsed,
+                                    msg="Bootstrap failed")
         return False
 
     def stop(self):
