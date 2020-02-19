@@ -2,7 +2,7 @@
 
 if ! "$CHUTNEY_PATH/tools/bootstrap-network.sh" "$NETWORK_FLAVOUR"; then
     if test "$?" = 77; then
-	$ECHO "SKIP: $NETWORK_FLAVOR not supported."
+	$ECHO "SKIP: $NETWORK_FLAVOUR not supported."
 	exit 77
     fi
     "$DIAGNOSTICS"
