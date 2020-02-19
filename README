@@ -79,6 +79,8 @@ Warning Options:
                      CHUTNEY_WARNINGS_SUMMARY=false
   --no-warnings      CHUTNEY_WARNINGS_SKIP=true
   --only-warnings    CHUTNEY_WARNINGS_ONLY=true
+  --diagnostics      CHUTNEY_DIAGNOSTICS=true
+  --only-diagnostics CHUTNEY_DIAGNOSTICS_ONLY=true
 
 Expert Options:
   --debug            CHUTNEY_DEBUG=true

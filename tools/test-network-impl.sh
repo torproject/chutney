@@ -5,6 +5,7 @@ if ! "$CHUTNEY_PATH/tools/bootstrap-network.sh" "$NETWORK_FLAVOUR"; then
 	$ECHO "SKIP: $NETWORK_FLAVOR not supported."
 	exit 77
     fi
+    "$DIAGNOSTICS"
     CHUTNEY_WARNINGS_IGNORE_EXPECTED=false CHUTNEY_WARNINGS_SUMMARY=false \
         "$WARNING_COMMAND"
     "$WARNINGS"
@@ -35,6 +36,7 @@ if [ "$CHUTNEY_START_TIME" -ge 0 ]; then
 else
     $ECHO "Chutney network launched and running. To stop the network, use:"
     $ECHO "$CHUTNEY stop $CHUTNEY_NETWORK"
+    "$DIAGNOSTICS"
     "$WARNINGS"
     exit 0
 fi
@@ -47,6 +49,7 @@ if [ "$CHUTNEY_BOOTSTRAP_TIME" -ge 0 ]; then
     while [ "$n_rounds" -lt "$CHUTNEY_ROUNDS" ]; do
         n_rounds=$((n_rounds+1))
         if ! "$CHUTNEY" verify "$CHUTNEY_NETWORK"; then
+            "$DIAGNOSTICS"
             CHUTNEY_WARNINGS_IGNORE_EXPECTED=false \
                 CHUTNEY_WARNINGS_SUMMARY=false \
                 "$WARNING_COMMAND"
@@ -59,6 +62,7 @@ if [ "$CHUTNEY_BOOTSTRAP_TIME" -ge 0 ]; then
 else
     $ECHO "Chutney network ready and running. To stop the network, use:"
     $ECHO "$CHUTNEY stop $CHUTNEY_NETWORK"
+    "$DIAGNOSTICS"
     "$WARNINGS"
     exit 0
 fi
@@ -71,6 +75,7 @@ if [ "$CHUTNEY_STOP_TIME" -ge 0 ]; then
     # work around a bug/feature in make -j2 (or more)
     # where make hangs if any child processes are still alive
     if ! "$CHUTNEY" stop "$CHUTNEY_NETWORK"; then
+        "$DIAGNOSTICS"
         CHUTNEY_WARNINGS_IGNORE_EXPECTED=false CHUTNEY_WARNINGS_SUMMARY=false \
             "$WARNING_COMMAND"
         "$WARNINGS"
@@ -82,9 +87,11 @@ if [ "$CHUTNEY_STOP_TIME" -ge 0 ]; then
 else
     $ECHO "Chutney network verified and running. To stop the network, use:"
     $ECHO "$CHUTNEY stop $CHUTNEY_NETWORK"
+    "$DIAGNOSTICS"
     "$WARNINGS"
     exit 0
 fi
 
+"$DIAGNOSTICS"
 "$WARNINGS"
 exit 0
