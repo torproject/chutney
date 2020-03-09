@@ -853,6 +853,51 @@ class LocalNodeController(NodeController):
         """Return the nickname for this node."""
         return self._env['nick']
 
+    def getBridge(self):
+        """Return the bridge (relay) flag for this node."""
+        try:
+            return self._env['bridge']
+        except KeyError:
+            return 0
+
+    def getBridgeClient(self):
+        """Return the bridge client flag for this node."""
+        try:
+            return self._env['bridgeclient']
+        except KeyError:
+            return 0
+
+    def getBridgeAuthority(self):
+        """Return the bridge authority flag for this node."""
+        try:
+            return self._env['bridgeauthority']
+        except KeyError:
+            return 0
+
+    def getAuthority(self):
+        """Return the authority flag for this node."""
+        try:
+            return self._env['authority']
+        except KeyError:
+            return 0
+
+    def getConsensusAuthority(self):
+        """Is this node a consensus (V2 directory) authority?"""
+        return self.getAuthority() and not self.getBridgeAuthority()
+
+    def getConsensusMember(self):
+        """Is this node listed in the consensus?"""
+        return self.getDirServer() and not self.getBridge()
+
+    def getDirServer(self):
+        """Return the relay flag for this node.
+           The relay flag is set on authorities, relays, and bridges.
+        """
+        try:
+            return self._env['relay']
+        except KeyError:
+            return 0
+
     def getPid(self):
         """Assuming that this node has its pidfile in ${dir}/pid, return
            the pid of the running process, or None if there is no pid in the
@@ -1070,7 +1115,512 @@ class LocalNodeController(NodeController):
         """Return true iff the logfile says that this instance is
            bootstrapped."""
         pct, _, _ = self.getLastBootstrapStatus()
-        return pct == 100
+        return pct == LocalNodeController.SUCCESS_CODE
+
+    # There are 7 v3 directory document types, but some networks only use 6,
+    # because they don't have a bridge authority
+    DOC_TYPE_DISPLAY_LIMIT_BRIDGEAUTH = 7
+    DOC_TYPE_DISPLAY_LIMIT_NO_BRIDGEAUTH = 6
+
+    def getDocTypeDisplayLimit(self):
+        """Return the expected number of document types in this network."""
+        if _THE_NETWORK._dfltEnv['hasbridgeauth']:
+            return LocalNodeController.DOC_TYPE_DISPLAY_LIMIT_BRIDGEAUTH
+        else:
+            return LocalNodeController.DOC_TYPE_DISPLAY_LIMIT_NO_BRIDGEAUTH
+
+    def getNodeCacheDirInfoPaths(self, v2_dir_paths):
+        """Return a 2-tuple containing:
+             * a boolean indicating whether this node is a directory server,
+               (that is, an authority, relay, or bridge), and
+             * a dict with the expected paths to the consensus files for this
+               node.
+
+           If v2_dir_paths is True, returns the v3 directory paths.
+           Otherwise, returns the bridge status path.
+           If v2_dir_paths is True, but this node is not a bridge client or
+           bridge authority, returns None. (There are no paths.)
+
+           Directory servers usually have both consensus flavours.
+           Clients usually have the microdesc consensus, but they may have
+           either flavour. (Or both flavours.)
+           Only the bridge authority has the bridge networkstatus.
+
+           The dict keys are:
+             * "ns_cons", "desc", and "desc_new";
+             * "md_cons", "md", and "md_new"; and
+             * "br_status".
+        """
+        bridge_client = self.getBridgeClient()
+        bridge_auth = self.getBridgeAuthority()
+        datadir = self._env['dir']
+        is_dir_server = self.getDirServer()
+
+        desc = os.path.join(datadir, "cached-descriptors")
+        desc_new = os.path.join(datadir, "cached-descriptors.new")
+
+        paths = None
+        if v2_dir_paths:
+            ns_cons = os.path.join(datadir, "cached-consensus")
+            md_cons = os.path.join(datadir,
+                                           "cached-microdesc-consensus")
+            md = os.path.join(datadir, "cached-microdescs")
+            md_new = os.path.join(datadir, "cached-microdescs.new")
+
+            paths = { 'ns_cons': ns_cons,
+                      'desc': desc,
+                      'desc_new': desc_new,
+                      'md_cons': md_cons,
+                      'md': md,
+                      'md_new': md_new }
+        # the published node is a bridge
+        # bridges are only used by bridge clients and bridge authorities
+        elif bridge_client or bridge_auth:
+            # bridge descs are stored with relay descs
+            paths = { 'desc': desc,
+                      'desc_new': desc_new }
+            if bridge_auth:
+                br_status = os.path.join(datadir, "networkstatus-bridges")
+                paths['br_status'] = br_status
+        else:
+            # We're looking for bridges, but other nodes don't use bridges
+            paths = None
+
+        return (is_dir_server, paths)
+
+    def getNodePublishedDirInfoPaths(self):
+        """Return a dict of paths to consensus files, where we expect this
+           node to be published.
+
+           The dict keys are the nicks for each node.
+
+           See getNodeCacheDirInfoPaths() for the path data structure, and which
+           nodes appear in each type of directory.
+        """
+        consensus_member = self.getConsensusMember()
+        bridge_member = self.getBridge()
+        # Nodes can be a member of only one kind of directory
+        assert not (consensus_member and bridge_member)
+
+        # Clients don't appear in any consensus
+        if not consensus_member and not bridge_member:
+            return None
+
+        # at this point, consensus_member == not bridge_member
+        directory_files = dict()
+        for node in _THE_NETWORK._nodes:
+            nick = node._env['nick']
+            controller = node.getController()
+            node_files = controller.getNodeCacheDirInfoPaths(consensus_member)
+            # skip empty file lists
+            if node_files:
+                directory_files[nick] = node_files
+
+        assert len(directory_files) > 0
+        return directory_files
+
+    def getNodeDirInfoStatusPattern(self, dir_format):
+        """Returns a regular expression pattern for finding this node's entry
+           in a dir_format file.
+
+           The microdesc format is not yet implemented, because it requires
+           the ed25519 key. (Or RSA block matching, which is hard.)
+        """
+        nickname = self.getNick()
+
+        cons = dir_format in ["ns_cons",
+                              "md_cons",
+                              "br_status"]
+        desc = dir_format in ["desc",
+                              "desc_new"]
+        md = dir_format in ["md",
+                            "md_new"]
+
+        assert cons or desc or md
+
+        if cons:
+            return r'^r ' + nickname + " "
+        elif desc:
+            return r'^router ' + nickname + " "
+        elif md:
+            # Not yet implemented, see #33428
+            # r'^id ed25519 " + ed25519_identity (end of line)
+            # needs ed25519-identity from #30642
+            # or the existing keys/ed25519_master_id_public_key
+            return None
+
+    def getFileDirInfoStatus(self, dir_format, dir_path):
+        """Check dir_path, a directory path used by another node, to see if
+           this node is present. The directory path is a dir_format file.
+
+           Returns a status 3-tuple containing:
+             * an integer status code:
+               * negative numbers correspond to errors,
+               * NO_PROGRESS_CODE means "not in the directory", and
+               * SUCCESS_CODE means "in the directory";
+             * a set containing dir_format; and
+             * a status message string.
+        """
+        if not os.path.exists(dir_path):
+            return (LocalNodeController.MISSING_FILE_CODE,
+                    { dir_format }, "No dir file")
+
+        dir_pattern = self.getNodeDirInfoStatusPattern(dir_format)
+        if dir_pattern is None:
+            return (LocalNodeController.NOT_YET_IMPLEMENTED_CODE,
+                    { dir_format }, "Not yet implemented")
+
+        line_count = 0
+        with open(dir_path, 'r') as f:
+            for line in f:
+                line_count = line_count + 1
+                m = re.search(dir_pattern, line)
+                if m:
+                    return (LocalNodeController.SUCCESS_CODE,
+                            { dir_format }, "Dir info cached")
+
+        if line_count == 0:
+            return (LocalNodeController.NO_RECORDS_CODE,
+                    { dir_format }, "Empty dir file")
+        elif line_count < 8:
+            # The minimum size of the bridge networkstatus is 3 lines,
+            # and the minimum size of one bridge is 5 lines
+            return (LocalNodeController.INCOMPLETE_RECORDS_CODE,
+                    { dir_format }, "Minimal dir file")
+        else:
+            return (LocalNodeController.NO_PROGRESS_CODE,
+                    { dir_format }, "Not in dir file")
+
+    def combineDirInfoStatuses(self, dir_status, status_key_list,
+                               best=True, ignore_missing=False):
+        """Combine the directory statuses in dir_status, if their keys
+           appear in status_key_list. Keys may be directory formats, or
+           node nicks.
+
+           If best is True, choose the best status, otherwise, choose the
+           worst status.
+
+           If ignore_missing is True, ignore missing statuses, if there is any
+           other status available.
+
+           If statuses are equal, combine their format sets.
+
+           Returns None if the status list is empty.
+        """
+        dir_status_list = [ dir_status[status_key]
+                            for status_key in dir_status
+                            if status_key in status_key_list ]
+
+        if len(dir_status_list) == 0:
+            return None
+
+        dir_status = None
+        for new_status in dir_status_list:
+            if dir_status is None:
+                dir_status = new_status
+                continue
+
+            (old_status_code, old_flav, old_msg) = dir_status
+            (new_status_code, new_flav, new_msg) = new_status
+            if new_status_code == old_status_code:
+                # We want to know all the flavours that have an
+                # equal status, not just the latest one
+                combined_flav = old_flav.union(new_flav)
+                dir_status = (old_status_code, combined_flav, old_msg)
+            elif (old_status_code == LocalNodeController.MISSING_FILE_CODE and
+                  ignore_missing):
+                # use the new status, which can't be MISSING_FILE_CODE,
+                # because they're not equal
+                dir_status = new_status
+            elif (new_status_code == LocalNodeController.MISSING_FILE_CODE and
+                  ignore_missing):
+                # ignore the new status
+                pass
+            elif old_status_code == LocalNodeController.NOT_YET_IMPLEMENTED_CODE:
+                # always ignore not yet implemented
+                dir_status = new_status
+            elif new_status_code == LocalNodeController.NOT_YET_IMPLEMENTED_CODE:
+                pass
+            elif best and new_status_code > old_status_code:
+                dir_status = new_status
+            elif not best and new_status_code < old_status_code:
+                dir_status = new_status
+        return dir_status
+
+    def summariseCacheDirInfoStatus(self, dir_status, is_dir_server):
+        """Summarise the statuses for this node, among all the files used by
+           the other node. is_dir_server is True if the other node is a
+           directory server.
+
+           Combine these alternate files by choosing the best status:
+             * desc_alts: "desc" and "desc_new"
+             * md_alts: "md" and "md_new"
+
+           Handle these alternate formats by ignoring missing directory files,
+           then choosing the worst status:
+             * cons_all: "ns_cons" and "md_cons"
+             * desc_all: "desc"/"desc_new" and
+                          "md"/"md_new"
+
+           Add an "node_dir" status that describes the overall status, which
+           is the worst status among descriptors, consensuses, and the bridge
+           networkstatus (if relevant). Return this status.
+
+           Returns None if no status is expected.
+        """
+        # We only need to be in one of these files to be successful
+        desc_alts = self.combineDirInfoStatuses(dir_status,
+                                                ["desc", "desc_new"],
+                                                best=True,
+                                                ignore_missing=True)
+        if desc_alts:
+            dir_status["desc_alts"] = desc_alts
+
+        md_alts = self.combineDirInfoStatuses(dir_status,
+                                              ["md",
+                                               "md_new"],
+                                              best=True,
+                                              ignore_missing=True)
+        if md_alts:
+            dir_status["md_alts"] = md_alts
+
+        if is_dir_server:
+            # Directory servers cache all flavours, so we want the worst
+            # combined flavour status, and we want to treat missing files as
+            # errors
+            cons_all = self.combineDirInfoStatuses(dir_status,
+                                                   ["ns_cons",
+                                                    "md_cons"],
+                                                   best=False,
+                                                   ignore_missing=False)
+        else:
+            # Clients usually only fetch one flavour, so we want the best
+            # combined flavour status, and we want to ignore missing files
+            cons_all = self.combineDirInfoStatuses(dir_status,
+                                                   ["ns_cons",
+                                                    "md_cons"],
+                                                   best=True,
+                                                   ignore_missing=True)
+        if cons_all:
+            dir_status["cons_all"] = cons_all
+
+        if is_dir_server:
+            desc_all = self.combineDirInfoStatuses(dir_status,
+                                                   ["desc_alts",
+                                                    "md_alts"],
+                                                   best=False,
+                                                   ignore_missing=False)
+        else:
+            desc_all = self.combineDirInfoStatuses(dir_status,
+                                                   ["desc_alts",
+                                                    "md_alts"],
+                                                   best=True,
+                                                   ignore_missing=True)
+        if desc_all:
+            dir_status["desc_all"] = desc_all
+
+        # Finally, get the worst status from all the combined statuses,
+        # and the bridge status (if applicable)
+        node_dir = self.combineDirInfoStatuses(dir_status,
+                                               ["cons_all",
+                                                "br_status",
+                                                "desc_all"],
+                                               best=False,
+                                               ignore_missing=True)
+        if node_dir:
+            dir_status["node_dir"] = node_dir
+
+        return node_dir
+
+    def getNodeCacheDirInfoStatus(self, other_node_files, is_dir_server):
+        """Check all the directory paths used by another node, to see if this
+           node is present. is_dir_server is True if the other node is a
+           directory server.
+
+           Returns a dict containing a status 3-tuple for every relevant
+           directory format. See getFileDirInfoStatus() for more details.
+
+           Returns None if the node doesn't have any directory files
+           containing published information from this node.
+        """
+        dir_status = dict()
+        assert len(other_node_files)
+        for dir_format in other_node_files:
+            dir_path = other_node_files[dir_format]
+            new_status = self.getFileDirInfoStatus(dir_format, dir_path)
+            if new_status is None:
+                continue
+            dir_status[dir_format] = new_status
+
+        if len(dir_status):
+            return self.summariseCacheDirInfoStatus(dir_status, is_dir_server)
+        else:
+            # this node must be a client, or a bridge
+            # (and the other node is not a bridge authority or bridge client)
+            consensus_member = self.getConsensusMember()
+            assert not consensus_member
+            return None
+
+    def getNodeDirInfoStatusList(self):
+        """Look through the directories on each node, and work out if
+           this node is in that directory.
+
+           Returns a dict containing a status 3-tuple for each relevant node.
+           The 3-tuple contains:
+             * a status code,
+             * a list of formats with that status, and
+             * a status message string.
+           See getNodeCacheDirInfoStatus() and getFileDirInfoStatus() for
+           more details.
+
+           If this node is a directory authority, bridge authority, or relay
+           (including exits), checks v3 directory consensuses, descriptors,
+           microdesc consensuses, and microdescriptors.
+
+           If this node is a bridge, checks bridge networkstatuses, and
+           descriptors on bridge authorities and bridge clients.
+
+           If this node is a client (including onion services), returns None.
+        """
+        dir_files = self.getNodePublishedDirInfoPaths()
+
+        if not dir_files:
+            return None
+
+        dir_statuses = dict()
+        # For all the nodes we expect will have us in their directory
+        for other_node_nick in dir_files:
+            (is_dir_server, other_node_files) = dir_files[other_node_nick]
+            assert len(other_node_files)
+            dir_statuses[other_node_nick] = \
+                self.getNodeCacheDirInfoStatus(other_node_files,
+                                               is_dir_server)
+
+        if len(dir_statuses):
+            return dir_statuses
+        else:
+            # this node must be a client
+            # (or a bridge in a network with no bridge authority,
+            # and no bridge clients, but chutney doesn't have networks like
+            # that)
+            consensus_member = self.getConsensusMember()
+            bridge_member = self.getBridge()
+            assert not consensus_member
+            assert not bridge_member
+            return None
+
+    def summariseNodeDirInfoStatus(self, dir_status):
+        """Summarise the statuses for this node's descriptor, among all the
+           directory files used by all other nodes.
+
+           Returns a dict containing a status 4-tuple for each status code.
+           The 4-tuple contains:
+             * a status code,
+             * a list of the other nodes which have directory files with that
+               status,
+             * a list of directory file formats which have that status, and
+             * a status message string.
+           See getNodeCacheDirInfoStatus() and getFileDirInfoStatus() for
+           more details.
+
+           Also add an "node_all" status that describes the overall status,
+           which is the worst status among all the other nodes' directory
+           files.
+
+           Returns None if no status is expected.
+        """
+        node_status = dict()
+
+        # if dir_status[other_node_nick][0] is not None ?
+        status_code_set = { dir_status[other_node_nick][0]
+                            for other_node_nick in dir_status }
+        #print(self.getNick(), status_code_set)
+        for status_code in status_code_set:
+            other_node_nick_list = [
+                other_node_nick
+                for other_node_nick in dir_status
+                if dir_status[other_node_nick][0] == status_code ]
+
+            #print(self.getNick(), status_code, other_node_nick_list)
+            comb_status = self.combineDirInfoStatuses(dir_status,
+                                                      other_node_nick_list,
+                                                      best=False)
+
+            if comb_status is not None:
+                (comb_code, comb_format_set, comb_msg) = comb_status
+                assert comb_code == status_code
+
+                node_status[status_code] = (status_code, other_node_nick_list,
+                                            comb_format_set, comb_msg)
+
+        node_all = None
+        if len(node_status):
+            # Finally, get the worst status from all the other nodes
+            worst_status_code = min(status_code_set)
+            node_all = node_status[worst_status_code]
+        else:
+            # this node should be a client
+            # (or a bridge in a network with no bridge authority,
+            # and no bridge clients, but chutney doesn't have networks like
+            # that)
+            consensus_member = self.getConsensusMember()
+            bridge_member = self.getBridge()
+            if consensus_member or bridge_member:
+                node_all = (LocalNodeController.INTERNAL_ERROR_CODE,
+                            set(),
+                            set(),
+                            "Expected {}{}{} dir info, but status is empty."
+                            .format("consensus" if consensus_member else "",
+                                    " and " if consensus_member
+                                            and bridge_member else "",
+                                    "bridge" if bridge_member else ""))
+            else:
+                # clients don't publish dir info
+                node_all = None
+
+        if node_all:
+            node_status["node_all"] = node_all
+            return node_status
+        else:
+            # client
+            return None
+
+    def getNodeDirInfoStatus(self):
+        """Return a 4-tuple describing the status of this node's descriptor,
+           in all the directory documents across the network.
+
+           If this node does not have a descriptor, returns None.
+        """
+        dir_status = self.getNodeDirInfoStatusList()
+        if dir_status:
+            summary = self.summariseNodeDirInfoStatus(dir_status)
+            if summary:
+                return summary["node_all"]
+
+        # this node must be a client
+        # (or a bridge in a network with no bridge authority,
+        # and no bridge clients, but chutney doesn't have networks like
+        # that)
+        consensus_member = self.getConsensusMember()
+        bridge_member = self.getBridge()
+        assert not consensus_member
+        assert not bridge_member
+        return None
+
+    def isInExpectedDirInfoDocs(self):
+        """Return True if the descriptors for this node are in all expected
+           directory documents.
+
+           Return None if this node does not publish descriptors.
+        """
+        node_status = self.getNodeDirInfoStatus()
+        if node_status:
+            status_code, _, _, _ = node_status
+            return status_code == LocalDirectoryController.SUCCESS_CODE
+        else:
+            # Clients don't publish descriptors, so they are always ok.
+            # (But we shouldn't print a descriptor status for them.)
+            return None
 
 # XXX: document these options
 DEFAULTS = {
@@ -1463,19 +2013,63 @@ class Network(object):
         print("Sending SIGHUP to nodes")
         return all([n.getController().hup() for n in self._nodes])
 
-    def print_bootstrap_status(self, controllers, most_recent_status,
+    def print_bootstrap_status(self,
+                               controllers,
+                               most_recent_bootstrap_status,
+                               most_recent_desc_status,
                                elapsed=None,
                                msg="Bootstrap in progress"):
-        header = "Node status:"
+        cons_auth_nick_set = set()
         elapsed_msg = ""
         if elapsed:
-            elapsed_msg = " for {} seconds".format(int(elapsed))
+            elapsed_msg = ": {} seconds".format(int(elapsed))
         if msg:
-            header = "{}{}. {}".format(msg, elapsed_msg, header)
+            header = "{}{}".format(msg, elapsed_msg)
         print(header)
-        for c, status in zip(controllers,most_recent_status):
+        print("Node status:")
+        for c, boot_status in zip(controllers, most_recent_bootstrap_status):
             c.check(listRunning=False, listNonRunning=True)
-            print("{}: {}".format(c.getNick(), status))
+            nick = c.getNick()
+            if c.getConsensusAuthority():
+                cons_auth_nick_set.add(nick)
+            pct, kwd, bmsg = boot_status
+            # Support older tor versions without bootstrap keywords
+            if not kwd:
+                kwd = "None"
+            print("{:13}: {:4}, {:25}, {}".format(nick,
+                                                  pct,
+                                                  kwd,
+                                                  bmsg))
+        print("Published dir info:")
+        for c in controllers:
+            nick = c.getNick()
+            if nick in most_recent_desc_status:
+                desc_status = most_recent_desc_status[nick]
+                code, nodes, docs, dmsg = desc_status
+                if len(nodes) == len(self._nodes):
+                    nodes = "all nodes"
+                elif len(cons_auth_nick_set.intersection(nodes)) == 0:
+                    nodes = "caches and clients"
+                else:
+                    nodes = [ node.replace("test", "")
+                              for node in nodes ]
+                    nodes = " ".join(sorted(nodes))
+                if len(docs) >= c.getDocTypeDisplayLimit():
+                    docs = "all formats"
+                else:
+                    # Fold desc_new into desc, and md_new into md
+                    if "desc_new" in docs:
+                        docs.discard("desc_new")
+                        docs.add("desc")
+                    if "md_new" in docs:
+                        docs.discard("md_new")
+                        docs.add("md")
+                    docs = " ".join(sorted(docs))
+                print("{:13}: {:4}, {:25}, {:30}, {}".format(nick,
+                                                             code,
+                                                             nodes,
+                                                             docs,
+                                                             dmsg))
         print()
 
     CHECK_NETWORK_STATUS_DELAY = 1.0
@@ -1487,31 +2081,54 @@ class Network(object):
         limit = start + getenv_int("CHUTNEY_START_TIME", 60)
         next_print_status = start + Network.PRINT_NETWORK_STATUS_DELAY
         controllers = [n.getController() for n in self._nodes]
-        most_recent_status = [ None ] * len(controllers)
+        most_recent_bootstrap_status = [ None ] * len(controllers)
+        most_recent_desc_status = dict()
         while True:
             all_bootstrapped = True
-            most_recent_status = [ ]
+            most_recent_bootstrap_status = [ ]
+            most_recent_desc_status = dict()
             for c in controllers:
-                pct, kwd, msg = c.getLastBootstrapStatus()
-                most_recent_status.append((pct, kwd, msg))
-                if pct != 100:
+                nick = c.getNick()
+                pct, kwd, bmsg = c.getLastBootstrapStatus()
+                most_recent_bootstrap_status.append((pct, kwd, bmsg))
+
+                if pct != LocalNodeController.SUCCESS_CODE:
                     all_bootstrapped = False
+
+                desc_status = c.getNodeDirInfoStatus()
+                if desc_status:
+                    code, nodes, docs, dmsg = desc_status
+                    most_recent_desc_status[nick] = (code,
+                                                     nodes,
+                                                     docs,
+                                                     dmsg)
+                    if code != LocalNodeController.SUCCESS_CODE:
+                        all_bootstrapped = False
 
             now = time.time()
             elapsed = now - start
             if all_bootstrapped:
                 print("Everything bootstrapped after {} sec"
                       .format(int(elapsed)))
+                self.print_bootstrap_status(controllers,
+                                            most_recent_bootstrap_status,
+                                            most_recent_desc_status,
+                                            elapsed=elapsed,
+                                            msg="Bootstrap finished")
                 return True
             if now >= limit:
                 break
             if now >= next_print_status:
-                self.print_bootstrap_status(controllers, most_recent_status,
+                self.print_bootstrap_status(controllers,
+                                            most_recent_bootstrap_status,
+                                            most_recent_desc_status,
                                             elapsed=elapsed)
                 next_print_status = now + Network.PRINT_NETWORK_STATUS_DELAY
             time.sleep(Network.CHECK_NETWORK_STATUS_DELAY)
 
-        self.print_bootstrap_status(controllers, most_recent_status,
+        self.print_bootstrap_status(controllers,
+                                    most_recent_bootstrap_status,
+                                    most_recent_desc_status,
                                     elapsed=elapsed,
                                     msg="Bootstrap failed")
         return False
