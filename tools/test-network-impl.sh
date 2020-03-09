@@ -28,7 +28,7 @@ export CHUTNEY_STOP_TIME=${CHUTNEY_STOP_TIME:-0}
 CHUTNEY="$CHUTNEY_PATH/chutney"
 
 if [ "$CHUTNEY_START_TIME" -ge 0 ]; then
-    $ECHO "Waiting $CHUTNEY_START_TIME seconds for a consensus containing relays to be generated..."
+    $ECHO "Waiting up to $CHUTNEY_START_TIME seconds for a consensus containing relays to be generated..."
     # We require the network to bootstrap, before we verify
     if ! "$CHUTNEY" wait_for_bootstrap "$CHUTNEY_NETWORK"; then
         "$DIAGNOSTICS"
