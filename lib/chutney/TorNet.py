@@ -1478,8 +1478,8 @@ class Network(object):
             print("{}: {}".format(c.getNick(), status))
         print()
 
-    CHECK_NETWORK_STATUS_DELAY = 0.5
-    PRINT_NETWORK_STATUS_DELAY = 20.0
+    CHECK_NETWORK_STATUS_DELAY = 1.0
+    PRINT_NETWORK_STATUS_DELAY = 10.0
 
     def wait_for_bootstrap(self):
         print("Waiting for nodes to bootstrap...\n")
