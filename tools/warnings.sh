@@ -21,6 +21,13 @@
 #
 #    CHUTNEY_WARNINGS_SUMMARY:
 #        set to "true" to merge warnings from all instances
+#
+#    CHUTNEY_WARNINGS_SKIP:
+#        set to "true" to skip all warnings
+
+if [ "$CHUTNEY_WARNINGS_SKIP" = true ]; then
+    exit 0
+fi
 
 if [ ! -d "$CHUTNEY_PATH" ] || [ ! -x "$CHUTNEY_PATH/chutney" ]; then
     # looks like a broken path: use the path to this tool instead
