@@ -563,9 +563,9 @@ class LocalNodeBuilder(NodeBuilder):
     # Environment members used:
     # torrc -- which torrc file to use
     # torrc_template_path -- path to search for torrc files and include files
-    # authority -- bool -- are we an authority?
+    # authority -- bool -- are we an authority? (includes bridge authorities)
     # bridgeauthority -- bool -- are we a bridge authority?
-    # relay -- bool -- are we a relay?
+    # relay -- bool -- are we a relay? (includes exits and bridges)
     # bridge -- bool -- are we a bridge?
     # hs -- bool -- are we a hidden service?
     # nodenum -- int -- set by chutney -- which unique node index is this?
@@ -1182,6 +1182,10 @@ class TorEnviron(chutney.Templating.Environ):
              process exits, the child tor processes will exit
           dns_conf: the path to a DNS config file for Tor Exits. If this file
              is empty or unreadable, Tor will try 127.0.0.1:53.
+          authority: are we an authority? (includes bridge authorities)
+          bridgeauthority: are we a bridge authority?
+          relay: are we a relay? (includes exits and bridges)
+          bridge: are we a bridge?
     """
 
     def __init__(self, parent=None, **kwargs):
