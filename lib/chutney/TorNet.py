@@ -1037,6 +1037,14 @@ class LocalNodeController(NodeController):
             logname = "notice.log"
         return os.path.join(datadir, logname)
 
+    INTERNAL_ERROR_CODE = -400
+    NOT_YET_IMPLEMENTED_CODE = -300
+    MISSING_FILE_CODE = -200
+    NO_RECORDS_CODE = -100
+    INCOMPLETE_RECORDS_CODE = -50
+    NO_PROGRESS_CODE = 0
+    SUCCESS_CODE = 100
+
     def getLastBootstrapStatus(self):
         """Look through the logs and return the last bootstrap message
            received as a 3-tuple of percentage complete, keyword
@@ -1044,8 +1052,11 @@ class LocalNodeController(NodeController):
         """
         logfname = self.getLogfile()
         if not os.path.exists(logfname):
-            return (-200, "no_logfile", "There is no logfile yet.")
-        percent,keyword,message=-100,"no_message","No bootstrap messages yet."
+            return (LocalNodeController.MISSING_FILE_CODE,
+                    "no_logfile", "There is no logfile yet.")
+        percent = LocalNodeController.NO_RECORDS_CODE
+        keyword = "no_message"
+        message = "No bootstrap messages yet."
         with open(logfname, 'r') as f:
             for line in f:
                 m = re.search(r'Bootstrapped (\d+)%(?: \(([^\)]*)\))?: (.*)',
