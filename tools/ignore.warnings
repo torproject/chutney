@@ -48,7 +48,10 @@ Option 'ExitPolicyRejectPrivate' used more than once
 Option 'ExitRelay' used more than once
 Option 'IPv6Exit' used more than once
 # We ignore consensus failure warnings
+our cutoff for received votes
+Posted vote received too late
 Received http status code 404 .* from server .* while fetching
+Vote received too late
 # Tor Bug 21525
 Rejected vote from .*Bad valid-after time
 Rejecting vote from .* with valid-after time of .* we were expecting 1970-01-01 00:00:00
