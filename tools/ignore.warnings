@@ -47,6 +47,10 @@ Not enough info to publish pending .* consensus
 Option 'ExitPolicyRejectPrivate' used more than once
 Option 'ExitRelay' used more than once
 Option 'IPv6Exit' used more than once
+# We ignore padding warnings
+Ignored cell.*40.*that arrived in padding circuit
+Padding negotiated cell from wrong hop
+Received circuit padding stop command for unknown machine
 # We ignore consensus failure warnings
 our cutoff for received votes
 Posted vote received too late
