@@ -2145,8 +2145,12 @@ class Network(object):
                                                              dmsg))
         print()
 
+    # Keep in sync with torrc_templates/authority.i V3AuthVotingInterval
+    V3_AUTH_VOTING_INTERVAL = 20.0
+
     CHECK_NETWORK_STATUS_DELAY = 1.0
-    PRINT_NETWORK_STATUS_DELAY = 10.0
+    PRINT_NETWORK_STATUS_DELAY = V3_AUTH_VOTING_INTERVAL/2.0
+    WAIT_FOR_UNCHECKED_DIR_INFO_DELAY = V3_AUTH_VOTING_INTERVAL + 1.0
 
     def wait_for_bootstrap(self):
         print("Waiting for nodes to bootstrap...\n")
@@ -2188,6 +2192,20 @@ class Network(object):
                                             most_recent_desc_status,
                                             elapsed=elapsed,
                                             msg="Bootstrap finished")
+                # Avoid a race condition where:
+                #  - all the directory info that chutney checks is present,
+                #  - but some unchecked dir info is missing
+                #    (perhaps microdescriptors, see #33428)
+                #    or some other state or connection isn't quite ready, and
+                #  - chutney's SOCKS connection puts tor in a failing state,
+                #    which affects tor for at least 10 seconds.
+                #
+                # We have only seen this race condition in 0.3.5. The fixes to
+                # microdescriptor downloads in 0.4.0 or 0.4.1 likely resolve
+                # this issue.
+                print("Waiting {} seconds for other dir info to sync...\n"
+                      .format(int(Network.WAIT_FOR_UNCHECKED_DIR_INFO_DELAY)))
+                time.sleep(Network.WAIT_FOR_UNCHECKED_DIR_INFO_DELAY)
                 return True
             if now >= limit:
                 break
