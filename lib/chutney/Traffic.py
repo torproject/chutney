@@ -440,7 +440,7 @@ class TrafficTester(object):
         while now < end and not self.tests.all_done():
             # run only one iteration at a time, with a nice short timeout, so we
             # can actually detect completion and timeouts.
-            asyncore.loop(0.2, False, self.socket_map, 1)
+            asyncore.loop(5.0, False, self.socket_map, 1)
             now = time.time()
             if now > dump_at:
                 debug("Test status: %s"%self.tests.status())
