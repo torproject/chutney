@@ -5,7 +5,7 @@ TestingTorNetwork 1
 # These parameters make tor networks bootstrap fast,
 # but can cause consensus instability and network unreliability
 # (Some are also bad for security.)
-AssumeReachable 1
+#
 # We need at least 3 descriptors to build circuits.
 # In a 3 relay network, 0.67 > 2/3, so we try hard to get 3 descriptors.
 # In larger networks, 0.67 > 2/N, so we try hard to get >=3 descriptors.

@@ -2,6 +2,11 @@ AuthoritativeDirectory 1
 V3AuthoritativeDirectory 1
 ContactInfo auth${nodenum}@test.test
 
+# Disable authority to relay/bridge reachability checks
+# These checks happen every half hour, even in testing networks
+# As of tor 0.4.3, there is no way to speed up these checks
+AssumeReachable 1
+
 # Speed up the consensus cycle as fast as it will go.
 # If clock desynchronisation is an issue, increase these voting times.
 
