@@ -2,17 +2,20 @@ OLD_TOR="tor-stable"
 # By default, Authorities are not configured as exits
 Authority = Node(tag="a", authority=1, relay=1, torrc="authority.tmpl")
 OldAuthority = Node(tag="aOLD", authority=1, relay=1, torrc="authority.tmpl",
-       tor=OLD_TOR)
-Relay = Node(tag="r", relay=1, exit=1, torrc="relay.tmpl")
-OldRelay = Node(tag="rOLD", relay=1, exit=1, torrc="relay.tmpl",
                     tor=OLD_TOR)
+NonExitRelay = Node(tag="r", relay=1, torrc="relay.tmpl")
+OldNonExitRelay = Node(tag="rOLD", relay=1, torrc="relay.tmpl",
+                       tor=OLD_TOR)
 Client = Node(tag="c", client=1, torrc="client.tmpl")
 OldClient = Node(tag="cOLD", client=1, torrc="client.tmpl", tor=OLD_TOR)
 HSv2 = Node(tag="h", hs=1, torrc="hs.tmpl")
 OldHSv2 = Node(tag="hOLD", hs=1, torrc="hs.tmpl", tor=OLD_TOR)
 
+# Due to microdec download issues, tor 0.3.5 needs at least 5
+# authorities/relays/exits in the consensus.
+# And for similar reasons, it needs non-exit relays in this network.
 NODES = Authority.getN(2) + OldAuthority.getN(2) + \
-        Relay.getN(1) + OldRelay.getN(1) + \
+        NonExitRelay.getN(1) + OldNonExitRelay.getN(1) + \
         Client.getN(1) + OldClient.getN(1) + \
         HSv2.getN(1) + OldHSv2.getN(1)
 
