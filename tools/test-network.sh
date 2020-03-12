@@ -390,6 +390,11 @@ while [ "$n_attempts" -lt "$max_attempts" ]; do
     if test "$?" = 77; then
 	exit 77
     fi
+    # Wait a little while after failures
+    if [ "$n_attempts" -lt "$max_attempts" ]; then
+        $ECHO "==== Failed bootstrap attempt $n_attempts, trying again..."
+        sleep 6
+    fi
 done
 
 $ECHO "Chutney failed $n_attempts bootstraps; we may have a problem here."
