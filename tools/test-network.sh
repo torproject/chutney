@@ -382,7 +382,7 @@ max_attempts=$((CHUTNEY_ALLOW_FAILURES+1))
 
 while [ "$n_attempts" -lt "$max_attempts" ]; do
     n_attempts=$((n_attempts+1))
-    $ECHO "==== Running tests: attempt $n_attempts/$max_attempts"
+    $ECHO "==== Running tests: bootstrap attempt $n_attempts/$max_attempts"
     if "$CHUTNEY_PATH/tools/test-network-impl.sh"; then
 	$ECHO "==== Chutney succeeded after $n_attempts attempt(s)."
 	exit 0
@@ -392,5 +392,5 @@ while [ "$n_attempts" -lt "$max_attempts" ]; do
     fi
 done
 
-$ECHO "Chutney failed $n_attempts times; we may have a problem here."
+$ECHO "Chutney failed $n_attempts bootstraps; we may have a problem here."
 exit 1

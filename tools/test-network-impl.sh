@@ -51,7 +51,7 @@ if [ "$CHUTNEY_BOOTSTRAP_TIME" -ge 0 ]; then
     # Chutney will try to verify for $CHUTNEY_BOOTSTRAP_TIME seconds each round
     n_rounds=0
     # Run CHUTNEY_ROUNDS verification rounds
-    $ECHO "Running $CHUTNEY_ROUNDS verify rounds..."
+    $ECHO "Running $CHUTNEY_ROUNDS verify rounds for this bootstrap..."
     while [ "$n_rounds" -lt "$CHUTNEY_ROUNDS" ]; do
         n_rounds=$((n_rounds+1))
         if ! "$CHUTNEY" verify "$CHUTNEY_NETWORK"; then
@@ -60,10 +60,10 @@ if [ "$CHUTNEY_BOOTSTRAP_TIME" -ge 0 ]; then
                 CHUTNEY_WARNINGS_SUMMARY=false \
                 "$WARNING_COMMAND"
             "$WARNINGS"
-            $ECHO "chutney verify $n_rounds/$CHUTNEY_ROUNDS failed"
+            $ECHO "chutney verify round $n_rounds/$CHUTNEY_ROUNDS failed"
             exit 1
         fi
-        $ECHO "Completed $n_rounds/$CHUTNEY_ROUNDS verify rounds."
+        $ECHO "Completed verify round $n_rounds/$CHUTNEY_ROUNDS in this bootstrap"
     done
 else
     $ECHO "Chutney network ready and running. To stop the network, use:"
