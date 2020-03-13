@@ -77,5 +77,6 @@ V3AuthVotingInterval is very low
 We don't have a consensus, so we can't perform v2 rendezvous operations
 We don't have enough votes to generate a consensus
 We only have [1-4] introduction points established for
+Your ContactInfo config option is not set
 You have used DirAuthority or AlternateDirAuthority
 Your log may contain sensitive information
