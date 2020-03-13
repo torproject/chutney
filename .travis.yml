@@ -16,6 +16,8 @@ env:
     ## triggered by Ubuntu Xenial and Bionic. See #32722.
     - CHUTNEY_TOR_SANDBOX="0"
     ## Tolerate a small number of failures in chutney jobs
+    ## Tor 0.3.5 seems particularly unstable, later versions seem to cope well
+    ## with CHUTNEY_ALLOW_FAILURES="1"
     - CHUTNEY_ALLOW_FAILURES="2"
   matrix:
     ## This matrix entry is required, but it doesn't actually create any jobs
@@ -262,10 +264,8 @@ script:
   ## Basic tests
   - if command -v shellcheck ; then tests/shellcheck-tests.sh; fi
   - tests/unit-tests.sh
-  ## Quick smoke test
-  - tools/test-network.sh --dry-run
-  ## Now, allow one failure for each test (--allow-failures 1)
-  - export CHUTNEY_ALLOW_FAILURES=1
+  ## Quick smoke test, don't allow failures
+  - CHUTNEY_ALLOW_FAILURES=0 tools/test-network.sh --dry-run
   ## Different data directory
   - tools/test-network.sh --net-dir "$(mktemp -d)"
   ## IP address handling
