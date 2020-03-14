@@ -920,9 +920,10 @@ class LocalNodeController(NodeController):
     # Older tor versions are slow to download microdescs
     # This version prefix compares less than all 0.4-series, and any
     # future version series (for example, 0.5, 1.0, and 22.0)
-    MIN_TOR_VERSION_FOR_MICRODESC_FIX = '0.4'
+    MIN_TOR_VERSION_FOR_MICRODESC_FIX = 'Tor 0.4'
 
-    MIN_START_TIME_LEGACY = V3_AUTH_VOTING_INTERVAL*3 + 5
+    MIN_TIME_FOR_COMPLETE_CONSENSUS = V3_AUTH_VOTING_INTERVAL*1.5
+    MIN_START_TIME_LEGACY = MIN_TIME_FOR_COMPLETE_CONSENSUS + 20
     MIN_START_TIME_RECENT = 0
 
     def getMinStartTime(self):
@@ -940,11 +941,13 @@ class LocalNodeController(NodeController):
         tor = self._env['tor']
         tor_version = get_tor_version(tor)
         min_version = LocalNodeController.MIN_TOR_VERSION_FOR_MICRODESC_FIX
+
         # We could compare the version components, but this works for now
-        if tor_version >= min_version:
-            return LocalNodeController.MIN_START_TIME_RECENT
-        else:
+        # If it's not our Tor, expect it to behave better
+        if tor_version.startswith('Tor ') and tor_version < min_version:
             return LocalNodeController.MIN_START_TIME_LEGACY
+        else:
+            return LocalNodeController.MIN_START_TIME_RECENT
 
     NODE_WAIT_FOR_UNCHECKED_DIR_INFO = 10
     HS_WAIT_FOR_UNCHECKED_DIR_INFO = V3_AUTH_VOTING_INTERVAL + 10
@@ -2270,9 +2273,10 @@ class Network(object):
                 # microdescriptor downloads in 0.4.0 or 0.4.1 likely resolve
                 # this issue.
                 if elapsed < min_time:
-                    print(("Waiting {} seconds for legacy tor microdesc "
-                           "downloads...\n").format(int(wait_time)))
-                    time.sleep(wait_time)
+                    sleep_time = min_time - elapsed
+                    print(("Waiting another {} seconds for legacy tor "
+                           "microdesc downloads...\n").format(int(sleep_time)))
+                    time.sleep(sleep_time)
                     elapsed = now - start
                 return True
             if now >= limit:
