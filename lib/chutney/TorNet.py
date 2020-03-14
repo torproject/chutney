@@ -907,6 +907,59 @@ class LocalNodeController(NodeController):
         """
         return self.getDirServer() and not self.getBridge()
 
+    def getOnionService(self):
+        """Is this node an onion service?"""
+        if self._env['tag'].startswith('h'):
+            return 1
+
+        try:
+            return self._env['hs']
+        except KeyError:
+            return 0
+
+    # Older tor versions are slow to download microdescs
+    # This version prefix compares less than all 0.4-series, and any
+    # future version series (for example, 0.5, 1.0, and 22.0)
+    MIN_TOR_VERSION_FOR_MICRODESC_FIX = '0.4'
+
+    MIN_START_TIME_LEGACY = V3_AUTH_VOTING_INTERVAL*3 + 5
+    MIN_START_TIME_RECENT = 0
+
+    def getMinStartTime(self):
+        """Returns the minimum start time before verifying, regardless of
+           whether the network has bootstrapped, or the dir info has been
+           distributed.
+
+           Based on $CHUTNEY_EXTRA_START_TIME and the tor version.
+        """
+        # User overrode the dynamic time
+        env_min_time = getenv_int('CHUTNEY_MIN_START_TIME', None)
+        if env_min_time is not None:
+            return env_min_time
+
+        tor = self._env['tor']
+        tor_version = get_tor_version(tor)
+        min_version = LocalNodeController.MIN_TOR_VERSION_FOR_MICRODESC_FIX
+        # We could compare the version components, but this works for now
+        if tor_version >= min_version:
+            return LocalNodeController.MIN_START_TIME_RECENT
+        else:
+            return LocalNodeController.MIN_START_TIME_LEGACY
+
+    NODE_WAIT_FOR_UNCHECKED_DIR_INFO = 10
+    HS_WAIT_FOR_UNCHECKED_DIR_INFO = V3_AUTH_VOTING_INTERVAL + 10
+
+    def getUncheckedDirInfoWaitTime(self):
+        """Returns the amount of time to wait before verifying, after the
+           network has bootstrapped, and the dir info has been distributed.
+
+           Based on whether this node is an onion service.
+        """
+        if self.getOnionService():
+            return LocalNodeController.HS_WAIT_FOR_UNCHECKED_DIR_INFO
+        else:
+            return LocalNodeController.NODE_WAIT_FOR_UNCHECKED_DIR_INFO
+
     def getPid(self):
         """Assuming that this node has its pidfile in ${dir}/pid, return
            the pid of the running process, or None if there is no pid in the
@@ -2150,14 +2203,19 @@ class Network(object):
 
     CHECK_NETWORK_STATUS_DELAY = 1.0
     PRINT_NETWORK_STATUS_DELAY = V3_AUTH_VOTING_INTERVAL/2.0
-    WAIT_FOR_UNCHECKED_DIR_INFO_DELAY = V3_AUTH_VOTING_INTERVAL + 1.0
 
     def wait_for_bootstrap(self):
         print("Waiting for nodes to bootstrap...\n")
         start = time.time()
         limit = start + getenv_int("CHUTNEY_START_TIME", 60)
         next_print_status = start + Network.PRINT_NETWORK_STATUS_DELAY
+
         controllers = [n.getController() for n in self._nodes]
+        min_time_list = [c.getMinStartTime() for c in controllers]
+        min_time = max(min_time_list)
+        wait_time_list = [c.getUncheckedDirInfoWaitTime() for c in controllers]
+        wait_time = max(wait_time_list)
+
         most_recent_bootstrap_status = [ None ] * len(controllers)
         most_recent_desc_status = dict()
         while True:
@@ -2192,7 +2250,15 @@ class Network(object):
                                             most_recent_desc_status,
                                             elapsed=elapsed,
                                             msg="Bootstrap finished")
-                # Avoid a race condition where:
+
+                # Wait for unchecked dir info (see #33595)
+                print("Waiting {} seconds for other dir info to sync...\n"
+                      .format(int(wait_time)))
+                time.sleep(wait_time)
+                elapsed = now - start
+
+                # Wait for a minimum amount of run time, to avoid a race
+                # condition where:
                 #  - all the directory info that chutney checks is present,
                 #  - but some unchecked dir info is missing
                 #    (perhaps microdescriptors, see #33428)
@@ -2203,9 +2269,11 @@ class Network(object):
                 # We have only seen this race condition in 0.3.5. The fixes to
                 # microdescriptor downloads in 0.4.0 or 0.4.1 likely resolve
                 # this issue.
-                print("Waiting {} seconds for other dir info to sync...\n"
-                      .format(int(Network.WAIT_FOR_UNCHECKED_DIR_INFO_DELAY)))
-                time.sleep(Network.WAIT_FOR_UNCHECKED_DIR_INFO_DELAY)
+                if elapsed < min_time:
+                    print(("Waiting {} seconds for legacy tor microdesc "
+                           "downloads...\n").format(int(wait_time)))
+                    time.sleep(wait_time)
+                    elapsed = now - start
                 return True
             if now >= limit:
                 break

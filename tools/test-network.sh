@@ -60,22 +60,32 @@ do
             export NETWORK_FLAVOUR="$2"
             shift
         ;;
-        # The amount of time chutney will wait before starting to verify
-        # If negative, chutney exits straight after launching the network
+        # The maximum amount of time chutney will wait for bootstrap and
+        # dir info distribution, before failing.
+        # If negative, chutney exits straight after launching the network.
         --start-time)
             export CHUTNEY_START_TIME="$2"
             shift
         ;;
-        # The amount of time chutney will try to verify, before failing
-        # If negative, chutney exits without verifying
+        # The minimum amount of time chutney will wait, regardless of
+        # bootstrap or dir info distribution, before starting to verify.
+        # If negative, chutney does not wait for any extra time.
+        # (No default, because chutney picks a default based on the tor
+        # version.)
+        --min-start-time)
+            export CHUTNEY_MIN_START_TIME="$2"
+            shift
+        ;;
+        # The amount of time chutney will try to verify, before failing.
+        # If negative, chutney exits without verifying.
         --delay|--sleep|--bootstrap-time|--time|--verify-time)
             # This isn't the best name for this variable, but we kept it the
             # same for backwards compatibility
             export CHUTNEY_BOOTSTRAP_TIME="$2"
             shift
         ;;
-        # The amount of time chutney will wait after successfully verifying
-        # If negative, chutney exits without stopping
+        # The amount of time chutney will wait after successfully verifying.
+        # If negative, chutney exits without stopping.
         --stop-time)
             export CHUTNEY_STOP_TIME="$2"
             shift

@@ -54,6 +54,7 @@ Verification Options:
 
 Timing Options:
   --start-time       CHUTNEY_START_TIME=N
+  --min-start-time   CHUTNEY_MIN_START_TIME=N
   --bootstrap-time   CHUTNEY_BOOTSTRAP_TIME=N
   --stop-time        CHUTNEY_STOP_TIME=N
 
@@ -230,14 +231,20 @@ Bootstrapping the network:
     * onion services have published their descriptors to the HSDirs (step 15,
       chutney ticket #33609).
 
-  After bootstrapping and dir info distribution, wait_for_bootstrap may wait
-  longer:
-    * at least one consensus interval (20 seconds), to wait for dir info that
-      chutney does not currently check.
+  After bootstrapping and dir info distribution, wait_for_bootstrap waits
+  until the network has been running for at least CHUTNEY_MIN_START_TIME
+  seconds (default 0 seconds for tor > 0.3.5.*, 65 seconds for tor <= 0.3.5.*),
+  to compensate for microdesc download issues in older tor versions.
 
-  If the time limit has elapsed, and some nodes have not bootstrapped, or
-  there are some nodes missing from the consensus, wait_for_bootstrap dumps the
-  bootstrap statuses, and exits with a failure.
+  In addition, wait_for_bootstrap also waits an extra:
+    * 10 seconds for clients to download microdescs, and
+    * 30 seconds for onion services to upload their descriptors.
+  We expect that these delays will be removed, once the relevant checks are
+  implemented in chutney.
+
+  If the CHUTNEY_START_TIME has elapsed, and some nodes have not bootstrapped,
+  or there are some nodes missing from the consensus, wait_for_bootstrap dumps
+  the bootstrap statuses, and exits with a failure.
 
 Verifying the network:
 
