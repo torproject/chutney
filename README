@@ -178,35 +178,66 @@ Bootstrapping the network:
         If the consensus contains at least 1 exit, relays also perform DirPort
         reachability self-tests.
     7.  Relays publish their descriptors to the DirAuths.
-    8.  The DirAuths produce a full consensus. A full consensus contains:
-          * the authorities
+    8.  The DirAuths produce a complete consensus, microdesc consensus, and
+        microdescriptors. A complete consensus contains:
+          * the authorities,
           * any bridge authorities, if present, and
           * all relays (including exits).
         Bridges, clients, and onion services are not included in the consensus.
 
-    9.  Clients bootstrap to 100%.
+    9.  Bridges publish their descriptors to the Bridge Auth.
+    10. The Bridge Auth produces a bridge networkstatus.
+
+    11. Relays and bridges download all consensus flavours, then download
+        descriptors and microdescriptors.
+    12. Bridge clients download the descriptors for their bridges.
+    13. Clients (including bridge clients, and onion services), download the
+        most recent microdesc consensus, and microdescriptors.
+    14. Clients bootstrap to 100%.
         (Clients can bootstrap as soon as the consensus contains enough nodes,
-        so step 9 depends on step 3, not step 8.)
-    10. Onion Services publish their descriptors to Onion Service directories
+        so this step can depend on step 3, not step 13.)
+
+    15. Onion Services publish their descriptors to Onion Service directories
         (otherwise known as hidden service directories, or HSDirs).
 
   The tools/test-network.sh script uses the chutney wait_for_bootstrap
-  command to wait for the network to bootstrap. wait_for_bootstrap waits up to
-  CHUTNEY_START_TIME seconds (default: 120), checking whether the logged
-  bootstrapped status for every node is 100% (step 9). Once all the nodes have
-  bootstrapped, wait_for_bootstrap starts waiting for a full consensus.
+  command to wait for the network to bootstrap.
 
-  When waiting for a full consensus, wait_for_bootstrap checks if each relay
-  is in the consensus (step 8). Once all the relays are in the consensus,
-  wait_for_bootstrap succeeds.
+  wait_for_bootstrap waits up to CHUTNEY_START_TIME seconds (default: 120),
+  checking whether:
+    * the logged bootstrapped status for every node is 100% (steps 9 and 14),
+      and
+    * directory information has been distributed throughout the network
+      (steps 7-8, 11-13).
+
+  When waiting for dir info distribution, wait_for_bootstrap checks if:
+    * each relay descriptor has been posted to every authority (step 7),
+    * each relay is in the consensus, and the microdesc consensus, at every
+      authority (step 8),
+    * a complete consensus and microdesc consensus has been distributed to
+      relays and bridges (step 11),
+    * all authority and relay descriptors have been distributed to relays
+      and bridges (step 11),
+    * all bridge descriptors have been distributed to all bridge clients
+      (step 12), and
+    * a complete microdesc consensus has been distributed to clients
+      (step 13).
+
+  wait_for_bootstrap does not currently check the following dir info:
+    * microdescriptors (steps 8, 11, and 13, chutney ticket #33407),
+    * bridge descriptors at the bridge authority (steps 9-10,
+      tor ticket #33582, chutney ticket #33428), and
+    * onion services have published their descriptors to the HSDirs (step 15,
+      chutney ticket #33609).
+
+  After bootstrapping and dir info distribution, wait_for_bootstrap may wait
+  longer:
+    * at least one consensus interval (20 seconds), to wait for dir info that
+      chutney does not currently check.
 
   If the time limit has elapsed, and some nodes have not bootstrapped, or
   there are some nodes missing from the consensus, wait_for_bootstrap dumps the
   bootstrap statuses, and exits with a failure.
-
-  (wait_for_bootstrap does not check if all the onion services have published
-  their descriptors to the HSDirs. But we would like to implement that feature
-  some time.)
 
 Verifying the network:
 
