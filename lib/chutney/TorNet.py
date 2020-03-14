@@ -31,6 +31,9 @@ import chutney.Templating
 import chutney.Traffic
 import chutney.Util
 
+# Keep in sync with torrc_templates/authority.i V3AuthVotingInterval
+V3_AUTH_VOTING_INTERVAL = 20.0
+
 _BASE_ENVIRON = None
 _TOR_VERSIONS = None
 _TORRC_OPTIONS = None
@@ -2144,9 +2147,6 @@ class Network(object):
                                                              docs,
                                                              dmsg))
         print()
-
-    # Keep in sync with torrc_templates/authority.i V3AuthVotingInterval
-    V3_AUTH_VOTING_INTERVAL = 20.0
 
     CHECK_NETWORK_STATUS_DELAY = 1.0
     PRINT_NETWORK_STATUS_DELAY = V3_AUTH_VOTING_INTERVAL/2.0

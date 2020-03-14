@@ -5,11 +5,15 @@ from __future__ import unicode_literals
 
 import time
 import chutney
+import chutney.TorNet
+import chutney.Traffic
+
+# Try to verify twice each consensus, but don't verify too fast
+V3_AUTH_VOTING_INTERVAL = chutney.TorNet.V3_AUTH_VOTING_INTERVAL
+VERIFY_ATTEMPT_INTERVAL = V3_AUTH_VOTING_INTERVAL/2.0 - 1.0
+TIMEOUT_INTERVAL = max(VERIFY_ATTEMPT_INTERVAL - 1.0, 5.0)
 
 def run_test(network):
-    # Try to verify twice each consensus
-    VERIFY_ATTEMPT_INTERVAL = network.V3_AUTH_VOTING_INTERVAL/2.0 - 1.0
-    TIMEOUT_INTERVAL = max(VERIFY_ATTEMPT_INTERVAL - 1.0, 5.0)
     wait_time = network._dfltEnv['bootstrap_time']
     start_time = time.time()
     end_time = start_time + wait_time
