@@ -2264,6 +2264,7 @@ class Network(object):
                 print("Waiting {} seconds for other dir info to sync...\n"
                       .format(int(wait_time)))
                 time.sleep(wait_time)
+                now = time.time()
                 elapsed = now - start
 
                 # Wait for a minimum amount of run time, to avoid a race
@@ -2283,6 +2284,7 @@ class Network(object):
                     print(("Waiting another {} seconds for legacy tor "
                            "microdesc downloads...\n").format(int(sleep_time)))
                     time.sleep(sleep_time)
+                    now = time.time()
                     elapsed = now - start
                 return True
             if now >= limit:
