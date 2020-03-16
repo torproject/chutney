@@ -2151,6 +2151,7 @@ class Network(object):
                                most_recent_desc_status,
                                elapsed=None,
                                msg="Bootstrap in progress"):
+        nick_set = set()
         cons_auth_nick_set = set()
         elapsed_msg = ""
         if elapsed:
@@ -2162,6 +2163,7 @@ class Network(object):
         for c, boot_status in zip(controllers, most_recent_bootstrap_status):
             c.check(listRunning=False, listNonRunning=True)
             nick = c.getNick()
+            nick_set.add(nick)
             if c.getConsensusAuthority():
                 cons_auth_nick_set.add(nick)
             pct, kwd, bmsg = boot_status
@@ -2172,15 +2174,19 @@ class Network(object):
                                                   pct,
                                                   kwd,
                                                   bmsg))
+        cache_client_nick_set = nick_set.difference(cons_auth_nick_set)
         print("Published dir info:")
         for c in controllers:
             nick = c.getNick()
             if nick in most_recent_desc_status:
                 desc_status = most_recent_desc_status[nick]
                 code, nodes, docs, dmsg = desc_status
-                if len(nodes) == len(self._nodes):
+                node_set = set(nodes)
+                if node_set == nick_set:
                     nodes = "all nodes"
-                elif len(cons_auth_nick_set.intersection(nodes)) == 0:
+                elif node_set == cons_auth_nick_set:
+                    nodes = "dir auths"
+                elif node_set == cache_client_nick_set:
                     nodes = "caches and clients"
                 else:
                     nodes = [ node.replace("test", "")
