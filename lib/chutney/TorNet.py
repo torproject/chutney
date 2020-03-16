@@ -2212,6 +2212,7 @@ class Network(object):
 
     CHECK_NETWORK_STATUS_DELAY = 1.0
     PRINT_NETWORK_STATUS_DELAY = V3_AUTH_VOTING_INTERVAL/2.0
+    CHECKS_PER_PRINT = PRINT_NETWORK_STATUS_DELAY / CHECK_NETWORK_STATUS_DELAY
 
     def wait_for_bootstrap(self):
         print("Waiting for nodes to bootstrap...\n")
@@ -2224,6 +2225,8 @@ class Network(object):
         min_time = max(min_time_list)
         wait_time_list = [c.getUncheckedDirInfoWaitTime() for c in controllers]
         wait_time = max(wait_time_list)
+
+        checks_since_last_print = 0
 
         most_recent_bootstrap_status = [ None ] * len(controllers)
         most_recent_desc_status = dict()
@@ -2290,12 +2293,46 @@ class Network(object):
             if now >= limit:
                 break
             if now >= next_print_status:
+                if checks_since_last_print <= Network.CHECKS_PER_PRINT/2:
+                    self.print_bootstrap_status(controllers,
+                                                most_recent_bootstrap_status,
+                                                most_recent_desc_status,
+                                                elapsed=elapsed,
+                                                msg="Internal timing error")
+                    print("checks_since_last_print: {} (expected: {})"
+                          .format(checks_since_last_print,
+                                  Network.CHECKS_PER_PRINT))
+                    print("start: {} limit: {}".format(start, limit))
+                    print("next_print_status: {} now: {}"
+                          .format(next_print_status, time.time()))
+                    return False
+                else:
+                    self.print_bootstrap_status(controllers,
+                                                most_recent_bootstrap_status,
+                                                most_recent_desc_status,
+                                                elapsed=elapsed)
+                    next_print_status = (now +
+                                         Network.PRINT_NETWORK_STATUS_DELAY)
+                    checks_since_last_print = 0
+
+            time.sleep(Network.CHECK_NETWORK_STATUS_DELAY)
+
+            # macOS Travis has some weird hangs, make sure we're not hanging
+            # in this loop due to clock skew
+            checks_since_last_print += 1
+            if checks_since_last_print >= Network.CHECKS_PER_PRINT*2:
                 self.print_bootstrap_status(controllers,
                                             most_recent_bootstrap_status,
                                             most_recent_desc_status,
-                                            elapsed=elapsed)
-                next_print_status = now + Network.PRINT_NETWORK_STATUS_DELAY
-            time.sleep(Network.CHECK_NETWORK_STATUS_DELAY)
+                                            elapsed=elapsed,
+                                            msg="Internal timing error")
+                print("checks_since_last_print: {} (expected: {})"
+                      .format(checks_since_last_print,
+                              Network.CHECKS_PER_PRINT))
+                print("start: {} limit: {}".format(start, limit))
+                print("next_print_status: {} now: {}"
+                      .format(next_print_status, time.time()))
+                return False
 
         self.print_bootstrap_status(controllers,
                                     most_recent_bootstrap_status,
