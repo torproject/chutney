@@ -2285,7 +2285,8 @@ class Network(object):
                 if elapsed < min_time:
                     sleep_time = min_time - elapsed
                     print(("Waiting another {} seconds for legacy tor "
-                           "microdesc downloads...\n").format(int(sleep_time)))
+                           "microdesc downloads...\n")
+                          .format(int(sleep_time)))
                     time.sleep(sleep_time)
                     now = time.time()
                     elapsed = now - start
