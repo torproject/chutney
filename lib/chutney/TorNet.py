@@ -764,6 +764,19 @@ class LocalNodeBuilder(NodeBuilder):
             sys.exit(1)
         self._env['fingerprint'] = fingerprint
 
+
+    def _setEd25519Id(self):
+        """Make chutney check for relay microdescriptors before verifying"""
+        datadir = self._env['dir']
+        key_directory =  os.path.join(datadir, 'keys', "ed25519_master_id_public_key")
+        with open(key_directory ,'rb') as f:
+            f.seek(32)
+            rest_file = f.read()
+            EncodedValue = base64.b64encode(rest_file)
+            ed25519_id = str(EncodedValue)[2:-2]
+            self._env['ed25519-id'] = ed25519_id
+      
+
     def _getAltAuthLines(self, hasbridgeauth=False):
         """Return a combination of AlternateDirAuthority,
         and AlternateBridgeAuthority lines for
