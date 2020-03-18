@@ -23,6 +23,7 @@ import shutil
 import subprocess
 import sys
 import time
+import base64
 
 from chutney.Debug import debug_flag, debug
 
@@ -763,19 +764,28 @@ class LocalNodeBuilder(NodeBuilder):
                   .format(" ".join(cmdline), stdouterr))
             sys.exit(1)
         self._env['fingerprint'] = fingerprint
-
+       
 
     def _setEd25519Id(self):
-        """Make chutney check for relay microdescriptors before verifying"""
+        """Read the ed25519 identity key for this router, and set up the 'ed25519-id' entry in the Environ"""
         datadir = self._env['dir']
-        key_directory =  os.path.join(datadir, 'keys', "ed25519_master_id_public_key")
-        with open(key_directory ,'rb') as f:
-            f.seek(32)
-            rest_file = f.read()
-            EncodedValue = base64.b64encode(rest_file)
-            ed25519_id = str(EncodedValue)[2:-2]
-            self._env['ed25519-id'] = ed25519_id
-      
+        key_directory = os.path.join(datadir, 'keys', "ed25519_master_id_public_key")
+        if os.path.exists(key_directory):
+            raise ValueError("File does not exit.")
+        elif os.stat(key_directory).st_size == 0:
+            raise ValueError("File is empty")
+        else:
+            with open(key_directory, 'rb') as f:
+                ED25519_KEY_POSITION = 32
+                f.seek(ED25519_KEY_POSITION)
+                rest_file = f.read()
+                EncodedValue = base64.b64encode(rest_file)
+                ed25519_id = EncodedValue.decode('utf-8').replace('=', '')
+                if len(ed25519_id) != 43:
+                    raise ValueError("Length of key exceeding than correct value")
+                else:
+                    self._env['ed25519-id'] = ed25519_id
+            
 
     def _getAltAuthLines(self, hasbridgeauth=False):
         """Return a combination of AlternateDirAuthority,
