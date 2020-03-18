@@ -668,8 +668,10 @@ class LocalNodeBuilder(NodeBuilder):
             self._genAuthorityKey()
         if self._env['relay']:
             self._genRouterKey()
+            self._setEd25519Id()
         if self._env['hs']:
             self._makeHiddenServiceDir()
+            
 
     def config(self, net):
         """Called to configure a node: creates a torrc file for it."""
@@ -771,7 +773,7 @@ class LocalNodeBuilder(NodeBuilder):
         datadir = self._env['dir']
         key_directory = os.path.join(datadir, 'keys', "ed25519_master_id_public_key")
         if os.path.exists(key_directory):
-            raise ValueError("File does not exit.")
+            raise ValueError("File does not exit")
         elif os.stat(key_directory).st_size == 0:
             raise ValueError("File is empty")
         else:
