@@ -672,7 +672,6 @@ class LocalNodeBuilder(NodeBuilder):
         if self._env['hs']:
             self._makeHiddenServiceDir()
             
-
     def config(self, net):
         """Called to configure a node: creates a torrc file for it."""
         self._createTorrcFile()
@@ -767,32 +766,30 @@ class LocalNodeBuilder(NodeBuilder):
             sys.exit(1)
         self._env['fingerprint'] = fingerprint
        
-
     def _setEd25519Id(self):
         """Read the ed25519 identity key for this router, and set up the 'ed25519-id' entry in the Environ"""
         datadir = self._env['dir']
         key_directory = os.path.join(datadir, 'keys', "ed25519_master_id_public_key")
         EXPECTED_ED25519_FILE_SIZE = 64
         CURRENT_FILE_SIZE = os.stat(key_directory).st_size
-        if os.path.exists(key_directory) == False:
+        if not os.path.exists(key_directory):
             raise ValueError("File does not exist")
         elif CURRENT_FILE_SIZE != EXPECTED_ED25519_FILE_SIZE:
-            raise ValueError("The current size of the file is {} bytes, which is not matching the expected value of {} bytes".format(CURRENT_FILE_SIZE,EXPECTED_ED25519_FILE_SIZE))
+            raise ValueError("The current size of the file is {} bytes, which is not matching the expected value of {} bytes".format(CURRENT_FILE_SIZE, EXPECTED_ED25519_FILE_SIZE))
         else:
             with open(key_directory, 'rb') as f:
                 ED25519_KEY_POSITION = 32
                 f.seek(ED25519_KEY_POSITION)
                 rest_file = f.read()
-                EncodedValue = base64.b64encode(rest_file)
-                ed25519_id = EncodedValue.decode('utf-8').replace('=', '')
+                encoded_value = base64.b64encode(rest_file)
+                ed25519_id = encoded_value.decode('utf-8').replace('=', '')
                 EXPECTED_ED25519_BASE64_KEY_SIZE = 43
                 CURRENT_ED25519_BASE64_KEY_SIZE = len(ed25519_id)
                 if CURRENT_ED25519_BASE64_KEY_SIZE != EXPECTED_ED25519_BASE64_KEY_SIZE:
-                    raise ValueError("The current length of the key is {}, which is not matching the expected length of {}".format(CURRENT_ED25519_BASE64_KEY_SIZE,EXPECTED_ED25519_BASE64_KEY_SIZE))
+                    raise ValueError("The current length of the key is {}, which is not matching the expected length of {}".format(CURRENT_ED25519_BASE64_KEY_SIZE, EXPECTED_ED25519_BASE64_KEY_SIZE))
                 else:
                     self._env['ed25519-id'] = ed25519_id
             
-
     def _getAltAuthLines(self, hasbridgeauth=False):
         """Return a combination of AlternateDirAuthority,
         and AlternateBridgeAuthority lines for
