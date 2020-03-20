@@ -2301,7 +2301,7 @@ class Network(object):
                 # condition where:
                 #  - all the directory info that chutney checks is present,
                 #  - but some unchecked dir info is missing
-                #    (perhaps microdescriptors, see #33428)
+                #    (perhaps onion service descriptors, see #33609)
                 #    or some other state or connection isn't quite ready, and
                 #  - chutney's SOCKS connection puts tor in a failing state,
                 #    which affects tor for at least 10 seconds.
