@@ -23,6 +23,7 @@ import shutil
 import subprocess
 import sys
 import time
+import base64
 
 from chutney.Debug import debug_flag, debug
 
@@ -667,6 +668,7 @@ class LocalNodeBuilder(NodeBuilder):
             self._genAuthorityKey()
         if self._env['relay']:
             self._genRouterKey()
+            self._setEd25519Id()
         if self._env['hs']:
             self._makeHiddenServiceDir()
 
@@ -763,7 +765,32 @@ class LocalNodeBuilder(NodeBuilder):
                   .format(" ".join(cmdline), stdouterr))
             sys.exit(1)
         self._env['fingerprint'] = fingerprint
-
+        
+    def _setEd25519Id(self):
+        """Read the ed25519 identity key for this router, and set up the 'ed25519-id' entry in the Environ"""
+        datadir = self._env['dir']
+        key_file = os.path.join(datadir, 'keys', "ed25519_master_id_public_key")
+        EXPECTED_ED25519_FILE_SIZE = 64
+        CURRENT_FILE_SIZE = os.stat(key_file).st_size
+        if not os.path.exists(key_file):
+            print("File {} does not exist. Are you running a very old tor version?".format(key_file))
+            return
+        elif CURRENT_FILE_SIZE != EXPECTED_ED25519_FILE_SIZE:
+            raise ValueError("The current size of the file is {} bytes, which is not matching the expected value of {} bytes".format(CURRENT_FILE_SIZE, EXPECTED_ED25519_FILE_SIZE))
+        else:
+            with open(key_file, 'rb') as f:
+                ED25519_KEY_POSITION = 32
+                f.seek(ED25519_KEY_POSITION)
+                rest_file = f.read()
+                encoded_value = base64.b64encode(rest_file)
+                ed25519_id = encoded_value.decode('utf-8').replace('=', '')
+                EXPECTED_ED25519_BASE64_KEY_SIZE = 43
+                CURRENT_ED25519_BASE64_KEY_SIZE = len(ed25519_id)
+                if CURRENT_ED25519_BASE64_KEY_SIZE != EXPECTED_ED25519_BASE64_KEY_SIZE:
+                    raise ValueError("The current length of the key is {}, which is not matching the expected length of {}".format(CURRENT_ED25519_BASE64_KEY_SIZE, EXPECTED_ED25519_BASE64_KEY_SIZE))
+                else:
+                    self._env['ed25519_id'] = ed25519_id
+    
     def _getAltAuthLines(self, hasbridgeauth=False):
         """Return a combination of AlternateDirAuthority,
         and AlternateBridgeAuthority lines for
@@ -1300,6 +1327,7 @@ class LocalNodeController(NodeController):
            the ed25519 key. (Or RSA block matching, which is hard.)
         """
         nickname = self.getNick()
+        #ed25519_id = self._setEd25519Id()
 
         cons = dir_format in ["ns_cons",
                               "md_cons",
@@ -1324,10 +1352,10 @@ class LocalNodeController(NodeController):
             return r'^router ' + nickname + " "
         elif md:
             # Not yet implemented, see #33428
-            # r'^id ed25519 " + ed25519_identity (end of line)
+            return r'^id ed25519 ' + re.escape('ed25519_id')
             # needs ed25519-identity from #30642
             # or the existing keys/ed25519_master_id_public_key
-            return None
+            
 
     def getFileDirInfoStatus(self, dir_format, dir_path):
         """Check dir_path, a directory path used by another node, to see if
