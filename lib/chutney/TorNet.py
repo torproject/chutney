@@ -1352,7 +1352,7 @@ class LocalNodeController(NodeController):
             return r'^router ' + nickname + " "
         elif md:
             # Not yet implemented, see #33428
-            return r'^id ed25519 ' + re.escape('ed25519_id')
+            return r'^id ed25519 ' + re.escape(ed25519_id)
             # needs ed25519-identity from #30642
             # or the existing keys/ed25519_master_id_public_key
             
