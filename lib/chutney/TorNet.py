@@ -806,7 +806,7 @@ class LocalNodeBuilder(NodeBuilder):
                 if CURRENT_ED25519_BASE64_KEY_SIZE != EXPECTED_ED25519_BASE64_KEY_SIZE:
                     raise ValueError("The current length of the key is {}, which is not matching the expected length of {}".format(CURRENT_ED25519_BASE64_KEY_SIZE, EXPECTED_ED25519_BASE64_KEY_SIZE))
                 else:
-                    self._env['ed25519-id'] = ed25519_id
+                    self._env['ed25519_id'] = ed25519_id
             
     def _getAltAuthLines(self, hasbridgeauth=False):
         """Return a combination of AlternateDirAuthority,
@@ -1354,6 +1354,8 @@ class LocalNodeController(NodeController):
            the ed25519 key. (Or RSA block matching, which is hard.)
         """
         nickname = self.getNick()
+        ed25519_id = self._setEd25519Id()
+
 
         cons = dir_format in ["ns_cons",
                               "md_cons",
@@ -1378,10 +1380,11 @@ class LocalNodeController(NodeController):
             return r'^router ' + nickname + " "
         elif md:
             # Not yet implemented, see #33428
+            return r'^id ed25519 ' + re.escape('ed25519_id') 
             # r'^id ed25519 " + ed25519_identity (end of line)
             # needs ed25519-identity from #30642
             # or the existing keys/ed25519_master_id_public_key
-            return None
+            #return None
 
     def getFileDirInfoStatus(self, dir_format, dir_path):
         """Check dir_path, a directory path used by another node, to see if
