@@ -789,7 +789,7 @@ class LocalNodeBuilder(NodeBuilder):
                 if CURRENT_ED25519_BASE64_KEY_SIZE != EXPECTED_ED25519_BASE64_KEY_SIZE:
                     raise ValueError("The current length of the key is {}, which is not matching the expected length of {}".format(CURRENT_ED25519_BASE64_KEY_SIZE, EXPECTED_ED25519_BASE64_KEY_SIZE))
                 else:
-                    ed25519_id = self._env['ed25519_id']
+                    self._env['ed25519_id'] = ed25519_id
     
     def _getAltAuthLines(self, hasbridgeauth=False):
         """Return a combination of AlternateDirAuthority,
@@ -1356,7 +1356,7 @@ class LocalNodeController(NodeController):
             return r'^router ' + nickname + " "
         elif md:
             # Not yet implemented, see #33428
-            return r'^id ed25519 ' + re.escape(ed25519_id)
+            return r'^id ed25519 ' + re.escape('ed25519_id')
             # needs ed25519-identity from #30642
             # or the existing keys/ed25519_master_id_public_key
             
