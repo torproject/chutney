@@ -789,7 +789,7 @@ class LocalNodeBuilder(NodeBuilder):
                 if CURRENT_ED25519_BASE64_KEY_SIZE != EXPECTED_ED25519_BASE64_KEY_SIZE:
                     raise ValueError("The current length of the key is {}, which is not matching the expected length of {}".format(CURRENT_ED25519_BASE64_KEY_SIZE, EXPECTED_ED25519_BASE64_KEY_SIZE))
                 else:
-                    self._env['ed25519_id'] = ed25519_id
+                    ed25519_id = self._env['ed25519_id']
     
     def _getAltAuthLines(self, hasbridgeauth=False):
         """Return a combination of AlternateDirAuthority,
@@ -1327,8 +1327,12 @@ class LocalNodeController(NodeController):
            the ed25519 key. (Or RSA block matching, which is hard.)
         """
         nickname = self.getNick()
-        #ed25519_id = self._setEd25519Id()
-
+        ed25519_id = None
+        # old tor versions do not have an ed25519-id
+        if 'ed25519_id' in self._env:
+            ed25519_id = self._env['ed25519_id']
+         # old tor versions do not have an ed25519-id
+        
         cons = dir_format in ["ns_cons",
                               "md_cons",
                               "br_status"]
