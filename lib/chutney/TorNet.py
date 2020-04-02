@@ -966,11 +966,10 @@ class LocalNodeController(NodeController):
             return LocalNodeController.NODE_WAIT_FOR_UNCHECKED_DIR_INFO
 
     def getPid(self):
-        """Assuming that this node has its pidfile in ${dir}/pid, return
-           the pid of the running process, or None if there is no pid in the
-           file.
+        """Read the pidfile, and return the pid of the running process.
+           Returns None if there is no pid in the file.
         """
-        pidfile = os.path.join(self._env['dir'], 'pid')
+        pidfile = self._env['pidfile']
         if not os.path.exists(pidfile):
             return None
 
@@ -1110,6 +1109,14 @@ class LocalNodeController(NodeController):
             debug("Removing stale lock file for {} ..."
                   .format(self._env['nick']))
             os.remove(lf)
+
+    def cleanup_pidfile(self):
+        pidfile = self._env['pidfile']
+        if not self.isRunning() and os.path.exists(pidfile):
+            debug("Renaming stale pid file for {} ..."
+                  .format(self._env['nick']))
+            # Move the pidfile, so that we don't try to stop the process again
+            os.rename(pidfile, pidfile + ".old")
 
     def waitOnLaunch(self):
         """Check whether we can wait() for the tor process to launch"""
@@ -1925,6 +1932,9 @@ class TorEnviron(chutney.Templating.Environ):
     def _get_lockfile(self, my):
         return os.path.join(self['dir'], 'lock')
 
+    def _get_pidfile(self, my):
+        return os.path.join(self['dir'], 'pid')
+
     # A hs generates its key on first run,
     # so check for it at the last possible moment,
     # but cache it in memory to avoid repeatedly reading the file
@@ -2360,6 +2370,7 @@ class Network(object):
              - wrote_dot: end a series of logged dots with a newline
              - any_tor_was_running: wait for STOP_WAIT_TIME for tor to stop
              - cleanup_runfiles: delete old lockfiles from crashed tors
+                                 rename old pid files from stopped tors
         '''
         # make the output clearer by adding a newline
         if wrote_dot:
@@ -2372,10 +2383,12 @@ class Network(object):
             time.sleep(Network.STOP_WAIT_TIME)
 
         # check for stale lock files when Tor crashes
+        # move aside old pid files after Tor stops running
         if cleanup_runfiles:
             controllers = [n.getController() for n in self._nodes]
             for c in controllers:
                 c.cleanup_lockfile()
+                c.cleanup_pidfile()
 
     def stop(self):
         any_tor_was_running = False
