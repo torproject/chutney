@@ -177,9 +177,11 @@ def get_absolute_nodes_path():
        "nodes*" directory that chutney should use to store the current
        network's torrcs and tor runtime data.
 
+       This path is also used as a prefix for the unique nodes directory
+       names.
+
        See get_new_absolute_nodes_path() for more details.
     """
-    # there's no way to customise this: we really don't need more options
     return os.path.join(get_absolute_net_path(), 'nodes')
 
 def get_new_absolute_nodes_path(now=time.time()):
@@ -2051,7 +2053,8 @@ class Network(object):
         # if this path exists, it must be a link
         if os.path.exists(nodeslink) and not os.path.islink(nodeslink):
             raise RuntimeError(
-                'get_absolute_nodes_path returned a path that exists and is not a link')
+                'get_absolute_nodes_path returned a path that exists and '
+                'is not a link')
 
         # create the new, uniquely named directory, and link it to nodes
         print("NOTE: creating %r, linking to %r" % (newnodesdir, nodeslink))
