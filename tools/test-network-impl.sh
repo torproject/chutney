@@ -88,8 +88,6 @@ if [ "$CHUTNEY_STOP_TIME" -ge 0 ]; then
         $ECHO "chutney stop failed"
         exit 1
     fi
-    # Give tor time to exit gracefully
-    sleep 3
 else
     $ECHO "Chutney network verified and running. To stop the network, use:"
     $ECHO "$CHUTNEY stop $CHUTNEY_NETWORK"

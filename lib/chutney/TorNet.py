@@ -2345,7 +2345,40 @@ class Network(object):
                                     msg="Bootstrap failed")
         return False
 
+    # Keep in sync with ShutdownWaitLength in common.i
+    SHUTDOWN_WAIT_LENGTH = 2
+    # Wait for at least two event loops to elapse
+    EVENT_LOOP_SLOP = 3
+    # Wait for this long after signalling tor
+    STOP_WAIT_TIME = SHUTDOWN_WAIT_LENGTH + EVENT_LOOP_SLOP
+
+    def final_cleanup(self,
+                      wrote_dot,
+                      any_tor_was_running,
+                      cleanup_runfiles):
+        '''Perform final cleanup actions, based on the arguments:
+             - wrote_dot: end a series of logged dots with a newline
+             - any_tor_was_running: wait for STOP_WAIT_TIME for tor to stop
+             - cleanup_runfiles: delete old lockfiles from crashed tors
+        '''
+        # make the output clearer by adding a newline
+        if wrote_dot:
+            sys.stdout.write("\n")
+            sys.stdout.flush()
+
+        # wait for tor to actually exit
+        if any_tor_was_running:
+            print("Waiting for nodes to cleanup and exit.")
+            time.sleep(Network.STOP_WAIT_TIME)
+
+        # check for stale lock files when Tor crashes
+        if cleanup_runfiles:
+            controllers = [n.getController() for n in self._nodes]
+            for c in controllers:
+                c.cleanup_lockfile()
+
     def stop(self):
+        any_tor_was_running = False
         controllers = [n.getController() for n in self._nodes]
         for sig, desc in [(signal.SIGINT, "SIGINT"),
                           (signal.SIGINT, "another SIGINT"),
@@ -2353,30 +2386,30 @@ class Network(object):
             print("Sending %s to nodes" % desc)
             for c in controllers:
                 if c.isRunning():
+                    any_tor_was_running = True
                     c.stop(sig=sig)
             print("Waiting for nodes to finish.")
             wrote_dot = False
             for n in range(15):
                 time.sleep(1)
                 if all(not c.isRunning() for c in controllers):
-                    # make the output clearer by adding a newline
-                    if wrote_dot:
-                        sys.stdout.write("\n")
-                        sys.stdout.flush()
-                    # check for stale lock file when Tor crashes
-                    for c in controllers:
-                        c.cleanup_lockfile()
+                    self.final_cleanup(wrote_dot,
+                                       any_tor_was_running,
+                                       True)
                     return
                 sys.stdout.write(".")
                 wrote_dot = True
                 sys.stdout.flush()
             for c in controllers:
                 c.check(listNonRunning=False)
-            # make the output clearer by adding a newline
-            if wrote_dot:
-                sys.stdout.write("\n")
-                sys.stdout.flush()
-
+            # cleanup chutney's logging, but don't wait or cleanup files
+            self.final_cleanup(wrote_dot,
+                               False,
+                               False)
+        # wait for tor to exit, but don't cleanup logging
+        self.final_cleanup(False,
+                           any_tor_was_running,
+                           True)
 
 def Require(feature):
     network = _THE_NETWORK
