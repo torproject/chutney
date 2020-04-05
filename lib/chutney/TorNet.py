@@ -1154,6 +1154,40 @@ class LocalNodeController(NodeController):
     SHORT_FILE_CODE = -100
     NO_PROGRESS_CODE = 0
     SUCCESS_CODE = 100
+    ONIONDESC_PUBLISHED_CODE = 200
+    HSV2_KEYWORD = "hidden service v2"
+    HSV3_KEYWORD = "hidden service v3"
+
+    def getLastOnionServiceDescStatus(self):
+        """Look through info-level logs for onion service descriptor uploads
+           and return a 3-tuple of percentage complete, the hidden service
+           version, and message.
+        """
+        logfname = self.getLogfile(info=True)
+        if not os.path.exists(logfname):
+            return (LocalNodeController.MISSING_FILE_CODE,
+                    "no_logfile", "There is no logfile yet.")
+        percent = LocalNodeController.NO_RECORDS_CODE
+        keyword = "no_message"
+        message = "No onion service descriptor messages yet."
+        with open(logfname, 'r') as f:
+            for line in f:
+                m_v2 = re.search(r'Launching upload for hidden service (.*)',
+                                 line)
+                if m_v2:
+                    percent = LocalNodeController.ONIONDESC_PUBLISHED_CODE
+                    keyword = LocalNodeController.HSV2_KEYWORD
+                    message = m_v2.groups()[0]
+                    break
+                # else
+                m_v3 = re.search(r'Service ([^\s]+ [^\s]+ descriptor of revision .*)',
+                                 line)
+                if m_v3:
+                    percent = LocalNodeController.ONIONDESC_PUBLISHED_CODE
+                    keyword = LocalNodeController.HSV3_KEYWORD
+                    message = m_v3.groups()[0]
+                    break
+        return (percent, keyword, message)
 
     def getLastBootstrapStatus(self):
         """Look through the logs and return the last bootstrap message
