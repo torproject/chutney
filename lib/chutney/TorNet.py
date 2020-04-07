@@ -1335,13 +1335,7 @@ class LocalNodeController(NodeController):
         """
         nickname = self.getNick()
         ed25519_key = self.getEd25519Id()
-         #old tor versions do not have an ed25519-id
-        #ed25519_id = None
-        #if 'ed25519_id' in self._env:
-             
-            #ed25519_id = self._env['ed25519_id']
          
-        
         cons = dir_format in ["ns_cons",
                               "md_cons",
                               "br_status"]
@@ -1364,12 +1358,12 @@ class LocalNodeController(NodeController):
         elif desc:
             return r'^router ' + nickname + " "
         elif md:
-            
+            if ed25519_key:
             # Not yet implemented, see #33428
-            return r'^id ed25519 ' + re.escape(ed25519_key)
-            # needs ed25519-identity from #30642
-            # or the existing keys/ed25519_master_id_public_key
-            
+                return r'^id ed25519 ' + re.escape(ed25519_key)
+            else:
+                return None
+            # Return None if ed25519_id not found
 
     def getFileDirInfoStatus(self, dir_format, dir_path):
         """Check dir_path, a directory path used by another node, to see if
