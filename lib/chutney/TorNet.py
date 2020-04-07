@@ -890,6 +890,13 @@ class LocalNodeController(NodeController):
         except KeyError:
             return 0
 
+    def getEd25519Id(self):
+        """Return the value of ed25519 key"""
+        try:
+            return self._env['ed25519_id']
+        except KeyError:
+            return None
+
     def getBridgeClient(self):
         """Return the bridge client flag for this node."""
         try:
@@ -1327,11 +1334,13 @@ class LocalNodeController(NodeController):
            the ed25519 key. (Or RSA block matching, which is hard.)
         """
         nickname = self.getNick()
-        ed25519_id = None
-        # old tor versions do not have an ed25519-id
-        if 'ed25519_id' in self._env:
-            ed25519_id = self._env['ed25519_id']
-         # old tor versions do not have an ed25519-id
+        ed25519_key = self.getEd25519Id()
+         #old tor versions do not have an ed25519-id
+        #ed25519_id = None
+        #if 'ed25519_id' in self._env:
+             
+            #ed25519_id = self._env['ed25519_id']
+         
         
         cons = dir_format in ["ns_cons",
                               "md_cons",
@@ -1355,8 +1364,9 @@ class LocalNodeController(NodeController):
         elif desc:
             return r'^router ' + nickname + " "
         elif md:
+            
             # Not yet implemented, see #33428
-            return r'^id ed25519 ' + re.escape('ed25519_id')
+            return r'^id ed25519 ' + re.escape(ed25519_key)
             # needs ed25519-identity from #30642
             # or the existing keys/ed25519_master_id_public_key
             
