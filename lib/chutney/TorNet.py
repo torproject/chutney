@@ -1328,10 +1328,7 @@ class LocalNodeController(NodeController):
 
     def getNodeDirInfoStatusPattern(self, dir_format):
         """Returns a regular expression pattern for finding this node's entry
-           in a dir_format file.
-
-           The microdesc format is not yet implemented, because it requires
-           the ed25519 key. (Or RSA block matching, which is hard.)
+           in a dir_format file and returning None if nickname or ed25519_id key not found.
         """
         nickname = self.getNick()
         ed25519_key = self.getEd25519Id()
@@ -1358,13 +1355,14 @@ class LocalNodeController(NodeController):
         elif desc:
             return r'^router ' + nickname + " "
         elif md:
+            print(nickname)
+            print(ed25519_key)
             if ed25519_key:
-            # Not yet implemented, see #33428
                 return r'^id ed25519 ' + re.escape(ed25519_key)
             else:
+                # If there is no ed25519_id, then we can't search for it
                 return None
-            # Return None if ed25519_id not found
-
+            
     def getFileDirInfoStatus(self, dir_format, dir_path):
         """Check dir_path, a directory path used by another node, to see if
            this node is present. The directory path is a dir_format file.
