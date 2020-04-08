@@ -53,7 +53,6 @@ def getenv_type(env_var, default, type_, type_name=None):
     """
        Return the value of the environment variable 'envar' as type_,
        or 'default' if no such variable exists.
-
        Raise ValueError using type_name if the environment variable is set,
        but type_() raises a ValueError on its value. (If type_name is None
        or empty, the ValueError uses type_'s string representation instead.)
@@ -74,7 +73,6 @@ def getenv_int(env_var, default):
     """
        Return the value of the environment variable 'envar' as an int,
        or 'default' if no such variable exists.
-
        Raise ValueError if the environment variable is set, but is not an int.
     """
     return getenv_type(env_var, default, int, type_name='an int')
@@ -83,9 +81,7 @@ def getenv_bool(env_var, default):
     """
        Return the value of the environment variable 'envar' as a bool,
        or 'default' if no such variable exists.
-
        Unlike bool(), converts 0, "False", and "No" to False.
-
        Raise ValueError if the environment variable is set, but is not a bool.
     """
     try:
@@ -102,11 +98,9 @@ def getenv_bool(env_var, default):
 def mkdir_p(d, mode=448):
     """Create directory 'd' and all of its parents as needed.  Unlike
        os.makedirs, does not give an error if d already exists.
-
        448 is the decimal representation of the octal number 0700. Since
        python2 only supports 0700 and python3 only supports 0o700, we can use
        neither.
-
        Note that python2 and python3 differ in how they create the
        permissions for the intermediate directories.  In python3, 'mode'
        only sets the mode for the last directory created.
@@ -142,15 +136,12 @@ def get_absolute_net_path():
     """
        Returns the absolute path of the "net" directory that chutney should
        use to store "node*" directories containing torrcs and tor runtime data.
-
        If the CHUTNEY_DATA_DIR environmental variable is an absolute path, it
        is returned unmodified, regardless of whether the path actually exists.
        (Chutney creates any directories that do not exist.)
-
        Otherwise, if it is a relative path, and there is an existing directory
        with that name in the directory containing the chutney executable
        script, return that path (this check exists for legacy reasons).
-
        Finally, return the path relative to the current working directory,
        regardless of whether the path actually exists.
     """
@@ -177,7 +168,6 @@ def get_absolute_nodes_path():
        Returns the absolute path of the "nodes" symlink that points to the
        "nodes*" directory that chutney should use to store the current
        network's torrcs and tor runtime data.
-
        See get_new_absolute_nodes_path() for more details.
     """
     # there's no way to customise this: we really don't need more options
@@ -187,10 +177,8 @@ def get_new_absolute_nodes_path(now=time.time()):
     """
        Returns the absolute path of a unique "nodes*" directory that chutney
        should use to store the current network's torrcs and tor runtime data.
-
        The nodes directory suffix is based on the current timestamp,
        incremented if necessary to avoid collisions with existing directories.
-
        (The existing directory check contains known race conditions: running
        multiple simultaneous chutney instances on the same "net" directory is
        not supported. The uniqueness check is only designed to avoid
@@ -232,9 +220,7 @@ def _warnMissingTor(tor_path, cmdline, tor_name="tor"):
 def run_tor(cmdline, exit_on_missing=True):
     """Run the tor command line cmdline, which must start with the path or
        name of a tor binary.
-
        Returns the combined stdout and stderr of the process.
-
        If exit_on_missing is true, warn and exit if the tor binary is missing.
        Otherwise, raise a MissingBinaryException.
     """
@@ -272,7 +258,6 @@ def launch_process(cmdline, tor_name="tor", stdin=None, exit_on_missing=True):
     """Launch the command line cmdline, which must start with the path or
        name of a binary. Use tor_name as the canonical name of the binary in
        logs. Pass stdin to the Popen constructor.
-
        Returns the Popen object for the launched process.
     """
     if tor_name == "tor":
@@ -306,7 +291,6 @@ def run_tor_gencert(cmdline, passphrase):
     """Run the tor-gencert command line cmdline, which must start with the
        path or name of a tor-gencert binary.
        Then send passphrase to the stdin of the process.
-
        Returns the combined stdout and stderr of the process.
     """
     p = launch_process(cmdline,
@@ -377,7 +361,6 @@ def get_tor_modules(tor):
     """Check the list of compile-time modules advertised by the given
        'tor' binary, and return a map from module name to a boolean
        describing whether it is supported.
-
        Unlisted modules are ones that Tor did not treat as compile-time
        optional modules.
     """
@@ -411,7 +394,6 @@ class Node(object):
 
     """A Node represents a Tor node or a set of Tor nodes.  It's created
        in a network configuration file.
-
        This class is responsible for holding the user's selected node
        configuration, and figuring out how the node needs to be
        configured and launched.
@@ -671,7 +653,7 @@ class LocalNodeBuilder(NodeBuilder):
             self._setEd25519Id()
         if self._env['hs']:
             self._makeHiddenServiceDir()
-            
+
     def config(self, net):
         """Called to configure a node: creates a torrc file for it."""
         self._createTorrcFile()
@@ -705,7 +687,6 @@ class LocalNodeBuilder(NodeBuilder):
 
     def _makeHiddenServiceDir(self):
         """Create the hidden service subdirectory for this node.
-
           The directory name is stored under the 'hs_directory' environment
           key. It is combined with the 'dir' data directory key to yield the
           path to the hidden service directory.
@@ -765,7 +746,7 @@ class LocalNodeBuilder(NodeBuilder):
                   .format(" ".join(cmdline), stdouterr))
             sys.exit(1)
         self._env['fingerprint'] = fingerprint
-       
+        
     def _setEd25519Id(self):
         """Read the ed25519 identity key for this router, and set up the 'ed25519-id' entry in the Environ"""
         datadir = self._env['dir']
@@ -790,7 +771,7 @@ class LocalNodeBuilder(NodeBuilder):
                     raise ValueError("The current length of the key is {}, which is not matching the expected length of {}".format(CURRENT_ED25519_BASE64_KEY_SIZE, EXPECTED_ED25519_BASE64_KEY_SIZE))
                 else:
                     self._env['ed25519_id'] = ed25519_id
-            
+    
     def _getAltAuthLines(self, hasbridgeauth=False):
         """Return a combination of AlternateDirAuthority,
         and AlternateBridgeAuthority lines for
@@ -890,6 +871,13 @@ class LocalNodeController(NodeController):
         except KeyError:
             return 0
 
+    def getEd25519Id(self):
+        """Return the value of ed25519 key"""
+        try:
+            return self._env['ed25519_id']
+        except KeyError:
+            return None
+
     def getBridgeClient(self):
         """Return the bridge client flag for this node."""
         try:
@@ -950,14 +938,13 @@ class LocalNodeController(NodeController):
     MIN_TOR_VERSION_FOR_MICRODESC_FIX = 'Tor 0.4'
 
     MIN_TIME_FOR_COMPLETE_CONSENSUS = V3_AUTH_VOTING_INTERVAL*1.5
-    MIN_START_TIME_LEGACY = MIN_TIME_FOR_COMPLETE_CONSENSUS + 20
+    MIN_START_TIME_LEGACY = 0
     MIN_START_TIME_RECENT = 0
 
     def getMinStartTime(self):
         """Returns the minimum start time before verifying, regardless of
            whether the network has bootstrapped, or the dir info has been
            distributed.
-
            Based on $CHUTNEY_EXTRA_START_TIME and the tor version.
         """
         # User overrode the dynamic time
@@ -976,13 +963,12 @@ class LocalNodeController(NodeController):
         else:
             return LocalNodeController.MIN_START_TIME_RECENT
 
-    NODE_WAIT_FOR_UNCHECKED_DIR_INFO = 10
+    NODE_WAIT_FOR_UNCHECKED_DIR_INFO = 0
     HS_WAIT_FOR_UNCHECKED_DIR_INFO = V3_AUTH_VOTING_INTERVAL + 10
 
     def getUncheckedDirInfoWaitTime(self):
         """Returns the amount of time to wait before verifying, after the
            network has bootstrapped, and the dir info has been distributed.
-
            Based on whether this node is an onion service.
         """
         if self.getOnionService():
@@ -1228,17 +1214,14 @@ class LocalNodeController(NodeController):
              * a boolean indicating whether this node is a bridge client, and
              * a dict with the expected paths to the consensus files for this
                node.
-
            If v2_dir_paths is True, returns the v3 directory paths.
            Otherwise, returns the bridge status path.
            If v2_dir_paths is True, but this node is not a bridge client or
            bridge authority, returns None. (There are no paths.)
-
            Directory servers usually have both consensus flavours.
            Clients usually have the microdesc consensus, but they may have
            either flavour. (Or both flavours.)
            Only the bridge authority has the bridge networkstatus.
-
            The dict keys are:
              * "ns_cons", "desc", and "desc_new";
              * "md_cons", "md", and "md_new"; and
@@ -1291,9 +1274,7 @@ class LocalNodeController(NodeController):
     def getNodePublishedDirInfoPaths(self):
         """Return a dict of paths to consensus files, where we expect this
            node to be published.
-
            The dict keys are the nicks for each node.
-
            See getNodeCacheDirInfoPaths() for the path data structure, and which
            nodes appear in each type of directory.
         """
@@ -1321,15 +1302,11 @@ class LocalNodeController(NodeController):
 
     def getNodeDirInfoStatusPattern(self, dir_format):
         """Returns a regular expression pattern for finding this node's entry
-           in a dir_format file.
-
-           The microdesc format is not yet implemented, because it requires
-           the ed25519 key. (Or RSA block matching, which is hard.)
+           in a dir_format file and returning None if nickname or ed25519_id key not found.
         """
         nickname = self.getNick()
-        ed25519_id = self._setEd25519Id()
-
-
+        ed25519_key = self.getEd25519Id()
+         
         cons = dir_format in ["ns_cons",
                               "md_cons",
                               "br_status"]
@@ -1352,17 +1329,17 @@ class LocalNodeController(NodeController):
         elif desc:
             return r'^router ' + nickname + " "
         elif md:
-            # Not yet implemented, see #33428
-            return r'^id ed25519 ' + re.escape('ed25519_id') 
-            # r'^id ed25519 " + ed25519_identity (end of line)
-            # needs ed25519-identity from #30642
-            # or the existing keys/ed25519_master_id_public_key
-            #return None
-
+            print(nickname)
+            print(ed25519_key)
+            if ed25519_key:
+                return r'^id ed25519 ' + re.escape(ed25519_key)
+            else:
+                # If there is no ed25519_id, then we can't search for it
+                return None
+            
     def getFileDirInfoStatus(self, dir_format, dir_path):
         """Check dir_path, a directory path used by another node, to see if
            this node is present. The directory path is a dir_format file.
-
            Returns a status 3-tuple containing:
              * an integer status code:
                * negative numbers correspond to errors,
@@ -1408,15 +1385,11 @@ class LocalNodeController(NodeController):
         """Combine the directory statuses in dir_status, if their keys
            appear in status_key_list. Keys may be directory formats, or
            node nicks.
-
            If best is True, choose the best status, otherwise, choose the
            worst status.
-
            If ignore_missing is True, ignore missing statuses, if there is any
            other status available.
-
            If statuses are equal, combine their format sets.
-
            Returns None if the status list is empty.
         """
         dir_status_list = [ dir_status[status_key]
@@ -1465,24 +1438,19 @@ class LocalNodeController(NodeController):
                                     to_bridge_client):
         """Summarise the statuses for this node, among all the files used by
            the other node.
-
            to_dir_server is True if the other node is a directory server.
            to_bridge_client is True if the other node is a bridge client.
-
            Combine these alternate files by choosing the best status:
              * desc_alts: "desc" and "desc_new"
              * md_alts: "md" and "md_new"
-
            Handle these alternate formats by ignoring missing directory files,
            then choosing the worst status:
              * cons_all: "ns_cons" and "md_cons"
              * desc_all: "desc"/"desc_new" and
                           "md"/"md_new"
-
            Add an "node_dir" status that describes the overall status, which
            is the worst status among descriptors, consensuses, and the bridge
            networkstatus (if relevant). Return this status.
-
            Returns None if no status is expected.
         """
         from_bridge = self.getBridge()
@@ -1581,13 +1549,10 @@ class LocalNodeController(NodeController):
                                   to_bridge_client):
         """Check all the directory paths used by another node, to see if this
            node is present.
-
            to_dir_server is True if the other node is a directory server.
            to_bridge_client is True if the other node is a bridge client.
-
            Returns a dict containing a status 3-tuple for every relevant
            directory format. See getFileDirInfoStatus() for more details.
-
            Returns None if the node doesn't have any directory files
            containing published information from this node.
         """
@@ -1616,7 +1581,6 @@ class LocalNodeController(NodeController):
     def getNodeDirInfoStatusList(self):
         """Look through the directories on each node, and work out if
            this node is in that directory.
-
            Returns a dict containing a status 3-tuple for each relevant node.
            The 3-tuple contains:
              * a status code,
@@ -1624,14 +1588,11 @@ class LocalNodeController(NodeController):
              * a status message string.
            See getNodeCacheDirInfoStatus() and getFileDirInfoStatus() for
            more details.
-
            If this node is a directory authority, bridge authority, or relay
            (including exits), checks v3 directory consensuses, descriptors,
            microdesc consensuses, and microdescriptors.
-
            If this node is a bridge, checks bridge networkstatuses, and
            descriptors on bridge authorities and bridge clients.
-
            If this node is a client (including onion services), returns None.
         """
         dir_files = self.getNodePublishedDirInfoPaths()
@@ -1669,7 +1630,6 @@ class LocalNodeController(NodeController):
     def summariseNodeDirInfoStatus(self, dir_status):
         """Summarise the statuses for this node's descriptor, among all the
            directory files used by all other nodes.
-
            Returns a dict containing a status 4-tuple for each status code.
            The 4-tuple contains:
              * a status code,
@@ -1679,11 +1639,9 @@ class LocalNodeController(NodeController):
              * a status message string.
            See getNodeCacheDirInfoStatus() and getFileDirInfoStatus() for
            more details.
-
            Also add an "node_all" status that describes the overall status,
            which is the worst status among all the other nodes' directory
            files.
-
            Returns None if no status is expected.
         """
         node_status = dict()
@@ -1750,7 +1708,6 @@ class LocalNodeController(NodeController):
     def getNodeDirInfoStatus(self):
         """Return a 4-tuple describing the status of this node's descriptor,
            in all the directory documents across the network.
-
            If this node does not have a descriptor, returns None.
         """
         dir_status = self.getNodeDirInfoStatusList()
@@ -1772,7 +1729,6 @@ class LocalNodeController(NodeController):
     def isInExpectedDirInfoDocs(self):
         """Return True if the descriptors for this node are in all expected
            directory documents.
-
            Return None if this node does not publish descriptors.
         """
         node_status = self.getNodeDirInfoStatus()
@@ -1865,9 +1821,7 @@ class TorEnviron(chutney.Templating.Environ):
 
     """Subclass of chutney.Templating.Environ to implement commonly-used
        substitutions.
-
        Environment fields provided:
-
           orport, controlport, socksport, dirport: *Port torrc option
           dir: DataDirectory torrc option
           nick: Nickname torrc option
@@ -1886,7 +1840,6 @@ class TorEnviron(chutney.Templating.Environ):
              Chutney users can disable the sandbox using:
                 export CHUTNEY_TOR_SANDBOX=0
              if it doesn't work on their version of glibc.
-
        Environment fields used:
           nodenum: chutney's internal node number for the node
           tag: a short text string that represents the type of node
