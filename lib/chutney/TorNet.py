@@ -957,7 +957,7 @@ class LocalNodeController(NodeController):
     MIN_TOR_VERSION_FOR_MICRODESC_FIX = 'Tor 0.4'
 
     MIN_TIME_FOR_COMPLETE_CONSENSUS = V3_AUTH_VOTING_INTERVAL*1.5
-    MIN_START_TIME_LEGACY = MIN_TIME_FOR_COMPLETE_CONSENSUS + 20
+    MIN_START_TIME_LEGACY = 0
     MIN_START_TIME_RECENT = 0
 
     def getMinStartTime(self):
@@ -983,7 +983,7 @@ class LocalNodeController(NodeController):
         else:
             return LocalNodeController.MIN_START_TIME_RECENT
 
-    NODE_WAIT_FOR_UNCHECKED_DIR_INFO = 10
+    NODE_WAIT_FOR_UNCHECKED_DIR_INFO = 0
     HS_WAIT_FOR_UNCHECKED_DIR_INFO = V3_AUTH_VOTING_INTERVAL + 10
 
     def getUncheckedDirInfoWaitTime(self):
