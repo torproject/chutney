@@ -1,0 +1,15 @@
+# A minimal Onionbalance V3 config:
+# - it has two clients (one for OBv3 and another for client)
+# - it has 4 onion services (to serve as OBv3 backends)
+
+# By default, Authorities are not configured as exits
+Authority = Node(tag="a", authority=1, relay=1, torrc="authority.tmpl")
+ExitRelay = Node(tag="r", relay=1, exit=1, torrc="relay.tmpl")
+Client = Node(tag="c", client=1, torrc="client.tmpl")
+HS = Node(tag="h", hs=1, torrc="hs-v3.tmpl")
+
+NODES = Authority.getN(3) + ExitRelay.getN(5) + \
+        Client.getN(2) + HS.getN(4)
+
+ConfigureNodes(NODES)
+
