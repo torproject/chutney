@@ -874,8 +874,10 @@ class LocalNodeController(NodeController):
     def getEd25519Id(self):
         """Return the value of ed25519 key"""
         try:
+            self._setEd25519Id()
             return self._env['ed25519_id']
         except KeyError:
+            
             return None
 
     def getBridgeClient(self):
