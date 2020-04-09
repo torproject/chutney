@@ -49,8 +49,7 @@ class MissingBinaryException(Exception):
     pass
 
 def getenv_type(env_var, default, type_, type_name=None):
-    """
-       Return the value of the environment variable 'envar' as type_,
+    """  Return the value of the environment variable 'envar' as type_,
        or 'default' if no such variable exists.
        Raise ValueError using type_name if the environment variable is set,
        but type_() raises a ValueError on its value. (If type_name is None
@@ -666,7 +665,6 @@ class LocalNodeBuilder(NodeBuilder):
             self._genAuthorityKey()
         if self._env['relay']:
             self._genRouterKey()
-            #self._setEd25519Id()
         if self._env['hs']:
             self._makeHiddenServiceDir()
 
@@ -865,6 +863,7 @@ class LocalNodeController(NodeController):
                 rest_file = f.read()
                 encoded_value = base64.b64encode(rest_file)
                 ed25519_id = encoded_value.decode('utf-8').replace('=', '')
+                print('abcd')
                 EXPECTED_ED25519_BASE64_KEY_SIZE = 43
                 CURRENT_ED25519_BASE64_KEY_SIZE = len(ed25519_id)
                 if CURRENT_ED25519_BASE64_KEY_SIZE != EXPECTED_ED25519_BASE64_KEY_SIZE:
@@ -873,9 +872,11 @@ class LocalNodeController(NodeController):
                     self._env['ed25519_id'] = ed25519_id
     
     def __init__(self, env):
-        NodeController.__init__(self, env)
+        NodeController.__init__(self,env)
         self._env = env
-
+        #print('abcd')
+        self._setEd25519Id()
+    
     def getNick(self):
         """Return the nickname for this node."""
         return self._env['nick']
@@ -890,6 +891,7 @@ class LocalNodeController(NodeController):
     def getEd25519Id(self):
         """Return the value of ed25519 key"""
         try:
+            #self._setEd25519Id()
             return self._env['ed25519_id']
         except KeyError:
             return None
@@ -1328,7 +1330,7 @@ class LocalNodeController(NodeController):
 
     def getNodeDirInfoStatusPattern(self, dir_format):
         """Returns a regular expression pattern for finding this node's entry
-           in a dir_format file and returning None if nickname or ed25519_id key not found.
+           in a dir_format file. Returns None if the requested pattern is not available.
         """
         nickname = self.getNick()
         ed25519_key = self.getEd25519Id()
