@@ -90,7 +90,7 @@ import os
 _KeyError = KeyError
 
 
-class _DictWrapper(object):
+class _DictWrapper(dict):
 
     """Base class to implement a dictionary-like object with delegation.
        To use it, implement the _getitem method, and pass the optional
@@ -198,17 +198,14 @@ class Environ(_DictWrapper):
        both spider['limbs'] and squid['limbs'] would be given
        (incorrectly) as 4.
     """
-    # Fields
-    # _dict: dictionary holding the contents of this Environ that are
-    #   not inherited from the parent and are not computed on the fly.
 
-    def __init__(self, parent=None, **kw):
+    def __init__(self, parent=None, **kwargs):
         _DictWrapper.__init__(self, parent)
-        self._dict = kw
+        self.update(kwargs)
 
     def _getitem(self, key, my):
         try:
-            return self._dict[key]
+            return self[key]
         except KeyError:
             pass
 
@@ -221,12 +218,10 @@ class Environ(_DictWrapper):
                 raise KeyError(key)
         raise KeyError(key)
 
-    def __setitem__(self, key, val):
-        self._dict[key] = val
 
     def keys(self):
         s = set()
-        s.update(self._dict.keys())
+        s.update(self.keys())
         if self._parent is not None:
             s.update(self._parent.keys())
         s.update(name[5:] for name in dir(self) if name.startswith("_get_"))
