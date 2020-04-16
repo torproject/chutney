@@ -167,9 +167,15 @@ def get_absolute_nodes_path():
        Returns the absolute path of the "nodes" symlink that points to the
        "nodes*" directory that chutney should use to store the current
        network's torrcs and tor runtime data.
+<<<<<<< HEAD
+=======
+
+       This path is also used as a prefix for the unique nodes directory
+       names.
+
+>>>>>>> 6282f471e432efa2aadf1046ea6e0fbaca17b434
        See get_new_absolute_nodes_path() for more details.
     """
-    # there's no way to customise this: we really don't need more options
     return os.path.join(get_absolute_net_path(), 'nodes')
 
 def get_new_absolute_nodes_path(now=time.time()):
@@ -979,11 +985,10 @@ class LocalNodeController(NodeController):
             return LocalNodeController.NODE_WAIT_FOR_UNCHECKED_DIR_INFO
 
     def getPid(self):
-        """Assuming that this node has its pidfile in ${dir}/pid, return
-           the pid of the running process, or None if there is no pid in the
-           file.
+        """Read the pidfile, and return the pid of the running process.
+           Returns None if there is no pid in the file.
         """
-        pidfile = os.path.join(self._env['dir'], 'pid')
+        pidfile = self._env['pidfile']
         if not os.path.exists(pidfile):
             return None
 
@@ -1123,6 +1128,14 @@ class LocalNodeController(NodeController):
             debug("Removing stale lock file for {} ..."
                   .format(self._env['nick']))
             os.remove(lf)
+
+    def cleanup_pidfile(self):
+        pidfile = self._env['pidfile']
+        if not self.isRunning() and os.path.exists(pidfile):
+            debug("Renaming stale pid file for {} ..."
+                  .format(self._env['nick']))
+            # Move the pidfile, so that we don't try to stop the process again
+            os.rename(pidfile, pidfile + ".old")
 
     def waitOnLaunch(self):
         """Check whether we can wait() for the tor process to launch"""
@@ -1908,6 +1921,9 @@ class TorEnviron(chutney.Templating.Environ):
     def _get_lockfile(self, my):
         return os.path.join(self['dir'], 'lock')
 
+    def _get_pidfile(self, my):
+        return os.path.join(self['dir'], 'pid')
+
     # A hs generates its key on first run,
     # so check for it at the last possible moment,
     # but cache it in memory to avoid repeatedly reading the file
@@ -2036,7 +2052,8 @@ class Network(object):
         # if this path exists, it must be a link
         if os.path.exists(nodeslink) and not os.path.islink(nodeslink):
             raise RuntimeError(
-                'get_absolute_nodes_path returned a path that exists and is not a link')
+                'get_absolute_nodes_path returned a path that exists and '
+                'is not a link')
 
         # create the new, uniquely named directory, and link it to nodes
         print("NOTE: creating %r, linking to %r" % (newnodesdir, nodeslink))
@@ -2327,7 +2344,43 @@ class Network(object):
                                     msg="Bootstrap failed")
         return False
 
+    # Keep in sync with ShutdownWaitLength in common.i
+    SHUTDOWN_WAIT_LENGTH = 2
+    # Wait for at least two event loops to elapse
+    EVENT_LOOP_SLOP = 3
+    # Wait for this long after signalling tor
+    STOP_WAIT_TIME = SHUTDOWN_WAIT_LENGTH + EVENT_LOOP_SLOP
+
+    def final_cleanup(self,
+                      wrote_dot,
+                      any_tor_was_running,
+                      cleanup_runfiles):
+        '''Perform final cleanup actions, based on the arguments:
+             - wrote_dot: end a series of logged dots with a newline
+             - any_tor_was_running: wait for STOP_WAIT_TIME for tor to stop
+             - cleanup_runfiles: delete old lockfiles from crashed tors
+                                 rename old pid files from stopped tors
+        '''
+        # make the output clearer by adding a newline
+        if wrote_dot:
+            sys.stdout.write("\n")
+            sys.stdout.flush()
+
+        # wait for tor to actually exit
+        if any_tor_was_running:
+            print("Waiting for nodes to cleanup and exit.")
+            time.sleep(Network.STOP_WAIT_TIME)
+
+        # check for stale lock files when Tor crashes
+        # move aside old pid files after Tor stops running
+        if cleanup_runfiles:
+            controllers = [n.getController() for n in self._nodes]
+            for c in controllers:
+                c.cleanup_lockfile()
+                c.cleanup_pidfile()
+
     def stop(self):
+        any_tor_was_running = False
         controllers = [n.getController() for n in self._nodes]
         for sig, desc in [(signal.SIGINT, "SIGINT"),
                           (signal.SIGINT, "another SIGINT"),
@@ -2335,30 +2388,30 @@ class Network(object):
             print("Sending %s to nodes" % desc)
             for c in controllers:
                 if c.isRunning():
+                    any_tor_was_running = True
                     c.stop(sig=sig)
             print("Waiting for nodes to finish.")
             wrote_dot = False
             for n in range(15):
                 time.sleep(1)
                 if all(not c.isRunning() for c in controllers):
-                    # make the output clearer by adding a newline
-                    if wrote_dot:
-                        sys.stdout.write("\n")
-                        sys.stdout.flush()
-                    # check for stale lock file when Tor crashes
-                    for c in controllers:
-                        c.cleanup_lockfile()
+                    self.final_cleanup(wrote_dot,
+                                       any_tor_was_running,
+                                       True)
                     return
                 sys.stdout.write(".")
                 wrote_dot = True
                 sys.stdout.flush()
             for c in controllers:
                 c.check(listNonRunning=False)
-            # make the output clearer by adding a newline
-            if wrote_dot:
-                sys.stdout.write("\n")
-                sys.stdout.flush()
-
+            # cleanup chutney's logging, but don't wait or cleanup files
+            self.final_cleanup(wrote_dot,
+                               False,
+                               False)
+        # wait for tor to exit, but don't cleanup logging
+        self.final_cleanup(False,
+                           any_tor_was_running,
+                           True)
 
 def Require(feature):
     network = _THE_NETWORK
