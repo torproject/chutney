@@ -67,7 +67,7 @@ def getenv_type(env_var, default, type_, type_name=None):
             type_name = str(type_)
         raise ValueError(("Invalid value for environment variable '{}': "
                           "expected {}, but got '{}'")
-                         .format(env_var, typename, strval))
+                         .format(env_var, type_name, strval))
 
 def getenv_int(env_var, default):
     """
@@ -389,7 +389,7 @@ def get_tor_modules(tor):
         ]
     try:
         mods = run_tor(cmdline)
-    except subprocess.CalledProcessError as e:
+    except subprocess.CalledProcessError:
         # Tor doesn't support --list-modules; act as if it said nothing.
         mods = ""
 
@@ -761,8 +761,8 @@ class LocalNodeBuilder(NodeBuilder):
         stdouterr = run_tor(cmdline)
         fingerprint = "".join((stdouterr.rstrip().split('\n')[-1]).split()[1:])
         if not re.match(r'^[A-F0-9]{40}$', fingerprint):
-            print("Error when getting fingerprint using '%r'. It output '%r'."
-                  .format(" ".join(cmdline), stdouterr))
+            print("Error when getting fingerprint using '{0}'. It output '{1}'."
+                  .format(repr(" ".join(cmdline)), repr(stdouterr)))
             sys.exit(1)
         self._env['fingerprint'] = fingerprint
 
@@ -1757,7 +1757,7 @@ class LocalNodeController(NodeController):
         node_status = self.getNodeDirInfoStatus()
         if node_status:
             status_code, _, _, _ = node_status
-            return status_code == LocalDirectoryController.SUCCESS_CODE
+            return status_code == LocalNodeController.SUCCESS_CODE
         else:
             # Clients don't publish descriptors, so they are always ok.
             # (But we shouldn't print a descriptor status for them.)
@@ -2020,7 +2020,7 @@ class Network(object):
     def _addRequirement(self, requirement):
         requirement = requirement.upper()
         if requirement not in KNOWN_REQUIREMENTS:
-            raise RuntimemeError(("Unrecognized requirement %r"%requirement))
+            raise RuntimeError(("Unrecognized requirement %r"%requirement))
         self._requirements.append(requirement)
 
     def move_aside_nodes_dir(self):
@@ -2403,7 +2403,7 @@ class Network(object):
                     c.stop(sig=sig)
             print("Waiting for nodes to finish.")
             wrote_dot = False
-            for n in range(15):
+            for _ in range(15):
                 time.sleep(1)
                 if all(not c.isRunning() for c in controllers):
                     self.final_cleanup(wrote_dot,

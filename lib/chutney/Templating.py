@@ -107,7 +107,7 @@ class _DictWrapper(object):
         self._parent = parent
 
     def _getitem(self, key, my):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def __getitem__(self, key):
         return self.lookup(key, self)
