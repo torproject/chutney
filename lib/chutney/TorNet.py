@@ -536,7 +536,6 @@ class NodeBuilder(_NodeCommon):
         """Called on each nodes after all nodes configure."""
         raise NotImplementedError()
 
-
     def isSupported(self, net):
         """Return true if this node appears to have everything it needs;
            false otherwise."""
