@@ -520,22 +520,27 @@ class NodeBuilder(_NodeCommon):
     def checkConfig(self, net):
         """Try to format our torrc; raise an exception if we can't.
         """
+        raise NotImplementedError()
 
     def preConfig(self, net):
         """Called on all nodes before any nodes configure: generates keys as
            needed.
         """
+        raise NotImplementedError()
 
     def config(self, net):
         """Called to configure a node: creates a torrc file for it."""
+        raise NotImplementedError()
 
     def postConfig(self, net):
         """Called on each nodes after all nodes configure."""
+        raise NotImplementedError()
 
 
     def isSupported(self, net):
         """Return true if this node appears to have everything it needs;
            false otherwise."""
+        raise NotImplementedError()
 
 
 class NodeController(_NodeCommon):
@@ -558,9 +563,11 @@ class NodeController(_NodeCommon):
     def start(self):
         """Try to start this node; return True if we succeeded or it was
            already running, False if we failed."""
+        raise NotImplementedError()
 
     def stop(self, sig=signal.SIGINT):
         """Try to stop this node by sending it the signal 'sig'."""
+        raise NotImplementedError()
 
 
 class LocalNodeBuilder(NodeBuilder):
