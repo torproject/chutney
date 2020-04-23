@@ -244,8 +244,7 @@ def run_tor(cmdline, exit_on_missing=True):
     try:
         stdouterr = subprocess.check_output(cmdline,
                                             stderr=subprocess.STDOUT,
-                                            universal_newlines=True,
-                                            bufsize=-1)
+                                            universal_newlines=True)
         debug(stdouterr)
     except OSError as e:
         # only catch file not found error
