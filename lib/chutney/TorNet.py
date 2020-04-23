@@ -427,6 +427,12 @@ class Node(object):
     # Users are expected to call these:
 
     def __init__(self, parent=None, **kwargs):
+        """Create a new Node. 
+
+           Initial fields in this Node's environment are set from 'kwargs'.
+
+           Any fields not found there will be searched for in 'parent'.
+        """
         self._parent = parent
         self._env = self._createEnviron(parent, kwargs)
         self._builder = None
@@ -436,6 +442,9 @@ class Node(object):
         return [Node(self) for _ in range(N)]
 
     def specialize(self, **kwargs):
+        """Return a new Node based on this node's value as its defaults,
+           but with the values from 'kwargs' (if any) overriding them.
+        """
         return Node(parent=self, **kwargs)
 
     def set_runtime(self, key, fn):
