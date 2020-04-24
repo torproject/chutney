@@ -433,6 +433,8 @@ class Node(object):
         self._controller = None
 
     def getN(self, N):
+        """Generate 'N' nodes of the same configuration as this node.
+        """
         return [Node(self) for _ in range(N)]
 
     def specialize(self, **kwargs):
@@ -1110,6 +1112,7 @@ class LocalNodeController(NodeController):
         os.kill(pid, sig)
 
     def cleanup_lockfile(self):
+        """Remove lock file if this node is no longer running."""
         lf = self._env['lockfile']
         if not self.isRunning() and os.path.exists(lf):
             debug("Removing stale lock file for {} ..."
@@ -1117,11 +1120,13 @@ class LocalNodeController(NodeController):
             os.remove(lf)
 
     def cleanup_pidfile(self):
+        """Move PID file to pidfile.old if this node is no longer running
+           so that we don't try to stop the node again.
+        """
         pidfile = self._env['pidfile']
         if not self.isRunning() and os.path.exists(pidfile):
             debug("Renaming stale pid file for {} ..."
                   .format(self._env['nick']))
-            # Move the pidfile, so that we don't try to stop the process again
             os.rename(pidfile, pidfile + ".old")
 
     def waitOnLaunch(self):
@@ -2137,6 +2142,9 @@ class Network(object):
             b.postConfig(network)
 
     def status(self):
+        """Print how many nodes are running and how many are expected, and
+           return True if all nodes are running.
+        """
         statuses = [n.getController().check(listNonRunning=True)
                     for n in self._nodes]
         n_ok = len([x for x in statuses if x])
@@ -2144,10 +2152,12 @@ class Network(object):
         return n_ok == len(self._nodes)
 
     def restart(self):
+        """Stop and subsequently start our network's nodes."""
         self.stop()
         self.start()
 
     def start(self):
+        """Start all our network's nodes and return True on no errors."""
         # format polling correctly - avoid printing a newline
         sys.stdout.write("Starting nodes")
         sys.stdout.flush()
@@ -2161,6 +2171,9 @@ class Network(object):
         return rv
 
     def hup(self):
+        """Send SIGHUP to all our network's running nodes and return True on no
+           errors.
+        """
         print("Sending SIGHUP to nodes")
         return all([n.getController().hup() for n in self._nodes])
 
@@ -2397,6 +2410,7 @@ class Network(object):
                 c.cleanup_pidfile()
 
     def stop(self):
+        """Stop our network's running tor nodes."""
         any_tor_was_running = False
         controllers = [n.getController() for n in self._nodes]
         for sig, desc in [(signal.SIGINT, "SIGINT"),
@@ -2501,6 +2515,7 @@ def runConfigFile(verb, data):
 
 
 def parseArgs():
+    """Parse and return commandline arguments."""
     if len(sys.argv) < 3:
         exit_on_error("Not enough arguments given.")
     if not os.path.isfile(sys.argv[2]):
