@@ -67,7 +67,7 @@ def getenv_type(env_var, default, type_, type_name=None):
             type_name = str(type_)
         raise ValueError(("Invalid value for environment variable '{}': "
                           "expected {}, but got '{}'")
-                         .format(env_var, typename, strval))
+                         .format(env_var, type_name, strval))
 
 def getenv_int(env_var, default):
     """
@@ -1757,7 +1757,7 @@ class LocalNodeController(NodeController):
         node_status = self.getNodeDirInfoStatus()
         if node_status:
             status_code, _, _, _ = node_status
-            return status_code == LocalDirectoryController.SUCCESS_CODE
+            return status_code == LocalNodeController.SUCCESS_CODE
         else:
             # Clients don't publish descriptors, so they are always ok.
             # (But we shouldn't print a descriptor status for them.)
@@ -2020,7 +2020,7 @@ class Network(object):
     def _addRequirement(self, requirement):
         requirement = requirement.upper()
         if requirement not in KNOWN_REQUIREMENTS:
-            raise RuntimemeError(("Unrecognized requirement %r"%requirement))
+            raise RuntimeError(("Unrecognized requirement %r"%requirement))
         self._requirements.append(requirement)
 
     def move_aside_nodes_dir(self):
