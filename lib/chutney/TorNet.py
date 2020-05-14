@@ -19,7 +19,6 @@ import os
 import platform
 import re
 import signal
-import shutil
 import subprocess
 import sys
 import time
@@ -389,7 +388,7 @@ def get_tor_modules(tor):
         ]
     try:
         mods = run_tor(cmdline)
-    except subprocess.CalledProcessError as e:
+    except subprocess.CalledProcessError:
         # Tor doesn't support --list-modules; act as if it said nothing.
         mods = ""
 

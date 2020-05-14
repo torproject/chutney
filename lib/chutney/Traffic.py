@@ -28,9 +28,7 @@ from __future__ import unicode_literals
 import sys
 import socket
 import struct
-import errno
 import time
-import os
 
 import asyncore
 import asynchat
