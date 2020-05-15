@@ -19,7 +19,6 @@ import os
 import platform
 import re
 import signal
-import shutil
 import subprocess
 import sys
 import time
