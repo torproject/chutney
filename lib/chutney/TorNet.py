@@ -908,7 +908,7 @@ class LocalNodeController(NodeController):
         """
         return self.getDirServer() and not self.getBridge()
 
-    def getOnionService(self):
+    def isOnionService(self):
         """Is this node an onion service?"""
         if self._env['tag'].startswith('h'):
             return 1
@@ -959,7 +959,7 @@ class LocalNodeController(NodeController):
 
            Based on whether this node is an onion service.
         """
-        if self.getOnionService():
+        if self.isOnionService():
             return LocalNodeController.HS_WAIT_FOR_UNCHECKED_DIR_INFO
         else:
             return LocalNodeController.NODE_WAIT_FOR_UNCHECKED_DIR_INFO
@@ -1221,9 +1221,9 @@ class LocalNodeController(NodeController):
         """Return true iff the logfile says that this instance is
            bootstrapped."""
         pct, _, _ = self.getLastBootstrapStatus()
-        if self.getOnionService():
         if pct != LocalNodeController.SUCCESS_CODE:
             return False
+        if self.isOnionService():
             pct, _, _ = self.getLastOnionServiceDescStatus()
             if pct != LocalNodeController.ONIONDESC_PUBLISHED_CODE:
                 return False
