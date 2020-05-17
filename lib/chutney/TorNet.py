@@ -2112,6 +2112,9 @@ class Network(object):
             sys.exit(1)
 
     def configure(self):
+        """Invoked from command line: Configure and prepare the network to be
+           started.
+        """
         phase = self._dfltEnv['CUR_CONFIG_PHASE']
         if phase == 1:
             self.create_new_nodes_dir()
@@ -2152,7 +2155,9 @@ class Network(object):
         return n_ok == len(self._nodes)
 
     def restart(self):
-        """Stop and subsequently start our network's nodes."""
+        """Invoked from command line: Stop and subsequently start our
+           network's nodes.
+        """
         self.stop()
         self.start()
 
@@ -2247,6 +2252,9 @@ class Network(object):
     CHECKS_PER_PRINT = PRINT_NETWORK_STATUS_DELAY / CHECK_NETWORK_STATUS_DELAY
 
     def wait_for_bootstrap(self):
+        """Invoked from tools/test-network.sh to wait for the network to
+           bootstrap.
+        """
         print("Waiting for nodes to bootstrap...\n")
         start = time.time()
         limit = start + getenv_int("CHUTNEY_START_TIME", 60)
