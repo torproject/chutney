@@ -1179,7 +1179,7 @@ class LocalNodeController(NodeController):
                     keyword = LocalNodeController.HSV2_KEYWORD
                     message = m_v2.groups()[0]
                     break
-                # else
+                # else check for HSv3
                 m_v3 = re.search(r'Service ([^\s]+ [^\s]+ descriptor of revision .*)',
                                  line)
                 if m_v3:
