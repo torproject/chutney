@@ -1221,6 +1221,13 @@ class LocalNodeController(NodeController):
         """
         return self.most_recent_bootstrap_status
 
+    def updateLastStatus(self):
+        """Update last messages this node has received, for use with
+           isBootstrapped and the getLast* functions.
+        """
+        self.updateLastOnionServiceDescStatus()
+        self.updateLastBootstrapStatus()
+
     def isBootstrapped(self):
         """Return true iff the logfile says that this instance is
            bootstrapped."""
@@ -2283,7 +2290,7 @@ class Network(object):
             most_recent_desc_status = dict()
             for c in controllers:
                 nick = c.getNick()
-                c.updateLastBootstrapStatus()
+                c.updateLastStatus()
 
                 if not c.isBootstrapped():
                     all_bootstrapped = False
