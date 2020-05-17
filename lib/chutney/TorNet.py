@@ -851,6 +851,7 @@ class LocalNodeController(NodeController):
     def __init__(self, env):
         NodeController.__init__(self, env)
         self._env = env
+        self.most_recent_bootstrap_status = None
 
     def getNick(self):
         """Return the nickname for this node."""
@@ -1189,10 +1190,9 @@ class LocalNodeController(NodeController):
                     break
         return (percent, keyword, message)
 
-    def getLastBootstrapStatus(self):
-        """Look through the logs and return the last bootstrap message
-           received as a 3-tuple of percentage complete, keyword
-           (optional), and message.
+    def updateLastBootstrapStatus(self):
+        """Look through the logs and cache the last bootstrap message
+           received.
         """
         logfname = self.getLogfile()
         if not os.path.exists(logfname):
@@ -1208,7 +1208,14 @@ class LocalNodeController(NodeController):
                 if m:
                     percent, keyword, message = m.groups()
                     percent = int(percent)
-        return (percent, keyword, message)
+        self.most_recent_bootstrap_status = (percent, keyword, message)
+
+    def getLastBootstrapStatus(self):
+        """Return the last bootstrap message fetched by
+           updateLastBootstrapStatus as a 3-tuple of percentage
+           complete, keyword (optional), and message.
+        """
+        return self.most_recent_bootstrap_status
 
     def isBootstrapped(self):
         """Return true iff the logfile says that this instance is
@@ -2185,7 +2192,6 @@ class Network(object):
 
     def print_bootstrap_status(self,
                                controllers,
-                               most_recent_bootstrap_status,
                                most_recent_desc_status,
                                elapsed=None,
                                msg="Bootstrap in progress"):
@@ -2198,13 +2204,13 @@ class Network(object):
             header = "{}{}".format(msg, elapsed_msg)
         print(header)
         print("Node status:")
-        for c, boot_status in zip(controllers, most_recent_bootstrap_status):
+        for c in controllers:
             c.check(listRunning=False, listNonRunning=True)
             nick = c.getNick()
             nick_set.add(nick)
             if c.getConsensusAuthority():
                 cons_auth_nick_set.add(nick)
-            pct, kwd, bmsg = boot_status
+            pct, kwd, bmsg = c.getLastBootstrapStatus()
             # Support older tor versions without bootstrap keywords
             if not kwd:
                 kwd = "None"
@@ -2268,14 +2274,12 @@ class Network(object):
 
         while True:
             all_bootstrapped = True
-            most_recent_bootstrap_status = [ ]
             most_recent_desc_status = dict()
             for c in controllers:
                 nick = c.getNick()
-                pct, kwd, bmsg = c.getLastBootstrapStatus()
-                most_recent_bootstrap_status.append((pct, kwd, bmsg))
+                c.updateLastBootstrapStatus()
 
-                if pct != LocalNodeController.SUCCESS_CODE:
+                if not c.isBootstrapped():
                     all_bootstrapped = False
 
                 desc_status = c.getNodeDirInfoStatus()
@@ -2294,7 +2298,6 @@ class Network(object):
                 print("Everything bootstrapped after {} sec"
                       .format(int(elapsed)))
                 self.print_bootstrap_status(controllers,
-                                            most_recent_bootstrap_status,
                                             most_recent_desc_status,
                                             elapsed=elapsed,
                                             msg="Bootstrap finished")
@@ -2332,7 +2335,6 @@ class Network(object):
             if now >= next_print_status:
                 if checks_since_last_print <= Network.CHECKS_PER_PRINT/2:
                     self.print_bootstrap_status(controllers,
-                                                most_recent_bootstrap_status,
                                                 most_recent_desc_status,
                                                 elapsed=elapsed,
                                                 msg="Internal timing error")
@@ -2345,7 +2347,6 @@ class Network(object):
                     return False
                 else:
                     self.print_bootstrap_status(controllers,
-                                                most_recent_bootstrap_status,
                                                 most_recent_desc_status,
                                                 elapsed=elapsed)
                     next_print_status = (now +
@@ -2359,7 +2360,6 @@ class Network(object):
             checks_since_last_print += 1
             if checks_since_last_print >= Network.CHECKS_PER_PRINT*2:
                 self.print_bootstrap_status(controllers,
-                                            most_recent_bootstrap_status,
                                             most_recent_desc_status,
                                             elapsed=elapsed,
                                             msg="Internal timing error")
@@ -2372,7 +2372,6 @@ class Network(object):
                 return False
 
         self.print_bootstrap_status(controllers,
-                                    most_recent_bootstrap_status,
                                     most_recent_desc_status,
                                     elapsed=elapsed,
                                     msg="Bootstrap failed")
