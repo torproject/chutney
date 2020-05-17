@@ -2266,8 +2266,6 @@ class Network(object):
 
         checks_since_last_print = 0
 
-        most_recent_bootstrap_status = [ None ] * len(controllers)
-        most_recent_desc_status = dict()
         while True:
             all_bootstrapped = True
             most_recent_bootstrap_status = [ ]
