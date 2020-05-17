@@ -1222,10 +1222,12 @@ class LocalNodeController(NodeController):
            bootstrapped."""
         pct, _, _ = self.getLastBootstrapStatus()
         if self.getOnionService():
-            return pct == LocalNodeController.SUCCESS_CODE
-        else:
+        if pct != LocalNodeController.SUCCESS_CODE:
+            return False
             pct, _, _ = self.getLastOnionServiceDescStatus()
-            return pct == LocalNodeController.ONIONDESC_PUBLISHED_CODE
+            if pct != LocalNodeController.ONIONDESC_PUBLISHED_CODE:
+                return False
+        return True
 
     # There are 7 v3 directory document types, but some networks only use 6,
     # because they don't have a bridge authority
