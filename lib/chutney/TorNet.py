@@ -986,6 +986,7 @@ class LocalNodeController(NodeController):
     # future version series (for example, 0.5, 1.0, and 22.0)
     MIN_TOR_VERSION_FOR_MICRODESC_FIX = 'Tor 0.4'
 
+    # TODO: delete all this unused code, once we're sure it's not needed
     MIN_TIME_FOR_COMPLETE_CONSENSUS = V3_AUTH_VOTING_INTERVAL*1.5
     MIN_START_TIME_LEGACY = 0
     MIN_START_TIME_RECENT = 0
@@ -1013,7 +1014,10 @@ class LocalNodeController(NodeController):
         else:
             return LocalNodeController.MIN_START_TIME_RECENT
 
-    NODE_WAIT_FOR_UNCHECKED_DIR_INFO = 0
+    # We don't check for bridge descriptors before verifying
+    # TODO: make this check specific to bridges
+    NODE_WAIT_FOR_UNCHECKED_DIR_INFO = 10
+    # We don't check for onion service descriptors before verifying
     HS_WAIT_FOR_UNCHECKED_DIR_INFO = V3_AUTH_VOTING_INTERVAL + 10
 
     def getUncheckedDirInfoWaitTime(self):
