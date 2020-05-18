@@ -1023,11 +1023,15 @@ class LocalNodeController(NodeController):
         else:
             return LocalNodeController.MIN_START_TIME_RECENT
 
-    # We don't check for bridge descriptors before verifying
-    # TODO: make this check specific to bridges
-    NODE_WAIT_FOR_UNCHECKED_DIR_INFO = 10
-    # We don't check for onion service descriptors before verifying
+    # The extra time after other descriptors have finished, and before
+    # verifying.
+    DEFAULT_WAIT_FOR_UNCHECKED_DIR_INFO = 0
+    # We don't check for onion service descriptors before verifying.
+    # See #33609 for details.
     HS_WAIT_FOR_UNCHECKED_DIR_INFO = V3_AUTH_VOTING_INTERVAL + 10
+    # We don't check for bridge descriptors before verifying.
+    # See #33581.
+    BRIDGE_WAIT_FOR_UNCHECKED_DIR_INFO = 10
 
     def getUncheckedDirInfoWaitTime(self):
         """Returns the amount of time to wait before verifying, after the
@@ -1037,8 +1041,10 @@ class LocalNodeController(NodeController):
         """
         if self.getOnionService():
             return LocalNodeController.HS_WAIT_FOR_UNCHECKED_DIR_INFO
+        elif self.getBridge():
+            return LocalNodeController.BRIDGE_WAIT_FOR_UNCHECKED_DIR_INFO
         else:
-            return LocalNodeController.NODE_WAIT_FOR_UNCHECKED_DIR_INFO
+            return LocalNodeController.DEFAULT_WAIT_FOR_UNCHECKED_DIR_INFO
 
     def getPid(self):
         """Read the pidfile, and return the pid of the running process.
