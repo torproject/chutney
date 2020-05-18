@@ -990,38 +990,43 @@ class LocalNodeController(NodeController):
         except KeyError:
             return 0
 
-    # Older tor versions are slow to download microdescs
-    # This version prefix compares less than all 0.4-series, and any
-    # future version series (for example, 0.5, 1.0, and 22.0)
-    MIN_TOR_VERSION_FOR_MICRODESC_FIX = 'Tor 0.4'
-
-    # TODO: delete all this unused code, once we're sure it's not needed
-    MIN_TIME_FOR_COMPLETE_CONSENSUS = V3_AUTH_VOTING_INTERVAL*1.5
-    MIN_START_TIME_LEGACY = 0
-    MIN_START_TIME_RECENT = 0
+    # By default, there is no minimum start time.
+    MIN_START_TIME_DEFAULT = 0
 
     def getMinStartTime(self):
         """Returns the minimum start time before verifying, regardless of
            whether the network has bootstrapped, or the dir info has been
            distributed.
 
-           Based on $CHUTNEY_EXTRA_START_TIME and the tor version.
+           The default can be overridden by the $CHUTNEY_MIN_START_TIME env
+           var.
         """
         # User overrode the dynamic time
         env_min_time = getenv_int('CHUTNEY_MIN_START_TIME', None)
         if env_min_time is not None:
             return env_min_time
+        return LocalNodeController.MIN_START_TIME_DEFAULT
 
+    # Older tor versions need extra time to bootstrap.
+    # (And we're not sure exactly why -  maybe we fixed some bugs in 0.4.0?)
+    #
+    # This version prefix compares less than all 0.4-series, and any
+    # future version series (for example, 0.5, 1.0, and 22.0)
+    MIN_TOR_VERSION_FOR_TIMING_FIX = 'Tor 0.4'
+
+    def isLegacyTorVersion(self):
+        """Is the current Tor version 0.3.5 or earlier?"""
         tor = self._env['tor']
         tor_version = get_tor_version(tor)
-        min_version = LocalNodeController.MIN_TOR_VERSION_FOR_MICRODESC_FIX
+        min_version = LocalNodeController.MIN_TOR_VERSION_FOR_TIMING_FIX
 
         # We could compare the version components, but this works for now
-        # If it's not our Tor, expect it to behave better
+        # (And if it's a custom Tor implementation, it shouldn't have this
+        # particular timing bug.)
         if tor_version.startswith('Tor ') and tor_version < min_version:
-            return LocalNodeController.MIN_START_TIME_LEGACY
+            return True
         else:
-            return LocalNodeController.MIN_START_TIME_RECENT
+            return False
 
     # The extra time after other descriptors have finished, and before
     # verifying.
@@ -1033,16 +1038,22 @@ class LocalNodeController(NodeController):
     # See #33581.
     BRIDGE_WAIT_FOR_UNCHECKED_DIR_INFO = 10
 
+    # Let everything propagate for another consensus period before verifying.
+    LEGACY_WAIT_FOR_UNCHECKED_DIR_INFO = V3_AUTH_VOTING_INTERVAL
+
     def getUncheckedDirInfoWaitTime(self):
         """Returns the amount of time to wait before verifying, after the
            network has bootstrapped, and the dir info has been distributed.
 
-           Based on whether this node is an onion service.
+           Based on whether this node has unchecked directory info, or other
+           known timing issues.
         """
         if self.getOnionService():
             return LocalNodeController.HS_WAIT_FOR_UNCHECKED_DIR_INFO
         elif self.getBridge():
             return LocalNodeController.BRIDGE_WAIT_FOR_UNCHECKED_DIR_INFO
+        elif self.isLegacyTorVersion():
+            return LocalNodeController.LEGACY_WAIT_FOR_UNCHECKED_DIR_INFO
         else:
             return LocalNodeController.DEFAULT_WAIT_FOR_UNCHECKED_DIR_INFO
 
@@ -2371,8 +2382,10 @@ class Network(object):
                                             elapsed=elapsed,
                                             msg="Bootstrap finished")
 
-                # Wait for unchecked dir info (see #33595)
-                print("Waiting {} seconds for other dir info to sync...\n"
+                # Wait for unchecked bridge or onion service dir info.
+                # (See #33581 and #33609.)
+                # Also used to work around a timing bug in Tor 0.3.5.
+                print("Waiting {} seconds for the network to be ready...\n"
                       .format(int(wait_time)))
                 time.sleep(wait_time)
                 now = time.time()
