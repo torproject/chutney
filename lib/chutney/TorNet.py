@@ -866,48 +866,53 @@ class LocalNodeBuilder(NodeBuilder):
 
 class LocalNodeController(NodeController):
 
-    def _setEd25519Id(self):
+    def __init__(self, env):
+        NodeController.__init__(self, env)
+        self._env = env
+
+    def _loadEd25519Id(self):
         """
-           Read the ed25519 identity key for this router, and set up the
-           'ed25519_id' entry in the Environ
+           Read the ed25519 identity key for this router, encode it using
+           base64, strip trailing padding, and return it.
+
+           If the file does not exist, returns None.
+
+           Raises a ValueError if the file appears to be corrupt.
         """
         datadir = self._env['dir']
         key_file = os.path.join(datadir, 'keys',
                                 "ed25519_master_id_public_key")
-        EXPECTED_ED25519_FILE_SIZE = 64
-        CURRENT_FILE_SIZE = os.stat(key_file).st_size
+        # If we're called early during bootstrap, the file won't have been
+        # created yet. (And some very old tor versions don't have ed25519.)
         if not os.path.exists(key_file):
-            print(("File {} does not exist. "
-                   "Are you running a very old tor version?").format(key_file))
-            return
-        elif CURRENT_FILE_SIZE != EXPECTED_ED25519_FILE_SIZE:
-            raise ValueError(("The current size of the file is {} bytes, "
-                              "which is not matching the expected value of "
-                              "{} bytes").format(CURRENT_FILE_SIZE,
-                                                 EXPECTED_ED25519_FILE_SIZE))
-        else:
-            with open(key_file, 'rb') as f:
-                ED25519_KEY_POSITION = 32
-                f.seek(ED25519_KEY_POSITION)
-                rest_file = f.read()
-                encoded_value = base64.b64encode(rest_file)
-                ed25519_id = encoded_value.decode('utf-8').replace('=', '')
-                EXPECTED_ED25519_BASE64_KEY_SIZE = 43
-                CURRENT_ED25519_BASE64_KEY_SIZE = len(ed25519_id)
-                if (CURRENT_ED25519_BASE64_KEY_SIZE !=
-                    EXPECTED_ED25519_BASE64_KEY_SIZE):
-                    raise ValueError(("The current length of the key is {}, "
-                                     "which is not matching the expected "
-                                     "length of {}")
-                                     .format(CURRENT_ED25519_BASE64_KEY_SIZE,
-                                             EXPECTED_ED25519_BASE64_KEY_SIZE))
-                else:
-                    self._env['ed25519_id'] = ed25519_id
+            debug(("File {} does not exist. Are you running a very old tor "
+                   "version?").format(key_file))
+            return None
 
-    def __init__(self, env):
-        NodeController.__init__(self, env)
-        self._env = env
-        self._setEd25519Id()
+        EXPECTED_ED25519_FILE_SIZE = 64
+        key_file_size = os.stat(key_file).st_size
+        if key_file_size != EXPECTED_ED25519_FILE_SIZE:
+            raise ValueError(
+                ("The current size of the file is {} bytes, which is not"
+                 "matching the expected value of {} bytes")
+                .format(key_file_size, EXPECTED_ED25519_FILE_SIZE))
+
+        with open(key_file, 'rb') as f:
+            ED25519_KEY_POSITION = 32
+            f.seek(ED25519_KEY_POSITION)
+            rest_file = f.read()
+            encoded_value = base64.b64encode(rest_file)
+            # tor strips trailing base64 padding
+            ed25519_id = encoded_value.decode('utf-8').replace('=', '')
+            EXPECTED_ED25519_BASE64_KEY_SIZE = 43
+            key_base64_size = len(ed25519_id)
+            if (key_base64_size != EXPECTED_ED25519_BASE64_KEY_SIZE):
+                raise ValueError(
+                    ("The current length of the key is {}, which is not "
+                     "matching the expected length of {}")
+                    .format(key_base64_size,
+                            EXPECTED_ED25519_BASE64_KEY_SIZE))
+            return ed25519_id
 
     def getNick(self):
         """Return the nickname for this node."""
@@ -921,11 +926,15 @@ class LocalNodeController(NodeController):
             return 0
 
     def getEd25519Id(self):
-        """Return the value of ed25519 key"""
+        """Return the base64-encoded ed25519 public key of this node."""
         try:
             return self._env['ed25519_id']
         except KeyError:
-            return None
+            ed25519_id = self._loadEd25519Id()
+            # cache a copy for later
+            if ed25519_id:
+                self._env['ed25519_id'] = ed25519_id
+            return ed25519_id
 
     def getBridgeClient(self):
         """Return the bridge client flag for this node."""
