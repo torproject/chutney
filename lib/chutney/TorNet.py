@@ -867,16 +867,24 @@ class LocalNodeBuilder(NodeBuilder):
 class LocalNodeController(NodeController):
 
     def _setEd25519Id(self):
-        """Read the ed25519 identity key for this router, and set up the 'ed25519-id' entry in the Environ"""
+        """
+           Read the ed25519 identity key for this router, and set up the
+           'ed25519_id' entry in the Environ
+        """
         datadir = self._env['dir']
-        key_file = os.path.join(datadir, 'keys', "ed25519_master_id_public_key")
+        key_file = os.path.join(datadir, 'keys',
+                                "ed25519_master_id_public_key")
         EXPECTED_ED25519_FILE_SIZE = 64
         CURRENT_FILE_SIZE = os.stat(key_file).st_size
         if not os.path.exists(key_file):
-            print("File {} does not exist. Are you running a very old tor version?".format(key_file))
+            print(("File {} does not exist. "
+                   "Are you running a very old tor version?").format(key_file))
             return
         elif CURRENT_FILE_SIZE != EXPECTED_ED25519_FILE_SIZE:
-            raise ValueError("The current size of the file is {} bytes, which is not matching the expected value of {} bytes".format(CURRENT_FILE_SIZE, EXPECTED_ED25519_FILE_SIZE))
+            raise ValueError(("The current size of the file is {} bytes, "
+                              "which is not matching the expected value of "
+                              "{} bytes").format(CURRENT_FILE_SIZE,
+                                                 EXPECTED_ED25519_FILE_SIZE))
         else:
             with open(key_file, 'rb') as f:
                 ED25519_KEY_POSITION = 32
@@ -884,18 +892,21 @@ class LocalNodeController(NodeController):
                 rest_file = f.read()
                 encoded_value = base64.b64encode(rest_file)
                 ed25519_id = encoded_value.decode('utf-8').replace('=', '')
-                print('abcd')
                 EXPECTED_ED25519_BASE64_KEY_SIZE = 43
                 CURRENT_ED25519_BASE64_KEY_SIZE = len(ed25519_id)
-                if CURRENT_ED25519_BASE64_KEY_SIZE != EXPECTED_ED25519_BASE64_KEY_SIZE:
-                    raise ValueError("The current length of the key is {}, which is not matching the expected length of {}".format(CURRENT_ED25519_BASE64_KEY_SIZE, EXPECTED_ED25519_BASE64_KEY_SIZE))
+                if (CURRENT_ED25519_BASE64_KEY_SIZE !=
+                    EXPECTED_ED25519_BASE64_KEY_SIZE):
+                    raise ValueError(("The current length of the key is {}, "
+                                     "which is not matching the expected "
+                                     "length of {}")
+                                     .format(CURRENT_ED25519_BASE64_KEY_SIZE,
+                                             EXPECTED_ED25519_BASE64_KEY_SIZE))
                 else:
                     self._env['ed25519_id'] = ed25519_id
 
     def __init__(self, env):
         NodeController.__init__(self, env)
         self._env = env
-        #print('abcd')
         self._setEd25519Id()
 
     def getNick(self):
@@ -912,7 +923,6 @@ class LocalNodeController(NodeController):
     def getEd25519Id(self):
         """Return the value of ed25519 key"""
         try:
-            #self._setEd25519Id()
             return self._env['ed25519_id']
         except KeyError:
             return None
@@ -1358,7 +1368,8 @@ class LocalNodeController(NodeController):
 
     def getNodeDirInfoStatusPattern(self, dir_format):
         """Returns a regular expression pattern for finding this node's entry
-           in a dir_format file. Returns None if the requested pattern is not available.
+           in a dir_format file. Returns None if the requested pattern is not
+           available.
         """
         nickname = self.getNick()
         ed25519_key = self.getEd25519Id()
@@ -1374,10 +1385,9 @@ class LocalNodeController(NodeController):
         assert cons or desc or md
 
         if cons:
-            # Disabled due to bug #33407: chutney bridge authorities don't publish
-            # bridge descriptors in the bridge networkstatus file
+            # Disabled due to bug #33407: chutney bridge authorities don't
+            # publish bridge descriptors in the bridge networkstatus file
             if dir_format == "br_status":
-                # Not yet implemented
                 return None
             else:
                 # ns_cons and md_cons work
@@ -1385,8 +1395,6 @@ class LocalNodeController(NodeController):
         elif desc:
             return r'^router ' + nickname + " "
         elif md:
-            print(nickname)
-            print(ed25519_key)
             if ed25519_key:
                 return r'^id ed25519 ' + re.escape(ed25519_key)
             else:
