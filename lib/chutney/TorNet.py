@@ -1161,6 +1161,9 @@ class LocalNodeController(NodeController):
     HSV3_KEYWORD = "hidden service v3"
 
     def updateLastOnionServiceDescStatus(self):
+        """Look through the logs and cache the last onion service
+           descriptor status received.
+        """
         logfname = self.getLogfile(info=True)
         if not os.path.exists(logfname):
             return (LocalNodeController.MISSING_FILE_CODE,
@@ -1188,9 +1191,9 @@ class LocalNodeController(NodeController):
         self.most_recent_oniondesc_status = (percent, keyword, message)
 
     def getLastOnionServiceDescStatus(self):
-        """Look through info-level logs for onion service descriptor uploads
-           and return a 3-tuple of percentage complete, the hidden service
-           version, and message.
+        """Return the last onion descriptor message fetched by
+           updateLastOnionServiceDescStatus as a 3-tuple of percentage
+           complete, the hidden service version, and message.
         """
         return self.most_recent_oniondesc_status
 
