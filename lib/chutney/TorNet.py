@@ -1194,6 +1194,9 @@ class LocalNodeController(NodeController):
         """Return the last onion descriptor message fetched by
            updateLastOnionServiceDescStatus as a 3-tuple of percentage
            complete, the hidden service version, and message.
+
+           The return status depends on the last time updateLastStatus()
+           was called; that function must be called before this one.
         """
         return self.most_recent_oniondesc_status
 
@@ -1221,6 +1224,9 @@ class LocalNodeController(NodeController):
         """Return the last bootstrap message fetched by
            updateLastBootstrapStatus as a 3-tuple of percentage
            complete, keyword (optional), and message.
+
+           The return status depends on the last time updateLastStatus()
+           was called; that function must be called before this one.
         """
         return self.most_recent_bootstrap_status
 
@@ -1233,7 +1239,11 @@ class LocalNodeController(NodeController):
 
     def isBootstrapped(self):
         """Return true iff the logfile says that this instance is
-           bootstrapped."""
+           bootstrapped.
+
+           The return status depends on the last time updateLastStatus()
+           was called; that function must be called before this one.
+        """
         pct, _, _ = self.getLastBootstrapStatus()
         if pct != LocalNodeController.SUCCESS_CODE:
             return False
