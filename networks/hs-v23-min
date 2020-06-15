@@ -15,7 +15,10 @@ HSv3 = Node(tag="h", hs=1, torrc="hs-v3.tmpl")
 # connections:
 # a minimum path length of 3, plus the client-nominated rendezvous point,
 # plus a seperate introduction point
-NODES = Authority.getN(2) + NonExitRelay.getN(3) + \
+#
+# (XXX We have temporarily added an extra authority to work around issue
+# 34447.)
+NODES = Authority.getN(3) + NonExitRelay.getN(3) + \
         Client.getN(1) + HSv2.getN(1) + HSv3.getN(1)
 
 ConfigureNodes(NODES)
