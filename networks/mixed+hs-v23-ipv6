@@ -51,7 +51,9 @@ OldHSv3IPv6 = Node(tag="hOLD", hs=1,
                  torrc="hs-v3-only-v6-md.tmpl",
                  tor=OLD_TOR)
 
-NODES = Authority6.getN(1)    + OldAuthority6.getN(1) + \
+# (XXX We have temporarily added an extra authority to work around issue
+# 34447.)
+NODES = Authority6.getN(2)    + OldAuthority6.getN(1) + \
         NonExitRelay.getN(1)  + OldNonExitRelay.getN(1) + \
         NonExitRelay6.getN(1) + OldNonExitRelay6.getN(1) + \
         Client6.getN(1)       + OldClient6.getN(1) + \

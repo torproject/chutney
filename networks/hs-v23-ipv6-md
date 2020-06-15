@@ -26,7 +26,10 @@ HSv3IPv6 = Node(tag="h", hs=1, torrc="hs-v3-only-v6-md.tmpl")
 # connections:
 # a minimum path length of 3, plus the client-nominated rendezvous point,
 # plus a seperate introduction point
-NODES = Authority6.getN(2) + \
+#
+# (XXX We have temporarily added an extra authority to work around issue
+# 34447.)
+NODES = Authority6.getN(3) + \
         NonExitRelay6.getN(3) + \
         Client.getN(1) + Client6.getN(1) + \
         HSv2IPv6.getN(1) + HSv3IPv6.getN(1)
