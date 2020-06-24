@@ -29,10 +29,19 @@ export CHUTNEY_DNS_CONF=${CHUTNEY_DNS_CONF:-/dev/null}
 # Linux, which is the only tor platform with a supported sandbox.
 #export CHUTNEY_TOR_SANDBOX=1
 
+# Set some default values if the variables are not already set
+: ${CHUTNEY_WARNINGS_ONLY:=false}
+: ${CHUTNEY_WARNINGS_SKIP:=false}
+: ${CHUTNEY_DIAGNOSTICS_ONLY:=false}
+: ${NETWORK_DRY_RUN:=false}
+: ${USE_COVERAGE_BINARY:=false}
+: ${CHUTNEY_DIAGNOSTICS:=false}
+: ${CHUTNEY_DATA_DIR:=}
+
 # what we say when we fail
 UPDATE_YOUR_CHUTNEY="Please update your chutney using 'git pull'."
 
-until [ -z "$1" ]
+until [ -z "${1:-}" ]
 do
     case "$1" in
         # the path to the chutney directory
@@ -237,8 +246,8 @@ fi
 #    $CHUTNEY_TOR and $CHUTNEY_TOR_GENCERT, or $PATH
 #
 # Find the Tor build dir using the src/tools dir
-if [ ! -d "$TOR_DIR" ]; then
-    if [ -d "$BUILDDIR/src/tools" ]; then
+if [ ! -d "${TOR_DIR:-}" ]; then
+    if [ -d "${BUILDDIR:-}/src/tools" ]; then
         # Choose the build directory
         # But only if it looks like one
         $ECHO "$myname: \$TOR_DIR not set, trying \$BUILDDIR"

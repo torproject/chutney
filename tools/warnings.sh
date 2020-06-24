@@ -28,6 +28,15 @@
 set -o errexit
 set -o nounset
 
+# Set some default values if the variables are not already set
+: ${CHUTNEY_WARNINGS_ONLY:=false}
+: ${CHUTNEY_WARNINGS_SKIP:=false}
+: ${CHUTNEY_DIAGNOSTICS_ONLY:=false}
+: ${NETWORK_DRY_RUN:=false}
+: ${USE_COVERAGE_BINARY:=false}
+: ${CHUTNEY_DIAGNOSTICS:=false}
+: ${CHUTNEY_DATA_DIR:=}
+
 if [ "$CHUTNEY_WARNINGS_SKIP" = true ]; then
     exit 0
 fi
