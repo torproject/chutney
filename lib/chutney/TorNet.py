@@ -1853,77 +1853,105 @@ class LocalNodeController(NodeController):
             # (But we shouldn't print a descriptor status for them.)
             return None
 
-# XXX: document these options
 DEFAULTS = {
+    # authority: whether a node is an authority or bridge authority
     'authority': False,
+    # bridgeauthority: whether a node is a bridge authority
     'bridgeauthority': False,
+    # hasbridgeauth: whether a node has a bridge authority
     'hasbridgeauth': False,
+    # relay: whether a node is a relay, exit, or bridge
     'relay': False,
+    # bridge: whether a node is a bridge
     'bridge': False,
+    # pt_bridge: whether a node is a potential bridge
     'pt_bridge': False,
+    # pt_transport, pt_extra: a potential bridge's transport and extra-info
+    # parameters, that will be used in the Bridge torrc option
     'pt_transport' : "",
     'pt_extra' : "",
+    # hs: whether a node has a hidden service
     'hs': False,
+    # hs_directory: directory (relative to datadir) to store hidden service info
     'hs_directory': 'hidden_service',
+    # hs-hostname: cached hidden service hostname value
     'hs-hostname': None,
+    # connlimit: value of ConnLimit torrc option
     'connlimit': 60,
+    # net_base_dir: path to the chutney net directory
     'net_base_dir': get_absolute_net_path(),
+    # tor: name or path of the tor binary
     'tor': os.environ.get('CHUTNEY_TOR', 'tor'),
+    # tor-gencert: name or path of the tor-gencert binary (if present)
     'tor-gencert': os.environ.get('CHUTNEY_TOR_GENCERT', None),
+    # auth_cert_lifetime: lifetime of authority certs, in months
     'auth_cert_lifetime': 12,
+    # ip: primary IP address (usually IPv4) to listen on
     'ip': os.environ.get('CHUTNEY_LISTEN_ADDRESS', '127.0.0.1'),
-    # we default to ipv6_addr None to support IPv4-only systems
+    # ipv6_addr: secondary IP address (usually IPv6) to listen on. we default to
+    # ipv6_addr=None to support IPv4-only systems
     'ipv6_addr': os.environ.get('CHUTNEY_LISTEN_ADDRESS_V6', None),
+    # dirserver_flags: used only if authority=True
     'dirserver_flags': 'no-v2',
+    # chutney_dir: directory of the chutney source code
     'chutney_dir': get_absolute_chutney_path(),
+    # torrc_fname: templated path for node's torrc
     'torrc_fname': '${dir}/torrc',
+
+    # orport_base, dirport_base, controlport_base, socksport_base,
+    # extorport_base, ptport_base: the initial port numbers used by nodenum 0.
+    # Each additional node adds 1 to the port numbers.
     'orport_base': 5000,
     'dirport_base': 7000,
     'controlport_base': 8000,
     'socksport_base': 9000,
     'extorport_base' : 9500,
     'ptport_base' : 9900,
+
+    # authorities: combination of AlternateDirAuthority and
+    # AlternateBridgeAuthority torrc lines. there is no default for this option
     'authorities': "AlternateDirAuthority bleargh bad torrc file!",
+    # bridges: potential Bridge torrc lines for this node. there is no default
+    # for this option
     'bridges': "Bridge bleargh bad torrc file!",
-    'core': True,
     # poll_launch_time: None means wait on launch (requires RunAsDaemon),
     # otherwise, poll after that many seconds (can be fractional/decimal)
     'poll_launch_time': None,
-    # Used when poll_launch_time is None, but RunAsDaemon is not set
-    # Set low so that we don't interfere with the voting interval
+    # poll_launch_time_default: Used when poll_launch_time is None, but
+    # RunAsDaemon is not set Set low so that we don't interfere with the
+    # voting interval
     'poll_launch_time_default': 0.1,
-    # the number of bytes of random data we send on each connection
+    # data_bytes: the number of bytes of random data we send on each connection
     'data_bytes': getenv_int('CHUTNEY_DATA_BYTES', 10 * 1024),
-    # the number of times each client will connect
+    # connection_count: the number of times each client will connect
     'connection_count': getenv_int('CHUTNEY_CONNECTIONS', 1),
-    # Do we want every client to connect to every HS, or one client
-    # to connect to each HS?
-    # (Clients choose an exit at random, so this doesn't apply to exits.)
+    # hs_multi_client: If 1, every client connects to every HS. If 0, one client
+    # connects to each HS. (Clients choose an exit at random, so this doesn't
+    # apply to exits.)
     'hs_multi_client': getenv_int('CHUTNEY_HS_MULTI_CLIENT', 0),
-    # How long should verify (and similar commands) wait for a successful
-    # outcome? (seconds)
-    # We check BOOTSTRAP_TIME for compatibility with old versions of
-    # test-network.sh
+    # bootstrap_time: How long in seconds we should verify (and similar
+    # commands) wait for a successful outcome. We check BOOTSTRAP_TIME for
+    # compatibility with old versions of test-network.sh
     'bootstrap_time': getenv_int('CHUTNEY_BOOTSTRAP_TIME',
                                  getenv_int('BOOTSTRAP_TIME',
                                             60)),
-    # the PID of the controlling script (for __OwningControllerProcess)
+    # controlling_pid: the PID of the controlling script
+    # (for __OwningControllerProcess)
     'controlling_pid': getenv_int('CHUTNEY_CONTROLLING_PID', 0),
-    # a DNS config file (for ServerDNSResolvConfFile)
+    # dns_conf: a DNS config file (for ServerDNSResolvConfFile)
     'dns_conf': (os.environ.get('CHUTNEY_DNS_CONF', '/etc/resolv.conf')
                         if 'CHUTNEY_DNS_CONF' in os.environ
                         else None),
 
-    # The phase at which this instance needs to be
-    # configured/launched, if we're doing multiphase
-    # configuration/launch.
+    # config_phase, launch_phase: The phase at which this instance needs to be
+    # configured/launched, if we're doing multiphase configuration/launch.
     'config_phase' : 1,
     'launch_phase' : 1,
 
     'CUR_CONFIG_PHASE': getenv_int('CHUTNEY_CONFIG_PHASE', 1),
     'CUR_LAUNCH_PHASE': getenv_int('CHUTNEY_LAUNCH_PHASE', 1),
 
-    # the Sandbox torrc option value
+    # sandbox: the Sandbox torrc option value
     # defaults to 1 on Linux, and 0 otherwise
     'sandbox': int(getenv_bool('CHUTNEY_TOR_SANDBOX',
                                platform.system() == 'Linux')),
