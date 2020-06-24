@@ -1380,9 +1380,13 @@ class LocalNodeController(NodeController):
         if not consensus_member and not bridge_member:
             return None
 
+        launch_phase = _THE_NETWORK._dfltEnv['launch_phase']
+
         # at this point, consensus_member == not bridge_member
         directory_files = dict()
         for node in _THE_NETWORK._nodes:
+            if node._env['launch_phase'] > launch_phase:
+                continue
             nick = node._env['nick']
             controller = node.getController()
             node_files = controller.getNodeCacheDirInfoPaths(consensus_member)
@@ -1950,6 +1954,7 @@ DEFAULTS = {
 
     'CUR_CONFIG_PHASE': getenv_int('CHUTNEY_CONFIG_PHASE', 1),
     'CUR_LAUNCH_PHASE': getenv_int('CHUTNEY_LAUNCH_PHASE', 1),
+    'CUR_BOOTSTRAP_PHASE': getenv_int('CHUTNEY_BOOTSTRAP_PHASE', 1),
 
     # sandbox: the Sandbox torrc option value
     # defaults to 1 on Linux, and 0 otherwise
@@ -2366,8 +2371,10 @@ class Network(object):
         start = time.time()
         limit = start + getenv_int("CHUTNEY_START_TIME", 60)
         next_print_status = start + Network.PRINT_NETWORK_STATUS_DELAY
+        bootstrap_upto = self._dfltEnv['CUR_LAUNCH_PHASE']
 
-        controllers = [n.getController() for n in self._nodes]
+        controllers = [n.getController() for n in self._nodes
+                       if n._env['launch_phase'] <= bootstrap_upto ]
         min_time_list = [c.getMinStartTime() for c in controllers]
         min_time = max(min_time_list)
         wait_time_list = [c.getUncheckedDirInfoWaitTime() for c in controllers]
