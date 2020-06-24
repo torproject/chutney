@@ -38,6 +38,7 @@ export CHUTNEY_DNS_CONF=${CHUTNEY_DNS_CONF:-/dev/null}
 : "${CHUTNEY_DIAGNOSTICS:=false}"
 : "${CHUTNEY_DATA_DIR:=}"
 : "${TOR_DIR:=}"
+: "${TOR_APP_DIR:=}"
 : "${CHUTNEY_TOR:=}"
 : "${CHUTNEY_TOR_GENCERT:=}"
 
