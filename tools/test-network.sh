@@ -285,7 +285,7 @@ if [ -d "$TOR_DIR" ]; then
         TOR_APP_DIR="$TOR_DIR/src/or"
     else
         $ECHO "$myname: \$TOR_DIR has no src/app or src/or, looking elsewhere"
-        unset TOR_DIR
+        TOR_DIR=""
     fi
 fi
 
