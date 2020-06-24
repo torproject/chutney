@@ -267,7 +267,7 @@ if [ ! -d "${TOR_DIR:-}" ]; then
         export TOR_DIR="$PWD/../tor"
     else
         $ECHO "$myname: no \$TOR_DIR, chutney will use \$CHUTNEY_TOR and \$CHUTNEY_TOR_GENCERT as tor binary paths, or search \$PATH for tor binary names"
-        unset TOR_DIR
+        export TOR_DIR=""
     fi
 fi
 
