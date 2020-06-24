@@ -2260,11 +2260,13 @@ class Network(object):
         """Print how many nodes are running and how many are expected, and
            return True if all nodes are running.
         """
+        cur_launch = self._dfltEnv['CUR_LAUNCH_PHASE']
         statuses = [n.getController().check(listNonRunning=True)
-                    for n in self._nodes]
+                    for n in self._nodes
+                    if n._env['launch_phase'] == cur_launch]
         n_ok = len([x for x in statuses if x])
         print("%d/%d nodes are running" % (n_ok, len(self._nodes)))
-        return n_ok == len(self._nodes)
+        return n_ok == len(statuses)
 
     def restart(self):
         """Invoked from command line: Stop and subsequently start our
@@ -2280,7 +2282,7 @@ class Network(object):
         sys.stdout.flush()
         rv = all([n.getController().start() for n in self._nodes
                   if n._env['launch_phase'] ==
-                     self._dfltEnv['CUR_LAUNCH_PHASE']])
+                  self._dfltEnv['CUR_LAUNCH_PHASE']])
         # now print a newline unconditionally - this stops poll()ing
         # output from being squashed together, at the cost of a blank
         # line in wait()ing output
