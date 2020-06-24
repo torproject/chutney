@@ -66,7 +66,7 @@ export LOG_FILE
 test -n "$LOG_FILE"
 
 # Choose an arbitrary port
-PYTHONPATH=$PYTHONPATH:lib $PYTHON lib/chutney/Traffic.py 9999 \
+PYTHONPATH="${PYTHONPATH:-}:lib" $PYTHON lib/chutney/Traffic.py 9999 \
     | tee "$LOG_FILE"
 
 # Traffic.py produces output with a single newline. But we don't want to get
