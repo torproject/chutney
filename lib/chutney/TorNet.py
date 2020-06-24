@@ -1885,7 +1885,6 @@ DEFAULTS = {
     'ptport_base' : 9900,
     'authorities': "AlternateDirAuthority bleargh bad torrc file!",
     'bridges': "Bridge bleargh bad torrc file!",
-    'core': True,
     # poll_launch_time: None means wait on launch (requires RunAsDaemon),
     # otherwise, poll after that many seconds (can be fractional/decimal)
     'poll_launch_time': None,
