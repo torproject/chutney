@@ -6,12 +6,12 @@ OldAuthority = Node(tag="aOLD", authority=1, relay=1, torrc="authority.tmpl",
 Relay = Node(tag="r", relay=1, exit=1, torrc="relay.tmpl")
 OldRelay = Node(tag="rOLD", relay=1, exit=1, torrc="relay.tmpl",
                     tor=OLD_TOR)
-Client = Node(tag="c", client=1, torrc="client.tmpl")
-OldClient = Node(tag="cOLD", client=1, torrc="client.tmpl", tor=OLD_TOR)
-HSv2 = Node(tag="h", hs=1, torrc="hs.tmpl")
-OldHSv2 = Node(tag="hOLD", hs=1, torrc="hs.tmpl", tor=OLD_TOR)
-HSv3 = Node(tag="h", hs=1, torrc="hs-v3.tmpl")
-OldHSv3 = Node(tag="hOLD", hs=1, torrc="hs-v3.tmpl", tor=OLD_TOR)
+Client = Node(tag="c", client=1, torrc="client.tmpl", launch_phase=2)
+OldClient = Node(tag="cOLD", client=1, torrc="client.tmpl", tor=OLD_TOR, launch_phase=2)
+HSv2 = Node(tag="h", hs=1, torrc="hs.tmpl", launch_phase=2)
+OldHSv2 = Node(tag="hOLD", hs=1, torrc="hs.tmpl", tor=OLD_TOR, launch_phase=2)
+HSv3 = Node(tag="h", hs=1, torrc="hs-v3.tmpl", launch_phase=2)
+OldHSv3 = Node(tag="hOLD", hs=1, torrc="hs-v3.tmpl", tor=OLD_TOR, launch_phase=2)
 
 NODES = Authority.getN(2) + OldAuthority.getN(2) + \
         Relay.getN(1) + OldRelay.getN(1) + \

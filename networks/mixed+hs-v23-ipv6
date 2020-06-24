@@ -34,22 +34,22 @@ OldNonExitRelay6 = Node(tag="rOLD", relay=1,
                         tor=OLD_TOR)
 
 Client6 = Node(tag="c", client=1,
-               torrc="client-only-v6-md.tmpl")
+               torrc="client-only-v6-md.tmpl", launch_phase=2)
 OldClient6 = Node(tag="cOLD", client=1,
                   torrc="client-only-v6-md.tmpl",
-                  tor=OLD_TOR)
+                  tor=OLD_TOR, launch_phase=2)
 
 HSv2IPv6 = Node(tag="h", hs=1,
-              torrc="hs-only-v6-md.tmpl")
+              torrc="hs-only-v6-md.tmpl", launch_phase=2)
 OldHSv2IPv6 = Node(tag="hOLD", hs=1,
                  torrc="hs-only-v6-md.tmpl",
-                 tor=OLD_TOR)
+                 tor=OLD_TOR, launch_phase=2)
 
 HSv3IPv6 = Node(tag="h", hs=1,
-              torrc="hs-v3-only-v6-md.tmpl")
+              torrc="hs-v3-only-v6-md.tmpl", launch_phase=2)
 OldHSv3IPv6 = Node(tag="hOLD", hs=1,
                  torrc="hs-v3-only-v6-md.tmpl",
-                 tor=OLD_TOR)
+                 tor=OLD_TOR, launch_phase=2)
 
 # (XXX We have temporarily added an extra authority to work around issue
 # 34447.)
