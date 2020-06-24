@@ -2561,6 +2561,16 @@ class Network(object):
                            any_tor_was_running,
                            True)
 
+    def print_phases(self):
+        """Print the total number of phases in which the network is
+           initialized, configured, or bootstrapped."""
+        def max_phase(key):
+            return max(int(n._env[key]) for n in self._nodes)
+        cfg_max = max_phase("config_phase")
+        launch_max = max_phase("launch_phase")
+        print("CHUTNEY_CONFIG_PHASES={}".format(cfg_max))
+        print("CHUTNEY_LAUNCH_PHASES={}".format(launch_max))
+
 def Require(feature):
     network = _THE_NETWORK
     network._addRequirement(feature)
