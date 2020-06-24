@@ -1,5 +1,8 @@
 #!/bin/sh
 
+set -o errexit
+set -o nounset
+
 export ECHO="${ECHO:-echo}"
 
 # Output is prefixed with the name of the script

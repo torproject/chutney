@@ -25,6 +25,9 @@
 #    CHUTNEY_WARNINGS_SKIP:
 #        set to "true" to skip all warnings
 
+set -o errexit
+set -o nounset
+
 if [ "$CHUTNEY_WARNINGS_SKIP" = true ]; then
     exit 0
 fi

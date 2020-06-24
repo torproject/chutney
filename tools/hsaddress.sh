@@ -7,6 +7,9 @@
 # Examples: tools/hsaddress.sh
 #           tools/hsaddress.sh 025h
 
+set -o errexit
+set -o nounset
+
 if [ ! -d "$CHUTNEY_PATH" ] || [ ! -x "$CHUTNEY_PATH/chutney" ]; then
     # looks like a broken path: use the path to this tool instead
     TOOLS_PATH=$(dirname "$0")

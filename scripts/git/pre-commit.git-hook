@@ -10,7 +10,8 @@ workdir=$(git rev-parse --show-toplevel)
 
 cd "$workdir" || exit 1
 
-set -e
+set -o errexit
+set -o nounset
 
 if [ -e tests/shellcheck-tests.sh ]; then
     tests/shellcheck-tests.sh

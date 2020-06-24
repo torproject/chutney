@@ -12,6 +12,9 @@
 #    network-flavour: one of the files in the networks directory,
 #                     (default: 'bridges+hs-v23')
 
+set -o errexit
+set -o nounset
+
 # Get a working chutney path
 if [ ! -d "$CHUTNEY_PATH" ] || [ ! -x "$CHUTNEY_PATH/chutney" ]; then
     # looks like a broken path: use the path to this tool instead

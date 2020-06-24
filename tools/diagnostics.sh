@@ -17,6 +17,9 @@
 #    tools/diagnostics.sh
 #    tools/diagnostics.sh 001a
 
+set -o errexit
+set -o nounset
+
 if [ ! -d "$CHUTNEY_PATH" ] || [ ! -x "$CHUTNEY_PATH/chutney" ]; then
     # looks like a broken path: use the path to this tool instead
     TOOLS_PATH=$(dirname "$0")

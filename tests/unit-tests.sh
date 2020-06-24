@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# Exit on errors
-set -e
+set -o errexit
+set -o nounset
 
 # Output is prefixed with the name of the script
 myname=$(basename "$0")
