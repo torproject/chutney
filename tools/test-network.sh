@@ -37,6 +37,9 @@ export CHUTNEY_DNS_CONF=${CHUTNEY_DNS_CONF:-/dev/null}
 : "${USE_COVERAGE_BINARY:=false}"
 : "${CHUTNEY_DIAGNOSTICS:=false}"
 : "${CHUTNEY_DATA_DIR:=}"
+: "${TOR_DIR:=}"
+: "${CHUTNEY_TOR:=}"
+: "${CHUTNEY_TOR_GENCERT:=}"
 
 # what we say when we fail
 UPDATE_YOUR_CHUTNEY="Please update your chutney using 'git pull'."
