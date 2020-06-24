@@ -91,3 +91,28 @@ if ! "$CHUTNEY" status "$CHUTNEY_NETWORK"; then
     sleep 6
     CHUTNEY_DEBUG=1 "$CHUTNEY" status "$CHUTNEY_NETWORK"
 fi
+
+
+# We allow up to CHUTNEY_START_TIME for each bootstrap phase to
+# complete.
+export CHUTNEY_START_TIME=${CHUTNEY_START_TIME:-120}
+
+if [ "$CHUTNEY_START_TIME" -ge 0 ]; then
+    $ECHO "Waiting up to $CHUTNEY_START_TIME seconds for all nodes to bootstrap..."
+    # We require the network to bootstrap, before we verify
+    if ! "$CHUTNEY" wait_for_bootstrap "$CHUTNEY_NETWORK"; then
+        "$DIAGNOSTICS"
+        CHUTNEY_WARNINGS_IGNORE_EXPECTED=false \
+            CHUTNEY_WARNINGS_SUMMARY=false \
+            "$WARNING_COMMAND"
+        "$WARNINGS"
+        $ECHO "chutney boostrap failed (in wait_for_bootstrap)"
+        exit 1
+    fi
+else
+    $ECHO "Chutney network launched and running. To stop the network, use:"
+    $ECHO "$CHUTNEY stop $CHUTNEY_NETWORK"
+    "$DIAGNOSTICS"
+    "$WARNINGS"
+    exit 0
+fi

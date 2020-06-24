@@ -16,39 +16,11 @@ if ! "$CHUTNEY_PATH/tools/bootstrap-network.sh" "$NETWORK_FLAVOUR"; then
     exit 1
 fi
 
-# chutney starts verifying after CHUTNEY_START_TIME seconds,
-# keeps on trying for CHUTNEY_BOOTSTRAP_TIME seconds,
-# and then stops after CHUTNEY_STOP_TIME seconds.
-# Even the fastest chutney networks take 5-10 seconds for their first consensus,
-# and then 10 seconds after that for relays to bootstrap and upload descriptors,
-# and then 10 seconds after that for clients and onion services to bootstrap.
-# But chutney defaults to running a bit more slowly, so it is more reliable,
-# and we allow a bit more time, in case the machine is heavily loaded.
-export CHUTNEY_START_TIME=${CHUTNEY_START_TIME:-120}
 export CHUTNEY_BOOTSTRAP_TIME=${CHUTNEY_BOOTSTRAP_TIME:-60}
 export CHUTNEY_STOP_TIME=${CHUTNEY_STOP_TIME:-0}
 
 CHUTNEY="$CHUTNEY_PATH/chutney"
 
-if [ "$CHUTNEY_START_TIME" -ge 0 ]; then
-    $ECHO "Waiting up to $CHUTNEY_START_TIME seconds for a consensus containing relays to be generated..."
-    # We require the network to bootstrap, before we verify
-    if ! "$CHUTNEY" wait_for_bootstrap "$CHUTNEY_NETWORK"; then
-        "$DIAGNOSTICS"
-        CHUTNEY_WARNINGS_IGNORE_EXPECTED=false \
-            CHUTNEY_WARNINGS_SUMMARY=false \
-            "$WARNING_COMMAND"
-        "$WARNINGS"
-        $ECHO "chutney boostrap failed (in wait_for_bootstrap)"
-        exit 1
-    fi
-else
-    $ECHO "Chutney network launched and running. To stop the network, use:"
-    $ECHO "$CHUTNEY stop $CHUTNEY_NETWORK"
-    "$DIAGNOSTICS"
-    "$WARNINGS"
-    exit 0
-fi
 
 if [ "$CHUTNEY_BOOTSTRAP_TIME" -ge 0 ]; then
     # Chutney will try to verify for $CHUTNEY_BOOTSTRAP_TIME seconds each round
