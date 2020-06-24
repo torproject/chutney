@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# Exit on errors
-set -e
+set -o errexit
+set -o nounset
 
 # SC1117 was disabled after 0.5, because it was too pedantic
 EXCLUSIONS="--exclude=SC1117"
