@@ -9,10 +9,10 @@ NonExitRelay6 = Node(tag="r", relay=1,
                      ipv6_addr=os.environ.get('CHUTNEY_LISTEN_ADDRESS_V6',
                                               '[::1]'),
                      torrc="relay-orport-v6-non-exit.tmpl")
-Client = Node(tag="c", client=1, torrc="client.tmpl")
-Client6 = Node(tag="c", client=1, torrc="client-only-v6-md.tmpl")
-SingleOnionv2IPv6 = Node(tag="h", hs=1, torrc="single-onion-only-v6-md.tmpl")
-SingleOnionv3IPv6 = Node(tag="h", hs=1, torrc="single-onion-v3-only-v6-md.tmpl")
+Client = Node(tag="c", client=1, torrc="client.tmpl", launch_phase=2)
+Client6 = Node(tag="c", client=1, torrc="client-only-v6-md.tmpl", launch_phase=2)
+SingleOnionv2IPv6 = Node(tag="h", hs=1, torrc="single-onion-only-v6-md.tmpl",launch_phase=2)
+SingleOnionv3IPv6 = Node(tag="h", hs=1, torrc="single-onion-v3-only-v6-md.tmpl", launch_phase=2)
 
 # Since only 25% of relays get the guard flag,
 # TestingDirAuthVoteGuard * may need to be used in small networks
