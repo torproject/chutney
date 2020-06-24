@@ -127,6 +127,10 @@ if [ -t 1 ]; then
     NC=$(tput sgr0)
     YELLOW=$(tput setaf 3)
     GREEN=$(tput setaf 2)
+else
+    NC=""
+    YELLOW=""
+    GREEN=""
 fi
 
 NAME=$(basename "$0")
