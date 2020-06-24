@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 #
 # To install this script, copy it to .git/hooks/pre-commit in local copy of
 # the chutney git repo, and make sure it has permission to execute.
