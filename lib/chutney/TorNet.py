@@ -2540,13 +2540,11 @@ def ConfigureNodes(nodelist):
             network._dfltEnv['hasbridgeauth'] = True
 
 def getTests():
-    tests = []
     chutney_path = get_absolute_chutney_path()
     chutney_tests_path = chutney_path / "scripts" / "chutney_tests"
-    for x in chutney_tests_path.glob("*.py"):
-        if not x.startswith("_"):
-            tests.append(x.with_suffix(""))
-    return tests
+
+    return [test.name for test in chutney_tests_path.glob("*.py")
+            if not test.name.startswith("_")]
 
 
 def usage(network):
