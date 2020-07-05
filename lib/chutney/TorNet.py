@@ -100,7 +100,7 @@ def getenv_bool(env_var, default):
         else:
             return getenv_type(env_var, default, bool, type_name='a bool')
 
-def mkdir_p(d, mode=448):
+def mkdir_p(*d, mode=448):
     """Create directory 'd' and all of its parents as needed.  Unlike
        os.makedirs, does not give an error if d already exists.
 
@@ -112,12 +112,7 @@ def mkdir_p(d, mode=448):
        permissions for the intermediate directories.  In python3, 'mode'
        only sets the mode for the last directory created.
     """
-    try:
-        os.makedirs(d, mode=mode)
-    except OSError as e:
-        if e.errno == errno.EEXIST:
-            return
-        raise
+    Path(*d).mkdir(mode=mode, parents=True, exist_ok=True)
 
 def make_datadir_subdirectory(datadir, subdir):
     """
@@ -125,7 +120,7 @@ def make_datadir_subdirectory(datadir, subdir):
        that datadirectory.  Ensure that both are mode 700.
     """
     mkdir_p(datadir)
-    mkdir_p(os.path.join(datadir, subdir))
+    mkdir_p(datadir, subdir)
 
 def get_absolute_chutney_path():
     """
