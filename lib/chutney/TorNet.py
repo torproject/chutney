@@ -12,6 +12,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from pathlib import Path
+
 import cgitb
 import errno
 import importlib
@@ -134,8 +136,8 @@ def get_absolute_chutney_path():
     # (./chutney already sets CHUTNEY_PATH using the path to the script)
     # use tools/test-network.sh if you want chutney to try really hard to find
     # itself
-    relative_chutney_path = os.environ.get('CHUTNEY_PATH', os.getcwd())
-    return os.path.abspath(relative_chutney_path)
+    relative_chutney_path = Path(os.environ.get('CHUTNEY_PATH', os.getcwd()))
+    return relative_chutney_path.resolve()
 
 def get_absolute_net_path():
     """
@@ -153,23 +155,23 @@ def get_absolute_net_path():
        Finally, return the path relative to the current working directory,
        regardless of whether the path actually exists.
     """
-    data_dir = os.environ.get('CHUTNEY_DATA_DIR', 'net')
-    if os.path.isabs(data_dir):
+    data_dir = Path(os.environ.get('CHUTNEY_DATA_DIR', 'net'))
+    if data_dir.is_absolute():
         # if we are given an absolute path, we should use it
         # regardless of whether the directory exists
         return data_dir
     # use the chutney path as the default
     absolute_chutney_path = get_absolute_chutney_path()
-    relative_net_path = data_dir
+    relative_net_path = Path(data_dir)
     # but what is it relative to?
     # let's check if there's an existing directory with this name in
     # CHUTNEY_PATH first, to preserve backwards-compatible behaviour
-    chutney_net_path = os.path.join(absolute_chutney_path, relative_net_path)
-    if os.path.isdir(chutney_net_path):
+    chutney_net_path = Path(absolute_chutney_path, relative_net_path)
+    if chutney_net_path.is_dir():
         return chutney_net_path
     # ok, it's relative to the current directory, whatever that is, and whether
     # or not the path actually exists
-    return os.path.abspath(relative_net_path)
+    return relative_net_path.resolve()
 
 def get_absolute_nodes_path():
     """
@@ -182,7 +184,7 @@ def get_absolute_nodes_path():
 
        See get_new_absolute_nodes_path() for more details.
     """
-    return os.path.join(get_absolute_net_path(), 'nodes')
+    return Path(get_absolute_net_path(), 'nodes')
 
 def get_new_absolute_nodes_path(now=time.time()):
     """
@@ -202,12 +204,12 @@ def get_new_absolute_nodes_path(now=time.time()):
     # should only be called by 'chutney configure', all other chutney commands
     # should use get_absolute_nodes_path()
     nodesdir = get_absolute_nodes_path()
-    newdir = newdirbase = "%s.%d" % (nodesdir, now)
+    newdir = newdirbase = Path("%s.%d" % (nodesdir, now))
     # if the time is the same, fall back to a simple integer count
     # (this is very unlikely to happen unless the clock changes: it's not
     # possible to run multiple chutney networks at the same time)
     i = 0
-    while os.path.exists(newdir):
+    while newdir.exists():
         i += 1
         newdir = "%s.%d" % (newdirbase, i)
     return newdir
@@ -735,12 +737,12 @@ class LocalNodeBuilder(NodeBuilder):
         datadir = self._env['dir']
         tor_gencert = self._env['tor_gencert']
         lifetime = self._env['auth_cert_lifetime']
-        idfile = os.path.join(datadir, 'keys', "authority_identity_key")
-        skfile = os.path.join(datadir, 'keys', "authority_signing_key")
-        certfile = os.path.join(datadir, 'keys', "authority_certificate")
+        idfile = Path(datadir, 'keys', "authority_identity_key")
+        skfile = Path(datadir, 'keys', "authority_signing_key")
+        certfile = Path(datadir, 'keys', "authority_certificate")
         addr = self.expand("${ip}:${dirport}")
         passphrase = self._env['auth_passphrase']
-        if all(os.path.exists(f) for f in [idfile, skfile, certfile]):
+        if all(f.exists() for f in [idfile, skfile, certfile]):
             return
         cmdline = [
             tor_gencert,
@@ -790,9 +792,9 @@ class LocalNodeBuilder(NodeBuilder):
             return ""
 
         datadir = self._env['dir']
-        certfile = os.path.join(datadir, 'keys', "authority_certificate")
+        certfile = Path(datadir, 'keys', "authority_certificate")
         v3id = None
-        with open(certfile, 'r') as f:
+        with certfile.open(mode='r') as f:
             for line in f:
                 if line.startswith("fingerprint"):
                     v3id = line.split()[1].strip()
@@ -880,24 +882,23 @@ class LocalNodeController(NodeController):
            Raises a ValueError if the file appears to be corrupt.
         """
         datadir = self._env['dir']
-        key_file = os.path.join(datadir, 'keys',
-                                "ed25519_master_id_public_key")
+        key_file = Path(datadir, 'keys', 'ed25519_master_id_public_key')
         # If we're called early during bootstrap, the file won't have been
         # created yet. (And some very old tor versions don't have ed25519.)
-        if not os.path.exists(key_file):
+        if not key_file.exists():
             debug(("File {} does not exist. Are you running a very old tor "
                    "version?").format(key_file))
             return None
 
         EXPECTED_ED25519_FILE_SIZE = 64
-        key_file_size = os.stat(key_file).st_size
+        key_file_size = key_file.stat().st_size
         if key_file_size != EXPECTED_ED25519_FILE_SIZE:
             raise ValueError(
                 ("The current size of the file is {} bytes, which is not"
                  "matching the expected value of {} bytes")
                 .format(key_file_size, EXPECTED_ED25519_FILE_SIZE))
 
-        with open(key_file, 'rb') as f:
+        with key_file.open(mode='rb') as f:
             ED25519_KEY_POSITION = 32
             f.seek(ED25519_KEY_POSITION)
             rest_file = f.read()
@@ -1061,11 +1062,11 @@ class LocalNodeController(NodeController):
         """Read the pidfile, and return the pid of the running process.
            Returns None if there is no pid in the file.
         """
-        pidfile = self._env['pidfile']
-        if not os.path.exists(pidfile):
+        pidfile = Path(self._env['pidfile'])
+        if not pidfile.exists():
             return None
 
-        with open(pidfile, 'r') as f:
+        with pidfile.open(mode='r') as f:
             try:
                 return int(f.read())
             except ValueError:
@@ -1113,7 +1114,7 @@ class LocalNodeController(NodeController):
                 print("{:12} is running with PID {:5}: {}"
                       .format(nick, pid, tor_version))
             return True
-        elif corefile and os.path.exists(os.path.join(datadir, corefile)):
+        elif corefile and Path(datadir, corefile).exists():
             if listNonRunning:
                 print("{:12} seems to have crashed, and left core file {}: {}"
                       .format(nick, corefile, tor_version))
@@ -1197,8 +1198,8 @@ class LocalNodeController(NodeController):
 
     def cleanup_lockfile(self):
         """Remove lock file if this node is no longer running."""
-        lf = self._env['lockfile']
-        if not self.isRunning() and os.path.exists(lf):
+        lf = Path(self._env['lockfile'])
+        if not self.isRunning() and lf.exists():
             debug("Removing stale lock file for {} ..."
                   .format(self._env['nick']))
             os.remove(lf)
@@ -1207,8 +1208,8 @@ class LocalNodeController(NodeController):
         """Move PID file to pidfile.old if this node is no longer running
            so that we don't try to stop the node again.
         """
-        pidfile = self._env['pidfile']
-        if not self.isRunning() and os.path.exists(pidfile):
+        pidfile = Path(self._env['pidfile'])
+        if not self.isRunning() and pidfile.exists():
             debug("Renaming stale pid file for {} ..."
                   .format(self._env['nick']))
             os.rename(pidfile, pidfile + ".old")
@@ -1249,7 +1250,7 @@ class LocalNodeController(NodeController):
             logname = "info.log"
         else:
             logname = "notice.log"
-        return os.path.join(datadir, logname)
+        return Path(datadir, logname)
 
     INTERNAL_ERROR_CODE = -500
     MISSING_FILE_CODE = -400
@@ -1265,13 +1266,13 @@ class LocalNodeController(NodeController):
            (optional), and message.
         """
         logfname = self.getLogfile()
-        if not os.path.exists(logfname):
+        if not logfname.exists():
             return (LocalNodeController.MISSING_FILE_CODE,
                     "no_logfile", "There is no logfile yet.")
         percent = LocalNodeController.NO_RECORDS_CODE
         keyword = "no_message"
         message = "No bootstrap messages yet."
-        with open(logfname, 'r') as f:
+        with logfname.open(mode='r') as f:
             for line in f:
                 m = re.search(r'Bootstrapped (\d+)%(?: \(([^\)]*)\))?: (.*)',
                               line)
@@ -1326,16 +1327,15 @@ class LocalNodeController(NodeController):
         datadir = self._env['dir']
         to_dir_server = self.getDirServer()
 
-        desc = os.path.join(datadir, "cached-descriptors")
-        desc_new = os.path.join(datadir, "cached-descriptors.new")
+        desc = Path(datadir, "cached-descriptors")
+        desc_new = Path(datadir, "cached-descriptors.new")
 
         paths = None
         if v2_dir_paths:
-            ns_cons = os.path.join(datadir, "cached-consensus")
-            md_cons = os.path.join(datadir,
-                                           "cached-microdesc-consensus")
-            md = os.path.join(datadir, "cached-microdescs")
-            md_new = os.path.join(datadir, "cached-microdescs.new")
+            ns_cons = Path(datadir, "cached-consensus")
+            md_cons = Path(datadir, "cached-microdesc-consensus")
+            md = Path(datadir, "cached-microdescs")
+            md_new = Path(datadir, "cached-microdescs.new")
 
             paths = { 'ns_cons': ns_cons,
                       'desc': desc,
@@ -1354,7 +1354,7 @@ class LocalNodeController(NodeController):
             # bootstrapping, and trying to publish their descriptors too early
             if to_bridge_auth:
                 paths = None
-            #   br_status = os.path.join(datadir, "networkstatus-bridges")
+            #   br_status = Path(datadir, "networkstatus-bridges")
             #   paths['br_status'] = br_status
         else:
             # We're looking for bridges, but other nodes don't use bridges
@@ -1440,14 +1440,15 @@ class LocalNodeController(NodeController):
              * a set containing dir_format; and
              * a status message string.
         """
-        if not os.path.exists(dir_path):
+        dir_path = Path(dir_path)
+        if not dir_path.exists():
             return (LocalNodeController.MISSING_FILE_CODE,
                     { dir_format }, "No dir file")
 
         dir_pattern = self.getNodeDirInfoStatusPattern(dir_format)
 
         line_count = 0
-        with open(dir_path, 'r') as f:
+        with dir_path.open(mode='r') as f:
             for line in f:
                 line_count = line_count + 1
                 if dir_pattern:
@@ -2002,10 +2003,9 @@ class TorEnviron(chutney.Templating.Environ):
         return my['ptport_base'] + my['nodenum']
 
     def _get_dir(self, my):
-        return os.path.abspath(os.path.join(my['net_base_dir'],
-                                            "nodes",
-                                            "%03d%s" % (
-                                                my['nodenum'], my['tag'])))
+        return Path(my['net_base_dir'],
+                    "nodes",
+                    "%03d%s" % (my['nodenum'], my['tag'])).resolve()
 
     def _get_nick(self, my):
         return "test%03d%s" % (my['nodenum'], my['tag'])
@@ -2017,13 +2017,13 @@ class TorEnviron(chutney.Templating.Environ):
         return self['nick']  # OMG TEH SECURE!
 
     def _get_torrc_template_path(self, my):
-        return [os.path.join(my['chutney_dir'], 'torrc_templates')]
+        return [Path(my['chutney_dir'], 'torrc_templates')]
 
     def _get_lockfile(self, my):
-        return os.path.join(self['dir'], 'lock')
+        return Path(self['dir'], 'lock')
 
     def _get_pidfile(self, my):
-        return os.path.join(self['dir'], 'pid')
+        return Path(self['dir'], 'pid')
 
     # A hs generates its key on first run,
     # so check for it at the last possible moment,
@@ -2034,8 +2034,7 @@ class TorEnviron(chutney.Templating.Environ):
         if my['hs-hostname'] is None:
             datadir = my['dir']
             # a file containing a single line with the hs' .onion address
-            hs_hostname_file = os.path.join(datadir, my['hs_directory'],
-                                            'hostname')
+            hs_hostname_file = Path(datadir, my['hs_directory'], 'hostname')
             try:
                 with open(hs_hostname_file, 'r') as hostnamefp:
                     hostname = hostnamefp.read()
@@ -2077,11 +2076,11 @@ class TorEnviron(chutney.Templating.Environ):
             dns_conf = TorEnviron.DEFAULT_DNS_RESOLV_CONF
         else:
             dns_conf = my['dns_conf']
-        dns_conf = os.path.abspath(dns_conf)
+        dns_conf = Path(dns_conf).resolve()
         # work around Tor bug #21900, where exits fail when the DNS conf
         # file does not exist, or is a broken symlink
-        # (os.path.exists returns False for broken symbolic links)
-        if not os.path.exists(dns_conf):
+        # (Path.exists returns False for broken symbolic links)
+        if not dns_conf.exists():
             # Issue a warning so the user notices
             print("CHUTNEY_DNS_CONF '{}' does not exist, using '{}'."
                   .format(dns_conf, TorEnviron.OFFLINE_DNS_RESOLV_CONF))
@@ -2121,17 +2120,17 @@ class Network(object):
         nodesdir = get_absolute_nodes_path()
 
         # only move the directory if it exists
-        if not os.path.exists(nodesdir):
+        if not nodesdir.exists():
             return
         # and if it's not a link
-        if os.path.islink(nodesdir):
+        if nodesdir.is_symlink():
             return
 
         # subtract 1 second to avoid collisions and get the correct ordering
         newdir = get_new_absolute_nodes_path(time.time() - 1)
 
         print("NOTE: renaming %r to %r" % (nodesdir, newdir))
-        os.rename(nodesdir, newdir)
+        nodesdir.rename(newdir)
 
     def create_new_nodes_dir(self):
         """Create a new directory with a unique name, and symlink it to nodes
@@ -2146,12 +2145,12 @@ class Network(object):
         nodeslink = get_absolute_nodes_path()
 
         # this path should be unique and should not exist
-        if os.path.exists(newnodesdir):
+        if newnodesdir.exists():
             raise RuntimeError(
                 'get_new_absolute_nodes_path returned a path that exists')
 
         # if this path exists, it must be a link
-        if os.path.exists(nodeslink) and not os.path.islink(nodeslink):
+        if nodeslink.exists() and not nodeslink.is_symlink():
             raise RuntimeError(
                 'get_absolute_nodes_path returned a path that exists and '
                 'is not a link')
@@ -2161,7 +2160,7 @@ class Network(object):
         # this gets created with mode 0700, that's probably ok
         mkdir_p(newnodesdir)
         try:
-            os.unlink(nodeslink)
+            nodeslink.unlink()
         except OSError as e:
             # it's ok if the link doesn't exist, we're just about to make it
             if e.errno == errno.ENOENT:
