@@ -2542,11 +2542,10 @@ def ConfigureNodes(nodelist):
 def getTests():
     tests = []
     chutney_path = get_absolute_chutney_path()
-    if len(chutney_path) > 0 and chutney_path[-1] != '/':
-        chutney_path += "/"
-    for x in os.listdir(chutney_path + "scripts/chutney_tests/"):
-        if not x.startswith("_") and os.path.splitext(x)[1] == ".py":
-            tests.append(os.path.splitext(x)[0])
+    chutney_tests_path = chutney_path / "scripts" / "chutney_tests"
+    for x in chutney_tests_path.glob("*.py"):
+        if not x.startswith("_"):
+            tests.append(x.with_suffix(""))
     return tests
 
 
