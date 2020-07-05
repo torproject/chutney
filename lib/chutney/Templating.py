@@ -81,6 +81,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from pathlib import Path
+
 import string
 import os
 
@@ -258,18 +260,18 @@ class IncluderDict(_DictWrapper):
         if not key.startswith("include:"):
             raise KeyError(key)
 
-        filename = key[len("include:"):]
-        if os.path.isabs(filename):
-            with open(filename, 'r') as f:
+        filename = Path(key[len("include:"):])
+        if filename.is_absolute():
+            with filename.open(mode='r') as f:
                 stat = os.fstat(f.fileno())
                 if stat.st_mtime > self._st_mtime:
                     self._st_mtime = stat.st_mtime
                 return f.read()
 
         for elt in self._includePath:
-            fullname = os.path.join(elt, filename)
-            if os.path.exists(fullname):
-                with open(fullname, 'r') as f:
+            fullname = Path(elt, filename)
+            if fullname.exists():
+                with fullname.open(mode='r') as f:
                     stat = os.fstat(f.fileno())
                     if stat.st_mtime > self._st_mtime:
                         self._st_mtime = stat.st_mtime
@@ -298,9 +300,9 @@ class PathDict(_DictWrapper):
         key = key[len("path:"):]
 
         for location in self._path:
-            p = os.path.join(location, key)
+            p = Path(location, key)
             try:
-                s = os.stat(p)
+                s = p.stat()
                 if s and s.st_mode & 0x111:
                     return p
             except OSError:
