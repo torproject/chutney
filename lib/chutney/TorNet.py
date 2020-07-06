@@ -743,9 +743,9 @@ class LocalNodeBuilder(NodeBuilder):
             tor_gencert,
             '--create-identity-key',
             '--passphrase-fd', '0',
-            '-i', idfile,
-            '-s', skfile,
-            '-c', certfile,
+            '-i', str(idfile),
+            '-s', str(skfile),
+            '-c', str(certfile),
             '-m', str(lifetime),
             '-a', addr,
             ]
