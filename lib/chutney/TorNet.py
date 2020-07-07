@@ -869,6 +869,8 @@ class LocalNodeController(NodeController):
     def __init__(self, env):
         NodeController.__init__(self, env)
         self._env = env
+        self.most_recent_oniondesc_status = None
+        self.most_recent_bootstrap_status = None
 
     def _loadEd25519Id(self):
         """
@@ -980,7 +982,7 @@ class LocalNodeController(NodeController):
         """
         return self.getDirServer() and not self.getBridge()
 
-    def getOnionService(self):
+    def isOnionService(self):
         """Is this node an onion service?"""
         if self._env['tag'].startswith('h'):
             return 1
@@ -1048,7 +1050,7 @@ class LocalNodeController(NodeController):
            Based on whether this node has unchecked directory info, or other
            known timing issues.
         """
-        if self.getOnionService():
+        if self.isOnionService():
             return LocalNodeController.HS_WAIT_FOR_UNCHECKED_DIR_INFO
         elif self.getBridge():
             return LocalNodeController.BRIDGE_WAIT_FOR_UNCHECKED_DIR_INFO
@@ -1258,11 +1260,53 @@ class LocalNodeController(NodeController):
     SHORT_FILE_CODE = -100
     NO_PROGRESS_CODE = 0
     SUCCESS_CODE = 100
+    ONIONDESC_PUBLISHED_CODE = 200
+    HSV2_KEYWORD = "hidden service v2"
+    HSV3_KEYWORD = "hidden service v3"
 
-    def getLastBootstrapStatus(self):
-        """Look through the logs and return the last bootstrap message
-           received as a 3-tuple of percentage complete, keyword
-           (optional), and message.
+    def updateLastOnionServiceDescStatus(self):
+        """Look through the logs and cache the last onion service
+           descriptor status received.
+        """
+        logfname = self.getLogfile(info=True)
+        if not os.path.exists(logfname):
+            return (LocalNodeController.MISSING_FILE_CODE,
+                    "no_logfile", "There is no logfile yet.")
+        percent = LocalNodeController.NO_RECORDS_CODE
+        keyword = "no_message"
+        message = "No onion service descriptor messages yet."
+        with open(logfname, 'r') as f:
+            for line in f:
+                m_v2 = re.search(r'Launching upload for hidden service (.*)',
+                                 line)
+                if m_v2:
+                    percent = LocalNodeController.ONIONDESC_PUBLISHED_CODE
+                    keyword = LocalNodeController.HSV2_KEYWORD
+                    message = m_v2.groups()[0]
+                    break
+                # else check for HSv3
+                m_v3 = re.search(r'Service ([^\s]+ [^\s]+ descriptor of revision .*)',
+                                 line)
+                if m_v3:
+                    percent = LocalNodeController.ONIONDESC_PUBLISHED_CODE
+                    keyword = LocalNodeController.HSV3_KEYWORD
+                    message = m_v3.groups()[0]
+                    break
+        self.most_recent_oniondesc_status = (percent, keyword, message)
+
+    def getLastOnionServiceDescStatus(self):
+        """Return the last onion descriptor message fetched by
+           updateLastOnionServiceDescStatus as a 3-tuple of percentage
+           complete, the hidden service version, and message.
+
+           The return status depends on the last time updateLastStatus()
+           was called; that function must be called before this one.
+        """
+        return self.most_recent_oniondesc_status
+
+    def updateLastBootstrapStatus(self):
+        """Look through the logs and cache the last bootstrap message
+           received.
         """
         logfname = self.getLogfile()
         if not os.path.exists(logfname):
@@ -1278,13 +1322,40 @@ class LocalNodeController(NodeController):
                 if m:
                     percent, keyword, message = m.groups()
                     percent = int(percent)
-        return (percent, keyword, message)
+        self.most_recent_bootstrap_status = (percent, keyword, message)
+
+    def getLastBootstrapStatus(self):
+        """Return the last bootstrap message fetched by
+           updateLastBootstrapStatus as a 3-tuple of percentage
+           complete, keyword (optional), and message.
+
+           The return status depends on the last time updateLastStatus()
+           was called; that function must be called before this one.
+        """
+        return self.most_recent_bootstrap_status
+
+    def updateLastStatus(self):
+        """Update last messages this node has received, for use with
+           isBootstrapped and the getLast* functions.
+        """
+        self.updateLastOnionServiceDescStatus()
+        self.updateLastBootstrapStatus()
 
     def isBootstrapped(self):
         """Return true iff the logfile says that this instance is
-           bootstrapped."""
+           bootstrapped.
+
+           The return status depends on the last time updateLastStatus()
+           was called; that function must be called before this one.
+        """
         pct, _, _ = self.getLastBootstrapStatus()
-        return pct == LocalNodeController.SUCCESS_CODE
+        if pct != LocalNodeController.SUCCESS_CODE:
+            return False
+        if self.isOnionService():
+            pct, _, _ = self.getLastOnionServiceDescStatus()
+            if pct != LocalNodeController.ONIONDESC_PUBLISHED_CODE:
+                return False
+        return True
 
     # There are 7 v3 directory document types, but some networks only use 6,
     # because they don't have a bridge authority
@@ -2298,7 +2369,6 @@ class Network(object):
 
     def print_bootstrap_status(self,
                                controllers,
-                               most_recent_bootstrap_status,
                                most_recent_desc_status,
                                elapsed=None,
                                msg="Bootstrap in progress"):
@@ -2311,13 +2381,13 @@ class Network(object):
             header = "{}{}".format(msg, elapsed_msg)
         print(header)
         print("Node status:")
-        for c, boot_status in zip(controllers, most_recent_bootstrap_status):
+        for c in controllers:
             c.check(listRunning=False, listNonRunning=True)
             nick = c.getNick()
             nick_set.add(nick)
             if c.getConsensusAuthority():
                 cons_auth_nick_set.add(nick)
-            pct, kwd, bmsg = boot_status
+            pct, kwd, bmsg = c.getLastBootstrapStatus()
             # Support older tor versions without bootstrap keywords
             if not kwd:
                 kwd = "None"
@@ -2384,18 +2454,14 @@ class Network(object):
 
         checks_since_last_print = 0
 
-        most_recent_bootstrap_status = [ None ] * len(controllers)
-        most_recent_desc_status = dict()
         while True:
             all_bootstrapped = True
-            most_recent_bootstrap_status = [ ]
             most_recent_desc_status = dict()
             for c in controllers:
                 nick = c.getNick()
-                pct, kwd, bmsg = c.getLastBootstrapStatus()
-                most_recent_bootstrap_status.append((pct, kwd, bmsg))
+                c.updateLastStatus()
 
-                if pct != LocalNodeController.SUCCESS_CODE:
+                if not c.isBootstrapped():
                     all_bootstrapped = False
 
                 desc_status = c.getNodeDirInfoStatus()
@@ -2414,7 +2480,6 @@ class Network(object):
                 print("Everything bootstrapped after {} sec"
                       .format(int(elapsed)))
                 self.print_bootstrap_status(controllers,
-                                            most_recent_bootstrap_status,
                                             most_recent_desc_status,
                                             elapsed=elapsed,
                                             msg="Bootstrap finished")
@@ -2454,7 +2519,6 @@ class Network(object):
             if now >= next_print_status:
                 if checks_since_last_print <= Network.CHECKS_PER_PRINT/2:
                     self.print_bootstrap_status(controllers,
-                                                most_recent_bootstrap_status,
                                                 most_recent_desc_status,
                                                 elapsed=elapsed,
                                                 msg="Internal timing error")
@@ -2467,7 +2531,6 @@ class Network(object):
                     return False
                 else:
                     self.print_bootstrap_status(controllers,
-                                                most_recent_bootstrap_status,
                                                 most_recent_desc_status,
                                                 elapsed=elapsed)
                     next_print_status = (now +
@@ -2481,7 +2544,6 @@ class Network(object):
             checks_since_last_print += 1
             if checks_since_last_print >= Network.CHECKS_PER_PRINT*2:
                 self.print_bootstrap_status(controllers,
-                                            most_recent_bootstrap_status,
                                             most_recent_desc_status,
                                             elapsed=elapsed,
                                             msg="Internal timing error")
@@ -2494,7 +2556,6 @@ class Network(object):
                 return False
 
         self.print_bootstrap_status(controllers,
-                                    most_recent_bootstrap_status,
                                     most_recent_desc_status,
                                     elapsed=elapsed,
                                     msg="Bootstrap failed")
