@@ -60,19 +60,19 @@ matrix:
     ##
     ## IPv6 networks (on macOS)
     ## "make test-network-all" on all supported tor versions
-    - env: TOR="stable-release" NETWORK_FLAVOUR="bridges+ipv6-min"
+    - env: PYTHON="python3" TOR="stable-release" NETWORK_FLAVOUR="bridges+ipv6-min"
       os: osx
       language: c
       python:
     ## The IPv6 exit test doesn't actually require IPv6, see #30182.
     ## But we'll keep this test, because it does test IPv6 exit config.
     - env: TOR="master-nightly" NETWORK_FLAVOUR="ipv6-exit-min"
-    - env: TOR="stable-release" NETWORK_FLAVOUR="hs-v23-ipv6-md"
+    - env: PYTHON="python3" TOR="stable-release" NETWORK_FLAVOUR="hs-v23-ipv6-md"
       os: osx
       language: c
       python:
     ## v3 onion service IPv6 tests
-    - env: TOR="stable-release" NETWORK_FLAVOUR="single-onion-v23-ipv6-md"
+    - env: PYTHON="python3" TOR="stable-release" NETWORK_FLAVOUR="single-onion-v23-ipv6-md"
       os: osx
       language: c
       python:
