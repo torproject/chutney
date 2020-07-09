@@ -12,7 +12,15 @@ then
     export CHUTNEY_PATH
 fi
 
-binaries="python3 python python2"
+python_ok ()
+{
+    checkpy="$1"
+    test -f "${checkpy}" && \
+	test -x "${checkpy}" && \
+	"${checkpy}" -c 'import sys;sys.exit(sys.version_info[0]<3)'
+}
+
+binaries="python3 python"
 
 if ! test "${PYTHON+y}"
 then
@@ -31,7 +39,7 @@ then
                     ;;
             esac
             abs_path="${directory}${binary}"
-            if test -f "${abs_path}" && test -x "${abs_path}"
+            if python_ok "${abs_path}"
             then
                 PYTHON="${abs_path}"
                 break
@@ -44,12 +52,18 @@ then
         fi
     done
     IFS="${saved_IFS}"
+else
+    if ! python_ok "${PYTHON}"
+    then
+	echo "Python in \$PYTHON envvar (\"$PYTHON\") is not present, or is not python 3." >&2
+	exit 1
+    fi
 fi
 
 if ! test "${PYTHON+y}"
 then
     printf "No compatible Python version found.\n" >&2
-    printf "Is Python installed and in your PATH?\n" >&2
+    printf "Is python 3 installed and in your PATH?\n" >&2
     exit 1
 fi
 
