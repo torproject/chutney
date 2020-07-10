@@ -53,7 +53,7 @@ then
     done
     IFS="${saved_IFS}"
 else
-    if ! python_ok "${PYTHON}"
+    if ! python_ok "$(command -v "${PYTHON}")"
     then
 	echo "Python in \$PYTHON envvar (\"$PYTHON\") is not present, or is not python 3." >&2
 	exit 1
