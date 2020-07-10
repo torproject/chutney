@@ -167,22 +167,6 @@ matrix:
     ## Tor master doesn't work on Travis Xenial, because it only has
     ## OpenSSL 1.1.0
 
-    ## Pypy 2
-    ## End of Life: "forever"
-    ## http://doc.pypy.org/en/latest/faq.html#how-long-will-pypy-support-python2
-    ## But chutney can decide not to support python 2 after 1 Jan 2020.
-    - python: "pypy"
-      dist: xenial
-      addons:
-        apt:
-          sources:
-            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-0.4.2.x-xenial main'
-              key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
-          packages:
-            - shellcheck
-            - tor
-      env: TOR="0.4.2-nightly" NETWORK_FLAVOUR="basic-min"
-
     ## PyPy does not have documented end of life dates
     - python: "pypy3"
       dist: xenial
