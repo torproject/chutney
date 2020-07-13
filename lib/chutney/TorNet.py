@@ -2162,7 +2162,7 @@ class Network(object):
                 pass
             else:
                 raise
-        os.symlink(newnodesdir, nodeslink)
+        newnodesdir.symlink_to(nodeslink)
 
     def _checkConfig(self):
         for n in self._nodes:
