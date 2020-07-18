@@ -2,7 +2,7 @@ language: python
 
 # The default python version on Travis is 2.7
 # But we add this line to show the python version in the Travis UI
-python: "2.7"
+python: "3.8"
 
 os:
   - linux
@@ -30,7 +30,7 @@ env:
     - TOR="master-nightly" NETWORK_FLAVOUR="basic-min"
 
 matrix:
-  # include creates Linux, python 2.7, tor master builds by default
+  # include creates Linux, python 3.8, tor master builds by default
   # we use tor master to catch tor issues before stable releases
   # the key(s) in each item override these defaults
   include:
@@ -39,9 +39,6 @@ matrix:
     ##
     ## We need to use macOS to test IPv6 networks, because Travis Linux doesn't
     ## support IPv6. But macOS is tricky:
-    ##   - We use the default python version on macOS, which is currently 2.7.
-    ##     (But we don't show the version, because Travis might change it
-    ##     without us noticing.)
     ##   - We use language: c, because language: python fails on Travis macOS.
     ##   - We get the tor version in the homebrew cache on the macOS image.
     ##     The latest tor version in homebrew is on this page:
@@ -63,19 +60,19 @@ matrix:
     ##
     ## IPv6 networks (on macOS)
     ## "make test-network-all" on all supported tor versions
-    - env: TOR="stable-release" NETWORK_FLAVOUR="bridges+ipv6-min"
+    - env: PYTHON="python3" TOR="stable-release" NETWORK_FLAVOUR="bridges+ipv6-min"
       os: osx
       language: c
       python:
     ## The IPv6 exit test doesn't actually require IPv6, see #30182.
     ## But we'll keep this test, because it does test IPv6 exit config.
     - env: TOR="master-nightly" NETWORK_FLAVOUR="ipv6-exit-min"
-    - env: TOR="stable-release" NETWORK_FLAVOUR="hs-v23-ipv6-md"
+    - env: PYTHON="python3" TOR="stable-release" NETWORK_FLAVOUR="hs-v23-ipv6-md"
       os: osx
       language: c
       python:
     ## v3 onion service IPv6 tests
-    - env: TOR="stable-release" NETWORK_FLAVOUR="single-onion-v23-ipv6-md"
+    - env: PYTHON="python3" TOR="stable-release" NETWORK_FLAVOUR="single-onion-v23-ipv6-md"
       os: osx
       language: c
       python:
@@ -140,10 +137,6 @@ matrix:
     ## Pre-installed in Travis Bionic:
     ## https://docs.travis-ci.com/user/reference/bionic/#python-support
 
-    ## End of Life: 1 January 2020
-    ## https://www.python.org/dev/peps/pep-0373/#update
-    - python: "2.7"
-
     ## End of Life: December 2021
     ## https://www.python.org/dev/peps/pep-0494/#lifespan
     - python: "3.6"
@@ -173,22 +166,6 @@ matrix:
     ## PyPy isn't packaged for Travis Bionic yet
     ## Tor master doesn't work on Travis Xenial, because it only has
     ## OpenSSL 1.1.0
-
-    ## Pypy 2
-    ## End of Life: "forever"
-    ## http://doc.pypy.org/en/latest/faq.html#how-long-will-pypy-support-python2
-    ## But chutney can decide not to support python 2 after 1 Jan 2020.
-    - python: "pypy"
-      dist: xenial
-      addons:
-        apt:
-          sources:
-            - sourceline: 'deb https://deb.torproject.org/torproject.org tor-nightly-0.4.2.x-xenial main'
-              key_url: 'https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc'
-          packages:
-            - shellcheck
-            - tor
-      env: TOR="0.4.2-nightly" NETWORK_FLAVOUR="basic-min"
 
     ## PyPy does not have documented end of life dates
     - python: "pypy3"
