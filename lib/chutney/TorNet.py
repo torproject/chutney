@@ -2651,7 +2651,7 @@ def getTests():
     chutney_path = get_absolute_chutney_path()
     chutney_tests_path = chutney_path / "scripts" / "chutney_tests"
 
-    return [test.name for test in chutney_tests_path.glob("*.py")
+    return [test.stem for test in chutney_tests_path.glob("*.py")
             if not test.name.startswith("_")]
 
 
