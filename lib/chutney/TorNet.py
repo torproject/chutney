@@ -1209,7 +1209,7 @@ class LocalNodeController(NodeController):
         if not self.isRunning() and pidfile.exists():
             debug("Renaming stale pid file for {} ..."
                   .format(self._env['nick']))
-            os.rename(pidfile, pidfile + ".old")
+            pidfile.rename(pidfile.with_suffix(".old"))
 
     def waitOnLaunch(self):
         """Check whether we can wait() for the tor process to launch"""
