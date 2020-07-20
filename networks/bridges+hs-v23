@@ -6,9 +6,9 @@ Client = Node(tag="c", client=1, torrc="client.tmpl")
 BridgeAuthority = Node(tag="ba", authority=1, bridgeauthority=1,
                        relay=1, torrc="bridgeauthority.tmpl")
 Bridge = Node(tag="br", bridge=1, relay=1, torrc="bridge.tmpl", launch_phase=2)
-BridgeClient = Node(tag="bc", client=1, bridgeclient=1, torrc="bridgeclient.tmpl", launch_phase=2)
 HSv2 = Node(tag="h", hs=1, torrc="hs.tmpl", launch_phase=2)
 HSv3 = Node(tag="h", hs=1, torrc="hs-v3.tmpl", launch_phase=2)
+BridgeClient = Node(tag="bc", client=1, bridgeclient=1, torrc="bridgeclient.tmpl", launch_phase=3)
 
 # We need 5 authorities/relays/exits to ensure we can build HS connections
 NODES = Authority.getN(3) + BridgeAuthority.getN(1) + \
