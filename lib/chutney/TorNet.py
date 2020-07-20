@@ -1415,13 +1415,9 @@ class LocalNodeController(NodeController):
             # bridge descs are stored with relay descs
             paths = { 'desc': desc,
                       'desc_new': desc_new }
-            # Temporarily disabled due to bug #33582. We will reactivate these
-            # checks in #33581. There's a race condition between bridges
-            # bootstrapping, and trying to publish their descriptors too early
             if to_bridge_auth:
-                paths = None
-            #   br_status = Path(datadir, "networkstatus-bridges")
-            #   paths['br_status'] = br_status
+                br_status = Path(datadir, "networkstatus-bridges")
+                paths['br_status'] = br_status
         else:
             # We're looking for bridges, but other nodes don't use bridges
             paths = None
