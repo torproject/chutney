@@ -1,3 +1,5 @@
+${include:orport-v6.i}
+
 # Must be included after relay-non-exit.tmpl
 ExitRelay 1
 
