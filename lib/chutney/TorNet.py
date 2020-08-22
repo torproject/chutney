@@ -2137,7 +2137,7 @@ class TorEnviron(chutney.Templating.Environ):
                 hostname = hostname.strip()
                 my['hs-hostname'] = hostname
             except IOError as e:
-                print("Error: hs %r error %d: %r opening hostname file '%r'" %
+                print("Error: hs %r error %d: %r opening hostname file '%s'" %
                       (my['nick'], e.errno, e.strerror, hs_hostname_file))
         return my['hs-hostname']
 
@@ -2224,7 +2224,7 @@ class Network(object):
         # subtract 1 second to avoid collisions and get the correct ordering
         newdir = get_new_absolute_nodes_path(time.time() - 1)
 
-        print("NOTE: renaming %r to %r" % (nodesdir, newdir))
+        print("NOTE: renaming '%s' to '%s'" % (nodesdir, newdir))
         nodesdir.rename(newdir)
 
     def create_new_nodes_dir(self):
@@ -2251,7 +2251,7 @@ class Network(object):
                 'is not a link')
 
         # create the new, uniquely named directory, and link it to nodes
-        print("NOTE: creating %r, linking to %r" % (newnodesdir, nodeslink))
+        print("NOTE: creating '%s', linking to '%s'" % (newnodesdir, nodeslink))
         # this gets created with mode 0700, that's probably ok
         mkdir_p(newnodesdir)
         try:
