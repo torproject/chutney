@@ -344,6 +344,9 @@ def get_tor_version(tor):
         "--version",
     ]
     tor_version = run_tor(cmdline)
+    # Keep only the first line of the output: since #32102 a bunch of more
+    # lines have been added to --version and we only care about the first
+    tor_version = tor_version.split("\n")[0]
     # clean it up a bit
     tor_version = tor_version.strip()
     tor_version = tor_version.replace("version ", "")
@@ -767,9 +770,9 @@ class LocalNodeBuilder(NodeBuilder):
             tor,
             "--ignore-missing-torrc",
             "-f", torrc,
-            "--list-fingerprint",
             "--orport", "1",
             "--datadirectory", datadir,
+            "--list-fingerprint",
             ]
         stdouterr = run_tor(cmdline)
         fingerprint = "".join((stdouterr.rstrip().split('\n')[-1]).split()[1:])
