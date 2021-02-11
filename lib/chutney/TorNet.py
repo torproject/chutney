@@ -598,12 +598,13 @@ class LocalNodeBuilder(NodeBuilder):
     # ipv6_addr -- secondary IP address (usually IPv6) to listen on
     # orport, dirport -- used on authorities, relays, and bridges. The orport
     #                    is used for both IPv4 and IPv6, if present
-    # fingerprint -- used only if authority
+    # fingerprint, fingerprint_ed -- used only if authority
     # dirserver_flags -- used only if authority
     # nick -- nickname of this router
 
     # Environment members set
     # fingerprint -- hex router key fingerprint
+    # fingerprint_ed -- base64 router key ed25519 fingerprint
     # nodenum -- int -- set by chutney -- which unique node index is this?
 
     def __init__(self, env):
@@ -782,12 +783,17 @@ class LocalNodeBuilder(NodeBuilder):
             sys.exit(1)
         self._env['fingerprint'] = fingerprint
 
+        ed_fn = os.path.join(datadir, "fingerprint-ed25519")
+        if os.path.exists(ed_fn):
+            s = open(ed_fn).read().strip().split()[1]
+            self._env['fingerprint_ed25519'] = s
+
     def _getAltAuthLines(self, hasbridgeauth=False):
         """Return a combination of AlternateDirAuthority,
         and AlternateBridgeAuthority lines for
         this Node, appropriately.  Non-authorities return ""."""
         if not self._env['authority']:
-            return ""
+            return ("","")
 
         datadir = self._env['dir']
         certfile = Path(datadir, 'keys', "authority_certificate")
@@ -805,6 +811,7 @@ class LocalNodeBuilder(NodeBuilder):
             # the 'bridge' flag set.
             options = ("AlternateBridgeAuthority",)
             self._env['dirserver_flags'] += " bridge"
+            arti = False
         else:
             # Directory authorities return AlternateDirAuthority with
             # the 'v3ident' flag set.
@@ -815,6 +822,7 @@ class LocalNodeBuilder(NodeBuilder):
             else:
                 options = ("DirAuthority",)
             self._env['dirserver_flags'] += " v3ident=%s" % v3id
+            arti = True
 
         authlines = ""
         for authopt in options:
@@ -829,7 +837,32 @@ class LocalNodeBuilder(NodeBuilder):
             authlines += " %s %s:%s %s\n" % (
                 self._env['dirserver_flags'], self._env['ip'],
                 self._env['dirport'], self._env['fingerprint'])
-        return authlines
+
+        # generate arti configuartion if supported
+        arti_lines = ""
+        if arti:
+            addrs = '"%s:%s"' % (self._env['ip'], self._env['orport'])
+            if self._env['ipv6_addr'] is not None:
+                addrs += ', "%s:%s"' % (self._env['ipv6_addr'],
+                                        self._env['orport'])
+            elts = { "fp": self._env['fingerprint'].replace(" ", ""),
+                     "ed_fp": self._env['fingerprint_ed25519'],
+                     "orports": addrs,
+                     "nick": self._env['nick'],
+                     "v3id": v3id }
+            arti_lines = """
+[[network.fallback_cache]]
+rsa_identity = "{fp}"
+ed_identity = "{ed_fp}"
+orports = [ {orports} ]
+
+[[network.authority]]
+name = "{nick}"
+v3ident = "{v3id}"
+
+""".format(**elts)
+
+        return (authlines, arti_lines)
 
     def _getBridgeLines(self):
         """Return potential Bridge line for this Node. Non-bridge
@@ -2297,6 +2330,7 @@ class Network(object):
         network = self
         altauthlines = []
         bridgelines = []
+        artilines = []
         all_builders = [ n.getBuilder() for n in self._nodes ]
         builders = [ b for b in all_builders
                      if b._env['config_phase'] == phase ]
@@ -2307,8 +2341,10 @@ class Network(object):
 
         for b in all_builders:
             b.preConfig(network)
-            altauthlines.append(b._getAltAuthLines(
-                self._dfltEnv['hasbridgeauth']))
+            tor_auth_line, arti_auth = b._getAltAuthLines(
+                self._dfltEnv['hasbridgeauth'])
+            altauthlines.append(tor_auth_line)
+            artilines.append(arti_auth)
             bridgelines.append(b._getBridgeLines())
 
         self._dfltEnv['authorities'] = "".join(altauthlines)
@@ -2316,6 +2352,9 @@ class Network(object):
 
         for b in builders:
             b.config(network)
+
+        with open(os.path.join(get_absolute_nodes_path(),"arti.toml"), 'w') as f:
+            f.write("".join(artilines))
 
         for b in builders:
             b.postConfig(network)
