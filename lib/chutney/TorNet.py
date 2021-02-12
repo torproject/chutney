@@ -787,6 +787,8 @@ class LocalNodeBuilder(NodeBuilder):
         if os.path.exists(ed_fn):
             s = open(ed_fn).read().strip().split()[1]
             self._env['fingerprint_ed25519'] = s
+        else:
+            self._env['fingerprint_ed25519'] = ""
 
     def _getAltAuthLines(self, hasbridgeauth=False):
         """Return a combination of AlternateDirAuthority,
