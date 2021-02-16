@@ -1,0 +1,56 @@
+# This network uses microdescriptors, even though it doesn't end in -md
+# All current tor versions support microdescriptors for IPv6
+
+Require("IPV6")
+
+import os
+
+OLD_TOR="tor-stable"
+
+# By default, Authorities are not configured as exits
+Authority6 = Node(tag="a", authority=1, relay=1,
+                  ipv6_addr=os.environ.get('CHUTNEY_LISTEN_ADDRESS_V6',
+                                           '[::1]'),
+                  torrc="authority-orport-v6.tmpl")
+OldAuthority6 = Node(tag="aOLD", authority=1, relay=1,
+                     ipv6_addr=os.environ.get('CHUTNEY_LISTEN_ADDRESS_V6',
+                                              '[::1]'),
+                     torrc="authority-orport-v6.tmpl",
+                     tor=OLD_TOR)
+
+NonExitRelay = Node(tag="r", relay=1,
+                    torrc="relay-non-exit.tmpl")
+OldNonExitRelay = Node(tag="rOLD", relay=1,
+                       torrc="relay-non-exit.tmpl",
+                       tor=OLD_TOR)
+NonExitRelay6 = Node(tag="r", relay=1,
+                     ipv6_addr=os.environ.get('CHUTNEY_LISTEN_ADDRESS_V6',
+                                              '[::1]'),
+                     torrc="relay-orport-v6-non-exit.tmpl")
+OldNonExitRelay6 = Node(tag="rOLD", relay=1,
+                        ipv6_addr=os.environ.get('CHUTNEY_LISTEN_ADDRESS_V6',
+                                                 '[::1]'),
+                        torrc="relay-orport-v6-non-exit.tmpl",
+                        tor=OLD_TOR)
+
+Client6 = Node(tag="c", client=1,
+               torrc="client-only-v6-md.tmpl", launch_phase=2)
+OldClient6 = Node(tag="cOLD", client=1,
+                  torrc="client-only-v6-md.tmpl",
+                  tor=OLD_TOR, launch_phase=2)
+
+HSv3IPv6 = Node(tag="h", hs=1,
+              torrc="hs-v3-only-v6-md.tmpl", launch_phase=2)
+OldHSv3IPv6 = Node(tag="hOLD", hs=1,
+                 torrc="hs-v3-only-v6-md.tmpl",
+                 tor=OLD_TOR, launch_phase=2)
+
+# (XXX We have temporarily added an extra authority to work around issue
+# 34447.)
+NODES = Authority6.getN(2)    + OldAuthority6.getN(1) + \
+        NonExitRelay.getN(1)  + OldNonExitRelay.getN(1) + \
+        NonExitRelay6.getN(1) + OldNonExitRelay6.getN(1) + \
+        Client6.getN(1)       + OldClient6.getN(1) + \
+        HSv3IPv6.getN(1)      + OldHSv3IPv6.getN(1)
+
+ConfigureNodes(NODES)

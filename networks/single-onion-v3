@@ -1,0 +1,20 @@
+# By default, Authorities are not configured as exits
+Authority = Node(tag="a", authority=1, relay=1, torrc="authority.tmpl")
+NonExitRelay = Node(tag="r", relay=1, torrc="relay-non-exit.tmpl")
+Client = Node(tag="c", client=1, torrc="client.tmpl", launch_phase=2)
+SingleOnionv3 = Node(tag="h", hs=1, torrc="single-onion-v3.tmpl", launch_phase=2)
+
+# Since only 25% of relays get the guard flag,
+# TestingDirAuthVoteGuard * may need to be used in small networks
+
+# A hidden service needs 5 authorities/relays to ensure it can build HS
+# connections:
+# a minimum path length of 3, plus the client-nominated rendezvous point,
+# plus a seperate introduction point
+#
+# (XXX We have temporarily added an extra authority to work around issue
+# 34447.)
+NODES = Authority.getN(3) + NonExitRelay.getN(3) + \
+        Client.getN(1) + SingleOnionv3.getN(1)
+
+ConfigureNodes(NODES)
