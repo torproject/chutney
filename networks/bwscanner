@@ -1,0 +1,20 @@
+# By default, Authorities are not configured as exits
+Authority = Node(tag="a", authority=1, relay=1, torrc="authority.tmpl")
+# #40013: All the relays get the EXIT flag
+# The relay-non-exit.tmpl includes the relay-non-dir.tmpl, which includdes
+# `${include:common.i} ExitRelay=0` and common.i generates a torrc file with
+# ExitRelay 0
+# ExitRelay 0
+# ExitPolicy reject *:*
+NonExitRelay = Node(tag="m", relay=1, exit=0, torrc="relay-non-exit.tmpl")
+ExitRelay = Node(tag="r", relay=1, exit=1, torrc="relay.tmpl")
+Client = Node(tag="c", client=1, torrc="client_bwscanner.tmpl")
+RelayMAB = Node(tag="relay1mbyteMAB", relay=1, exit=1, torrc="relay-MAB.tmpl")
+RelayMBR = Node(tag="relay1mbyteMBR", relay=1, exit=1, torrc="relay-MBR.tmpl")
+
+NODES = Authority.getN(3) + \
+      NonExitRelay.getN(7) + \
+      RelayMBR.getN(1) + RelayMAB.getN(1) + \
+      ExitRelay.getN(3) + Client.getN(1)
+
+ConfigureNodes(NODES)
