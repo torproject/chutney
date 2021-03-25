@@ -1,24 +1,5 @@
-
-- Have ability to override default parameter values.
-   Search order for configuration values:
-    - command line
-    - network configuration file
-    - dotfile
-    - defaults
-
-- Get smarter about naming and numbering nodes if their number changes
-
-- Get smarter about when we need to kill the network and when we need to
-  restart nodes
-
-- Avoid regenerating so many authority keys: it's okay to recycle for
-  testing.
-
-- Right now we assume that we're acting like a fooctl startup/shutdown script
-  series.  Instead we could run in a managed mode.
-
-- Pipe stdout to a file, not to nowhere with "quiet"
-
-- Have launcher check for configuration
-
-- Resolve XXXX comments
+- Currently Chuteny does not appear to function with Tor 10.0.12 or Tor 10.0.13.  I get an error: "At least one protocol listed as required in the consensus is not supported by this version of Tor. You should upgrade. This version of Tor will not work as a client on the Tor network. The missing protocols are: DirCache=1"  
+I can not find any DirCache in the files that I can flip to zero to try to get it working.  If you have any suggestions, please let me know, If there are none, I suppose you have a bug that you have now been made aware of.  I was not sure how to get this message to you other than this method.
+Thank you, 
+Dustin
+comptech10@gmail.com
