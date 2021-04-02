@@ -161,6 +161,7 @@ Multiple Tests:
 Bootstrapping the network:
 
   Chutney expects a tor network to bootstrap in these stages:
+  
     1.  All directory authorities (DirAuths) bootstrap to 100%.
     2.  The DirAuths produce the first consensus.
         Usually, this consensus only contains authorities.
