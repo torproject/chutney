@@ -791,9 +791,17 @@ class LocalNodeBuilder(NodeBuilder):
             self._env['fingerprint_ed25519'] = ""
 
     def _getAltAuthLines(self, hasbridgeauth=False):
-        """Return a combination of AlternateDirAuthority,
-        and AlternateBridgeAuthority lines for
-        this Node, appropriately.  Non-authorities return ""."""
+        """Return a set of lines to configure other nodes to use this Node as
+        an authority.  For C tor, this is a combination of
+        AternateDirAuthority and AlternateBridgeAuthority.  For Arti,
+        this is a pair of lines to use this node as an authority and
+        as a fallback.  (Arti does not automatically use authorities
+        as fallbacks.)
+
+        The answers are returned as: (tor-auth, (arti-auth, arti-fallback))
+
+        If this node not an authority, the returned strings are empty.
+        """
         if not self._env['authority']:
             return ("",("", ""))
 
@@ -2357,6 +2365,9 @@ cache_dir = "{path}/arti/cache"
 state_dir = "{path}/arti/state"
 
 [path_rules]
+# These values disable enforce_distance entirely; we can replace them
+# with something like Tor's "EnforceDistinceSubnets 0" if Arti ever
+# implements it.
 enforce_distance = {{ "subnets_family_v4" = 33, "subnets_family_v6" = 129 }}
 
 """.format(path=self.dir))
