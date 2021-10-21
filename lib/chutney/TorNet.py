@@ -2370,6 +2370,10 @@ state_dir = "{path}/arti/state"
 # implements it.
 enforce_distance = {{ "subnets_family_v4" = 33, "subnets_family_v6" = 129 }}
 
+[client_config]
+# Allow the client to accept requests to connect to e.g. 127.0.0.1
+allow_local_addrs = true
+
 """.format(path=self.dir))
             f.write("""[network]
 fallback_caches = [
