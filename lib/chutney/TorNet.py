@@ -2368,14 +2368,15 @@ state_dir = "{path}/arti/state"
 # These values disable enforce_distance entirely; we can replace them
 # with something like Tor's "EnforceDistinceSubnets 0" if Arti ever
 # implements it.
-enforce_distance = {{ "subnets_family_v4" = 33, "subnets_family_v6" = 129 }}
+ipv4_subnet_family_prefix = 33
+ipv6_subnet_family_prefix = 129
 
-[addr_config]
+[address_filter]
 # Allow the client to accept requests to connect to e.g. 127.0.0.1
 allow_local_addrs = true
 
 """.format(path=self.dir))
-            f.write("""[network]
+            f.write("""[tor_network]
 fallback_caches = [
 """)
             f.write("".join(arti_fallback_lines))
