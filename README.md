@@ -1,3 +1,5 @@
+This project is no longer hosted here. Come find us at our [gitlab repository](https://gitlab.torproject.org) instead.
+
 # Chutney
 
 This is chutney.  It doesn't do much so far.  It isn't ready for prime-time.
